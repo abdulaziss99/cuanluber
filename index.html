@@ -1069,17 +1069,6 @@ async function fetchGlobalNews() {
   }
 }
 
-// Helper: ekstrak pesan error yang berguna dari response NewsData.io
-// (termasuk daftar 'suggestion' domain kalau domainurl salah/tidak terindex)
-function newsDataErrorMessage(data, fallback) {
-  if (!data) return fallback;
-  const msg = data.results?.message || data.message || (typeof data.results === 'string' ? data.results : '');
-  let suggestion = '';
-  const sugList = data.results?.suggestion || data.suggestion;
-  if (Array.isArray(sugList) && sugList.length) suggestion = ` Saran domain: ${sugList.join(', ')}`;
-  return (msg || fallback) + suggestion;
-}
-
 // Berita Indonesia — sumber: Bloomberg Technoz (bloombergtechnoz.com)
 async function fetchIndonesiaNews() {
   document.getElementById('indoNews').innerHTML = '<div class="loading-state"><span class="spinner"></span> Loading...</div>';
@@ -1088,12 +1077,12 @@ async function fetchIndonesiaNews() {
     const res = await fetch(url);
     const data = await res.json();
     console.log('[indoNews] raw response:', data);
-    if (data.status !== 'success') throw new Error(newsDataErrorMessage(data, 'NewsData error'));
+    if (data.status !== 'success') throw new Error(JSON.stringify(data));
     newsCache.indo = (data.results || []).slice(0, 8);
     renderNewsList('indoNews', newsCache.indo, 'Tidak ada berita dari Bloomberg Technoz.');
   } catch(e) {
     console.error('indoNews', e);
-    document.getElementById('indoNews').innerHTML = `<div class="loading-state" style="color:var(--red);">Gagal memuat berita Bloomberg Technoz.<br><span style="font-size:10.5px;color:var(--muted);">${e.message || ''}</span></div>`;
+    document.getElementById('indoNews').innerHTML = `<div class="loading-state" style="color:var(--red);">Gagal memuat berita Bloomberg Technoz.<br><span style="font-size:10px;color:var(--muted);word-break:break-all;">${e.message || ''}</span></div>`;
   }
 }
 
@@ -1105,13 +1094,13 @@ async function fetchCombinedNews() {
     const res = await fetch(url);
     const data = await res.json();
     console.log('[combinedNews] raw response:', data);
-    if (data.status !== 'success') throw new Error(newsDataErrorMessage(data, 'NewsData error'));
+    if (data.status !== 'success') throw new Error(JSON.stringify(data));
     newsCache.combined = (data.results || []).slice(0, 15);
     window._combinedNewsAll = newsCache.combined;
     filterCombinedNews(window._combinedNewsActiveCat || '', document.querySelector('.news-tab.active'));
   } catch(e) {
     console.error('combinedNews', e);
-    document.getElementById('combinedNews').innerHTML = `<div class="loading-state" style="color:var(--red);">Gagal memuat berita Investor.id.<br><span style="font-size:10.5px;color:var(--muted);">${e.message || ''}</span></div>`;
+    document.getElementById('combinedNews').innerHTML = `<div class="loading-state" style="color:var(--red);">Gagal memuat berita Investor.id.<br><span style="font-size:10px;color:var(--muted);word-break:break-all;">${e.message || ''}</span></div>`;
   }
 }
 
