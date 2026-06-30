@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>AZIS GOLD SYSTEM — AGS Lite</title>
+
+<!-- ===== ADD TO HOME SCREEN SETUP ===== -->
+<!-- Android (Chrome): pakai manifest.json -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b0f17">
+
+<!-- iPhone (Safari): pakai meta tags khusus Apple -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AGS Lite">
+<link rel="apple-touch-icon" href="icon-180.png">
+
+<!-- Icon umum / favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<style>
+  :root{
+    --bg:#0b0f17;
+    --panel:#11161f;
+    --panel2:#0e1420;
+    --line:#1d2531;
+    --gold:#f0b429;
+    --green:#22c55e;
+    --red:#ef4444;
+    --blue:#3b82f6;
+    --purple:#a855f7;
+    --text:#e6e9ef;
+    --muted:#7c8597;
+    --mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    --sans: 'Inter', -apple-system, sans-serif;
+  }
+  html[data-theme="light"]{
+    --bg:#f4f6fa;
+    --panel:#ffffff;
+    --panel2:#eef1f6;
+    --line:#dde3ec;
+    --text:#1a2332;
+    --muted:#6b7484;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+    transition: background .25s ease, color .25s ease;
+  }
+  .card, .topbar, .symbol-pill, .rec-box, #tv_chart_container{
+    transition: background .25s ease, border-color .25s ease;
+  }
+  .theme-toggle{
+    display:flex; align-items:center; gap:6px;
+    background:var(--panel2); border:1px solid var(--line);
+    color:var(--muted); font-size:12px; font-weight:600;
+    padding:6px 12px; border-radius:8px; cursor:pointer;
+    font-family:var(--sans);
+  }
+  .theme-toggle:hover{color:var(--text);}
+  .topbar{
+    display:flex; align-items:center; gap:12px;
+    padding:12px 16px;
+    background:var(--panel);
+    border-bottom:1px solid var(--line);
+    flex-wrap:wrap;
+    position:sticky; top:0; z-index:50;
+  }
+  .brand{
+    font-weight:800; font-size:15px; letter-spacing:.3px;
+    display:flex; align-items:center; gap:8px; margin-right:8px;
+  }
+  .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--green); box-shadow:0 0 8px var(--green);}
+  .symbol-pill{
+    font-family:var(--mono); font-size:12px; color:var(--muted);
+    background:var(--panel2); border:1px solid var(--line);
+    padding:4px 10px; border-radius:6px;
+  }
+  nav.tabs{display:flex; gap:4px; flex-wrap:wrap; flex:1;}
+  nav.tabs button{
+    background:transparent; border:1px solid transparent; color:var(--muted);
+    font-size:12.5px; padding:7px 12px; border-radius:8px; cursor:pointer;
+    font-family:var(--sans); font-weight:600; transition:.15s;
+    white-space:nowrap;
+  }
+  nav.tabs button:hover{color:var(--text); background:var(--panel2);}
+  nav.tabs button.active{
+    background:rgba(240,180,41,.12); color:var(--gold); border-color:rgba(240,180,41,.35);
+  }
+  .conn{font-size:11px; color:var(--green); display:flex; align-items:center; gap:5px; font-family:var(--mono);}
+
+  .layout{
+    display:grid;
+    grid-template-columns:260px 1fr 300px;
+    gap:14px;
+    padding:14px;
+    max-width:1600px;
+    margin:0 auto;
+  }
+  .col{display:flex; flex-direction:column; gap:14px;}
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:14px;
+  }
+  .card h3{
+    font-size:11px; text-transform:uppercase; letter-spacing:.6px;
+    color:var(--muted); margin-bottom:10px; display:flex; align-items:center; gap:6px;
+    font-weight:700;
+  }
+  .row{display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-size:13px;}
+  .row .label{color:var(--muted);}
+  .row .val{font-family:var(--mono); font-weight:600;}
+  .bull{color:var(--green);}
+  .bear{color:var(--red);}
+  .neutral{color:var(--gold);}
+
+  /* trend rows */
+  .trend-row{display:flex; justify-content:space-between; padding:6px 0; font-size:13px; border-bottom:1px solid var(--line);}
+  .trend-row:last-child{border-bottom:none;}
+  .trend-row .tf{color:var(--muted); font-family:var(--mono); width:32px;}
+  .trend-tag{font-family:var(--mono); font-weight:700; font-size:12px; display:flex; align-items:center; gap:5px;}
+
+  /* score bars */
+  .score-block{margin-bottom:14px;}
+  .score-head{display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;}
+  .score-head .pct{font-family:var(--mono); font-weight:800; font-size:18px;}
+  .bar-track{height:8px; background:var(--panel2); border-radius:5px; overflow:hidden; display:flex; gap:2px;}
+  .bar-track .seg{flex:1; border-radius:2px;}
+  .bar-track.green .seg{background:var(--line);}
+  .bar-track.green .seg.on{background:var(--green);}
+  .bar-track.red .seg{background:var(--line);}
+  .bar-track.red .seg.on{background:var(--red);}
+
+  .ai-score-big{
+    text-align:left; margin:10px 0 14px;
+  }
+  .ai-score-big .num{font-size:34px; font-weight:800; font-family:var(--mono); color:var(--gold);}
+  .ai-score-big .barwrap{height:8px; background:var(--panel2); border-radius:5px; margin-top:8px; overflow:hidden;}
+  .ai-score-big .barfill{height:100%; background:linear-gradient(90deg,var(--gold),#ffd76a); border-radius:5px;}
+
+  .rec-box{
+    background:rgba(240,180,41,.08); border:1px solid rgba(240,180,41,.35);
+    border-radius:10px; padding:10px 12px; margin-top:6px;
+  }
+  .rec-box .tag{font-size:10px; color:var(--gold); letter-spacing:.5px; font-weight:700;}
+  .rec-box .word{font-size:20px; font-weight:800; color:var(--gold); margin:2px 0;}
+  .rec-box .sub{font-size:11.5px; color:var(--muted); line-height:1.4;}
+
+  .check-item{display:flex; justify-content:space-between; align-items:center; font-size:12.5px; padding:5px 0;}
+  .check-item .ico{color:var(--green); font-size:13px;}
+  .check-item .ico.off{color:var(--red);}
+
+  /* chart panel */
+  .chart-card{flex:1; display:flex; flex-direction:column; min-height:680px;}
+  .chart-head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; flex-wrap:wrap; gap:8px;}
+  .chart-title{font-size:16px; font-weight:800; display:flex; align-items:center; gap:8px;}
+  .chart-sub{font-size:11.5px; color:var(--muted); margin-top:2px;}
+  .sessions{display:flex; gap:14px; font-size:11px; font-family:var(--mono);}
+  .sessions span{display:flex; align-items:center; gap:5px;}
+  .sd{width:7px;height:7px;border-radius:50%;}
+  .tv-badge{
+    font-size:9.5px; font-family:var(--mono); color:#2962ff; background:rgba(41,98,255,.12);
+    border:1px solid rgba(41,98,255,.4); padding:2px 7px; border-radius:5px; font-weight:700;
+  }
+  #tv_chart_container{width:100%; min-height:680px; min-width:320px; border-radius:8px; overflow:hidden; border:1px solid var(--line);}
+
+  .legend-grid{display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:12px;}
+  .legend-grid .li{display:flex; align-items:center; gap:6px;}
+  .legend-grid .sw{width:14px; height:3px; border-radius:2px;}
+  .legend-grid .sw.box{width:12px;height:10px;border-radius:2px;}
+
+  .bottom-grid{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:14px; padding:0 14px 14px;
+    max-width:1600px; margin:0 auto;
+  }
+  .entry-list .ei{display:flex; align-items:center; gap:7px; font-size:12.5px; padding:4px 0;}
+  .entry-list .ei svg{flex-shrink:0;}
+
+  footer{
+    text-align:center; padding:18px; color:var(--muted); font-size:11.5px;
+    border-top:1px solid var(--line);
+  }
+  footer b{color:var(--gold);}
+
+  .pulse{animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+  @media (max-width:1100px){
+    .layout{grid-template-columns:1fr; }
+    .bottom-grid{grid-template-columns:1fr 1fr;}
+  }
+  @media (max-width:600px){
+    .bottom-grid{grid-template-columns:1fr;}
+    nav.tabs{order:3; width:100%;}
+    .topbar{justify-content:space-between;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="dot pulse"></span>AZIS GOLD SYSTEM <span style="color:var(--muted); font-weight:500;">v1.0</span></div>
+  <div class="symbol-pill">XAUUSD · M15</div>
+  <nav class="tabs" id="tabs">
+    <button class="active" data-tab="dashboard">Dashboard</button>
+    <button data-tab="trend">Trend</button>
+    <button data-tab="sr">S&amp;R</button>
+    <button data-tab="liquidity">Liquidity</button>
+    <button data-tab="ob">Order Block</button>
+    <button data-tab="fvg">FVG</button>
+    <button data-tab="news">News</button>
+    <button data-tab="ai">AI Analysis</button>
+    <button data-tab="about">About</button>
+  </nav>
+  <button class="theme-toggle" id="themeToggle">🌙 <span id="themeLabel">Dark</span></button>
+  <div class="conn">● CONNECTED</div>
+</div>
+
+<div class="layout">
+
+  <!-- LEFT COLUMN -->
+  <div class="col">
+    <div class="card">
+      <h3>📊 Market Overview</h3>
+      <div style="font-size:11px; color:var(--muted); margin-bottom:6px; font-weight:600;">TREND MULTI TIMEFRAME</div>
+      <div class="trend-row"><span class="tf">H4</span><span class="trend-tag" id="trend-h4">— LOADING</span></div>
+      <div class="trend-row"><span class="tf">H1</span><span class="trend-tag" id="trend-h1">— LOADING</span></div>
+      <div class="trend-row"><span class="tf">M15</span><span class="trend-tag" id="trend-m15">— LOADING</span></div>
+      <div class="trend-row"><span class="tf">M5</span><span class="trend-tag" id="trend-m5">— LOADING</span></div>
+      <div style="font-size:9px;color:var(--muted);margin-top:6px;font-family:var(--mono);" id="trendUpdated"></div>
+    </div>
+
+    <div class="card">
+      <h3>⭐ AI Score <span class="mock-tag" style="text-transform:none; font-size:9.5px;">(mock)</span></h3>
+      <div class="score-block">
+        <div class="score-head"><span>BUY SCORE</span><span class="pct bull">82%</span></div>
+        <div class="bar-track green" id="buyBar"></div>
+      </div>
+      <div class="score-block" style="margin-bottom:0;">
+        <div class="score-head"><span>SELL SCORE</span><span class="pct bear">21%</span></div>
+        <div class="bar-track red" id="sellBar"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📈 Market Condition</h3>
+      <div class="row"><span class="label">Trend Strength</span><span class="val" id="mc-strength">—</span></div>
+      <div class="row"><span class="label">Volatility</span><span class="val" id="mc-volatility">—</span></div>
+      <div class="row"><span class="label">Volume</span><span class="val" id="mc-volume">—</span></div>
+      <div class="row"><span class="label">Spread</span><span class="val" id="mc-spread">—</span></div>
+      <div class="row"><span class="label">ATR (14)</span><span class="val" id="mc-atr">—</span></div>
+    </div>
+
+    <div class="card">
+      <h3>⏰ Next High Impact News</h3>
+      <div style="font-size:13px; font-weight:700; color:var(--red); margin-bottom:2px;">USD CPI (MoM)</div>
+      <div style="font-family:var(--mono); font-size:22px; font-weight:800; color:var(--gold);" id="newsTimer">00:45:20</div>
+      <div style="font-size:11px; color:var(--muted); margin-top:4px;">High Impact · 15 May 2024 19:30 (GMT+7)</div>
+    </div>
+
+    <div class="card">
+      <h3>🛡️ Account Risk</h3>
+      <div class="row"><span class="label">Risk per Trade</span><span class="val">1.00%</span></div>
+      <div class="row"><span class="label">Account Balance</span><span class="val">$5,000.00</span></div>
+      <div class="row"><span class="label">Risk Amount</span><span class="val bear">$50.00</span></div>
+      <div class="row"><span class="label">Lot Size (XAUUSD)</span><span class="val">0.02</span></div>
+    </div>
+  </div>
+
+  <!-- CENTER: CHART -->
+  <div class="col">
+    <div class="card chart-card">
+      <div class="chart-head">
+        <div>
+          <div class="chart-title">XAUUSD · M15 <span class="tv-badge">LIVE · TradingView</span></div>
+          <div class="chart-sub">Gold Spot / U.S. Dollar — chart real-time, candlestick asli dari TradingView</div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);font-family:var(--mono);">LIVE SESSION TRACKER</div>
+      </div>
+
+      <!-- LIVE CLOCK + SESSION INDICATOR -->
+      <div id="sessionIndicator" style="margin-bottom:10px;">
+        <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:8px;">
+          <div id="liveClock" style="font-family:var(--mono);font-size:28px;font-weight:800;color:var(--gold);letter-spacing:2px;"></div>
+          <div id="liveDate" style="font-size:11px;color:var(--muted);font-family:var(--mono);"></div>
+        </div>
+        <div id="sesBar" style="display:flex;border-radius:6px;overflow:hidden;height:22px;margin-bottom:8px;border:1px solid var(--line);"></div>
+        <div id="clockRow" style="display:flex;gap:8px;margin-bottom:6px;"></div>
+        <div id="utcRow" style="font-size:10px;color:var(--muted);text-align:right;font-family:var(--mono);"></div>
+      </div>
+
+      <div id="tv_chart_container" style="flex:1;">
+        <div class="tradingview-widget-container" style="height:100%;width:100%">
+          <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div class="col">
+    <div class="card">
+      <h3>🤖 AI Analysis</h3>
+      <div class="check-item"><span>Trend Direction</span><span class="ico" id="ai-trend">— LOADING</span></div>
+      <div class="check-item"><span>Price Above EMA50</span><span class="ico" id="ai-ema">— LOADING</span></div>
+      <div class="check-item"><span>Pullback to Order Block</span><span class="ico" id="ai-ob">⦿ MOCK</span></div>
+      <div class="check-item"><span>FVG Filled</span><span class="ico" id="ai-fvg">⦿ MOCK</span></div>
+      <div class="check-item"><span>Liquidity Sweep</span><span class="ico" id="ai-liq">⦿ MOCK</span></div>
+      <div class="check-item"><span>Volume Confirmation</span><span class="ico" id="ai-vol">— LOADING</span></div>
+      <div class="check-item"><span>RSI Condition</span><span class="ico" id="ai-rsi">— LOADING</span></div>
+      <div class="check-item"><span>News Filter</span><span class="ico off" id="ai-news">✕ HIGH IMPACT</span></div>
+
+      <div class="ai-score-big">
+        <div style="font-size:11px; color:var(--muted); font-weight:700; letter-spacing:.5px;">CONFIDENCE LEVEL</div>
+        <div class="num" id="ai-score-num">—%</div>
+        <div class="barwrap"><div class="barfill" id="ai-score-bar" style="width:0%"></div></div>
+        <div style="font-size:11.5px; margin-top:4px; font-weight:600;" id="ai-score-label">Calculating...</div>
+      </div>
+
+      <div class="rec-box" id="ai-rec-box">
+        <div class="tag">RECOMMENDATION</div>
+        <div class="word" id="ai-rec-word">—</div>
+        <div class="sub" id="ai-rec-sub">Fetching data...</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🧮 Risk Calculator</h3>
+
+      <!-- Inputs -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px;">BALANCE ($)</div>
+          <input id="rc-balance" type="number" value="5000" min="100" step="100"
+            style="width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);
+            border-radius:6px;padding:5px 8px;font-size:13px;font-family:var(--mono);">
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px;">RISK %</div>
+          <input id="rc-risk" type="number" value="1" min="0.1" max="10" step="0.1"
+            style="width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);
+            border-radius:6px;padding:5px 8px;font-size:13px;font-family:var(--mono);">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+        <div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px;">DIRECTION</div>
+          <select id="rc-dir"
+            style="width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);
+            border-radius:6px;padding:5px 8px;font-size:13px;font-family:var(--mono);">
+            <option value="buy">BUY</option>
+            <option value="sell">SELL</option>
+          </select>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px;">ATR MULTIPLIER</div>
+          <input id="rc-atr-mult" type="number" value="1" min="0.5" max="3" step="0.1"
+            style="width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);
+            border-radius:6px;padding:5px 8px;font-size:13px;font-family:var(--mono);">
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="row"><span class="label">Entry Price</span><span class="val" id="rc-entry">—</span></div>
+      <div class="row"><span class="label">ATR (14)</span><span class="val" id="rc-atr">—</span></div>
+      <div class="row"><span class="label">Stop Loss</span><span class="val bear" id="rc-sl">—</span></div>
+      <div class="row"><span class="label">Take Profit 1 (1:2)</span><span class="val bull" id="rc-tp1">—</span></div>
+      <div class="row"><span class="label">Take Profit 2 (1:4)</span><span class="val bull" id="rc-tp2">—</span></div>
+      <div style="border-top:1px solid var(--line);margin:8px 0;"></div>
+      <div class="row"><span class="label">Risk Amount</span><span class="val bear" id="rc-risk-amt">—</span></div>
+      <div class="row"><span class="label">Lot Size</span><span class="val" id="rc-lot">—</span></div>
+      <div class="row"><span class="label">Profit TP1</span><span class="val bull" id="rc-profit1">—</span></div>
+      <div class="row"><span class="label">Profit TP2</span><span class="val bull" id="rc-profit2">—</span></div>
+      <div style="font-size:9px;color:var(--muted);margin-top:6px;font-family:var(--mono);" id="rc-updated"></div>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-grid" id="dashboardBottom">
+  <div class="card">
+    <h3>🔑 Legend</h3>
+    <div class="legend-grid">
+      <div class="li"><span class="sw" style="background:#f0b429"></span>Support</div>
+      <div class="li"><span class="sw" style="background:#ef4444"></span>Resistance</div>
+      <div class="li"><span class="sw box" style="background:rgba(34,197,94,.35); border:1px solid #22c55e"></span>Bullish OB</div>
+      <div class="li"><span class="sw box" style="background:rgba(239,68,68,.35); border:1px solid #ef4444"></span>Bearish OB</div>
+      <div class="li"><span class="sw box" style="background:rgba(59,130,246,.3); border:1px solid #3b82f6"></span>FVG</div>
+      <div class="li">💧 Liquidity</div>
+    </div>
+  </div>
+</div>
+
+<!-- ABOUT PAGE -->
+<div id="aboutPage" style="display:none; max-width:1600px; margin:0 auto; padding:14px;">
+  <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px;">
+    <div class="card entry-list">
+      <h3>✅ Entry Rules (Buy)</h3>
+      <div class="ei"><span style="color:var(--green)">✔</span>Trend Bullish (H1+H4)</div>
+      <div class="ei"><span style="color:var(--green)">✔</span>Price Retrace to Bullish OB</div>
+      <div class="ei"><span style="color:var(--green)">✔</span>FVG Filled</div>
+      <div class="ei"><span style="color:var(--green)">✔</span>Liquidity Sweep (EQ Low)</div>
+      <div class="ei"><span style="color:var(--green)">✔</span>RSI Rebound Above 40</div>
+      <div class="ei"><span style="color:var(--green)">✔</span>Volume Increasing</div>
+      <div class="ei"><span style="color:var(--green)">✔</span>No High Impact News Nearby</div>
+      <div class="ei"><span style="color:var(--green)">✔</span>Min R:R 1:2</div>
+    </div>
+    <div class="card entry-list">
+      <h3>🔻 Entry Rules (Sell)</h3>
+      <div class="ei"><span style="color:var(--red)">✔</span>Trend Bearish (H1+H4)</div>
+      <div class="ei"><span style="color:var(--red)">✔</span>Price Retrace to Bearish OB</div>
+      <div class="ei"><span style="color:var(--red)">✔</span>FVG Filled</div>
+      <div class="ei"><span style="color:var(--red)">✔</span>Liquidity Sweep (EQ High)</div>
+      <div class="ei"><span style="color:var(--red)">✔</span>RSI Rejection Below 60</div>
+      <div class="ei"><span style="color:var(--red)">✔</span>Volume Increasing</div>
+      <div class="ei"><span style="color:var(--red)">✔</span>No High Impact News Nearby</div>
+      <div class="ei"><span style="color:var(--red)">✔</span>Min R:R 1:2</div>
+    </div>
+    <div class="card">
+      <h3>📖 How To Use</h3>
+      <div class="ei">1. Check Trend &amp; AI Score</div>
+      <div class="ei">2. Wait for Price Retrace to OB</div>
+      <div class="ei">3. Wait for Liquidity Sweep</div>
+      <div class="ei">4. Confirm with FVG + RSI + Volume</div>
+      <div class="ei">5. Set SL &amp; TP with Risk Calculator</div>
+      <div class="ei">6. Execute with Discipline</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <b>AZIS GOLD SYSTEM</b> v1.0 &nbsp;|&nbsp; Build for Discipline. Trade with Confidence.
+</footer>
+
+<script>
+// ===== Tabs =====
+document.getElementById('tabs').addEventListener('click', e=>{
+  if(e.target.tagName==='BUTTON'){
+    document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('active'));
+    e.target.classList.add('active');
+    const tab = e.target.dataset.tab;
+    const isAbout = tab === 'about';
+    document.querySelector('.layout').style.display = isAbout ? 'none' : '';
+    document.getElementById('dashboardBottom').style.display = isAbout ? 'none' : '';
+    document.getElementById('aboutPage').style.display = isAbout ? 'block' : 'none';
+  }
+});
+
+// ===== Buy/Sell segmented bars =====
+function buildBar(id, pct, total=20){
+  const el = document.getElementById(id);
+  const on = Math.round((pct/100)*total);
+  for(let i=0;i<total;i++){
+    const s = document.createElement('div');
+    s.className = 'seg' + (i<on ? ' on':'');
+    el.appendChild(s);
+  }
+}
+buildBar('buyBar', 82);
+buildBar('sellBar', 21);
+
+// ===== News countdown =====
+let secs = 45*60+20;
+setInterval(()=>{
+  if(secs>0){ secs--; }
+  const h=String(Math.floor(secs/3600)).padStart(2,'0');
+  const m=String(Math.floor((secs%3600)/60)).padStart(2,'0');
+  const s=String(secs%60).padStart(2,'0');
+  document.getElementById('newsTimer').textContent = `${h}:${m}:${s}`;
+}, 1000);
+
+// ===================================================================
+// TRADINGVIEW WIDGET
+// ===================================================================
+function loadTradingView(theme){
+  const container = document.querySelector('#tv_chart_container .tradingview-widget-container__widget');
+  container.innerHTML = '';
+  const script = document.createElement('script');
+  script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+  script.async = true;
+  script.innerHTML = JSON.stringify({
+    "autosize": true,
+    "symbol": "OANDA:XAUUSD",
+    "interval": "15",
+    "timezone": "Asia/Jakarta",
+    "theme": theme,
+    "style": "1",
+    "locale": "id",
+    "backgroundColor": theme === "dark" ? "rgba(17, 22, 31, 1)" : "rgba(255, 255, 255, 1)",
+    "gridColor": theme === "dark" ? "rgba(29, 37, 49, 0.5)" : "rgba(221, 227, 236, 0.6)",
+    "hide_top_toolbar": false,
+    "hide_side_toolbar": false,
+    "withdateranges": true,
+    "details": false,
+    "hide_legend": false,
+    "allow_symbol_change": true,
+    "studies": ["MASimple@tv-basicstudies","RSI@tv-basicstudies"],
+    "support_host": "https://www.tradingview.com"
+  });
+  container.appendChild(script);
+}
+
+// ===================================================================
+// TOGGLE DARK / LIGHT MODE
+// FIX: Ganti localStorage → sessionStorage supaya works di iOS PWA
+// (localStorage diblokir Safari saat app dibuka dari Home Screen shortcut)
+// ===================================================================
+const root = document.documentElement;
+const themeToggleBtn = document.getElementById('themeToggle');
+const themeLabel = document.getElementById('themeLabel');
+
+function getSavedTheme(){
+  try {
+    return sessionStorage.getItem('ags_theme');
+  } catch(e) {
+    return null; // fallback kalau sessionStorage juga diblokir
+  }
+}
+
+function saveTheme(theme){
+  try {
+    sessionStorage.setItem('ags_theme', theme);
+  } catch(e) {
+    // silent fail, no crash
+  }
+}
+
+function applyTheme(theme){
+  root.setAttribute('data-theme', theme);
+  themeLabel.textContent = theme === 'dark' ? 'Dark' : 'Light';
+  themeToggleBtn.firstChild.textContent = theme === 'dark' ? '🌙 ' : '☀️ ';
+  saveTheme(theme);
+  loadTradingView(theme);
+}
+
+themeToggleBtn.addEventListener('click', ()=>{
+  const current = root.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+});
+
+// load tema tersimpan, default dark
+applyTheme(getSavedTheme() || 'dark');
+
+// ===================================================================
+// LIVE SESSION INDICATOR
+// ===================================================================
+const SESSIONS = [
+  { name:'SYDNEY',   color:'#a855f7', utcStart:21, utcEnd:6  },
+  { name:'TOKYO',    color:'#3b82f6', utcStart:0,  utcEnd:9  },
+  { name:'LONDON',   color:'#22c55e', utcStart:7,  utcEnd:16 },
+  { name:'NEW YORK', color:'#f0b429', utcStart:12, utcEnd:21 },
+];
+function sessIsActive(s,hUTC){if(s.utcEnd>s.utcStart)return hUTC>=s.utcStart&&hUTC<s.utcEnd;return hUTC>=s.utcStart||hUTC<s.utcEnd;}
+function sessPct(s,minUTC){const total=((s.utcEnd-s.utcStart+24)%24)*60;const elapsed=(minUTC-s.utcStart*60+1440)%1440;return Math.min(100,Math.max(0,(elapsed/total)*100));}
+function toLocalStr(utcH){const d=new Date();d.setUTCHours(utcH,0,0,0);return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false});}
+function buildSessBar(){
+  const bar=document.getElementById('sesBar');if(!bar)return;bar.innerHTML='';
+  for(let i=0;i<48;i++){
+    const hUTC=Math.floor(i*0.5);
+    const active=SESSIONS.filter(s=>sessIsActive(s,hUTC));
+    const div=document.createElement('div');
+    div.style.cssText='flex:1;height:100%;';
+    if(active.length===1)div.style.background=active[0].color+'55';
+    else if(active.length>1)div.style.background=`linear-gradient(90deg,${active[0].color}55 50%,${active[1].color}55 50%)`;
+    else div.style.background='var(--panel2)';
+    div.dataset.slot=i;bar.appendChild(div);
+  }
+}
+function updateSess(){
+  const bar=document.getElementById('sesBar');
+  const row=document.getElementById('clockRow');
+  const utcRow=document.getElementById('utcRow');
+  if(!bar||!row||!utcRow)return;
+  const now=new Date();
+  const hUTC=now.getUTCHours(),mUTC=now.getUTCMinutes(),sUTC=now.getUTCSeconds();
+  const minUTC=hUTC*60+mUTC,curSlot=Math.floor(minUTC/30);
+  Array.from(bar.children).forEach((seg,i)=>{
+    seg.style.opacity=i<curSlot?'0.3':'1';
+    seg.style.outline=i===curSlot?'2px solid var(--text)':'none';
+    seg.style.outlineOffset='-1px';seg.style.position='relative';seg.style.zIndex=i===curSlot?'1':'0';
+  });
+  row.innerHTML='';
+  SESSIONS.forEach(s=>{
+    const act=sessIsActive(s,hUTC);
+    const p=act?sessPct(s,minUTC).toFixed(1):0;
+    const card=document.createElement('div');
+    card.style.cssText=`flex:1;border-radius:8px;padding:6px 8px;border:1px solid ${act?s.color:'var(--line)'};background:var(--panel);`;
+    card.innerHTML=`
+      <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:${s.color};display:inline-block;${act?'box-shadow:0 0 5px '+s.color:''}"></span>
+        <span style="font-size:9px;font-weight:700;color:${act?s.color:'var(--muted)'};font-family:var(--mono);">${s.name}</span>
+      </div>
+      <div style="font-size:9px;color:var(--muted);font-family:var(--mono);">${toLocalStr(s.utcStart)}–${toLocalStr(s.utcEnd)}</div>
+      <div style="font-size:9px;font-weight:700;color:${act?s.color:'var(--muted)'};">${act?'OPEN':'CLOSED'}</div>
+      ${act?`<div style="height:3px;border-radius:2px;background:var(--line);margin-top:4px;"><div style="width:${p}%;height:100%;border-radius:2px;background:${s.color};"></div></div>`:''}
+    `;
+    row.appendChild(card);
+  });
+  const pad=n=>String(n).padStart(2,'0');
+  utcRow.textContent=`UTC ${pad(hUTC)}:${pad(mUTC)}:${pad(sUTC)}`;
+  const lc=document.getElementById('liveClock');
+  const ld=document.getElementById('liveDate');
+  if(lc){
+    lc.textContent=`${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  }
+  if(ld){
+    const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    ld.textContent=`${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+  }
+}
+buildSessBar();updateSess();setInterval(updateSess,1000);
+
+// ===================================================================
+// LIVE TREND MTF — Twelve Data API
+// Fetch candle XAUUSD, hitung EMA50, tentukan trend tiap TF
+// ===================================================================
+const TD_KEY = '5f52a74cd9f24b49a4729b5b8e599505';
+const TD_SYMBOL = 'XAU/USD';
+const TF_MAP = [
+  { id:'trend-h4',  interval:'4h',  label:'H4'  },
+  { id:'trend-h1',  interval:'1h',  label:'H1'  },
+  { id:'trend-m15', interval:'15min',label:'M15' },
+  { id:'trend-m5',  interval:'5min', label:'M5'  },
+];
+
+function calcEMA(closes, period){
+  const k = 2/(period+1);
+  let ema = closes.slice(0,period).reduce((a,b)=>a+b,0)/period;
+  for(let i=period;i<closes.length;i++) ema = closes[i]*k + ema*(1-k);
+  return ema;
+}
+
+function getTrend(closes){
+  if(closes.length < 52) return {label:'NO DATA', cls:'neutral', arrow:'—'};
+  const ema50 = calcEMA(closes, 50);
+  const price = closes[closes.length-1];
+  const prev  = closes[closes.length-2];
+  const diff  = ((price - ema50) / ema50) * 100;
+  if(Math.abs(diff) < 0.05){
+    return {label:'RETRACE', cls:'neutral', arrow:'↔'};
+  } else if(price > ema50){
+    if(prev < price) return {label:'BULLISH', cls:'bull', arrow:'↑'};
+    return {label:'RETRACE', cls:'neutral', arrow:'↕'};
+  } else {
+    if(prev > price) return {label:'RETRACE', cls:'neutral', arrow:'↕'};
+    return {label:'BEARISH', cls:'bear', arrow:'↓'};
+  }
+}
+
+async function fetchTrend(tf){
+  const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(TD_SYMBOL)}&interval=${tf.interval}&outputsize=60&apikey=${TD_KEY}`;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    if(!data.values || !data.values.length) throw new Error('no data');
+    const closes = data.values.map(v=>parseFloat(v.close)).reverse();
+    const trend = getTrend(closes);
+    const el = document.getElementById(tf.id);
+    if(el){
+      el.className = 'trend-tag ' + trend.cls;
+      el.textContent = trend.arrow + ' ' + trend.label;
+    }
+  } catch(e){
+    const el = document.getElementById(tf.id);
+    if(el){ el.className='trend-tag neutral'; el.textContent='— ERROR'; }
+  }
+}
+
+async function fetchAllTrends(){
+  await Promise.all(TF_MAP.map(tf => fetchTrend(tf)));
+  const el = document.getElementById('trendUpdated');
+  if(el){
+    const now = new Date();
+    const pad = n=>String(n).padStart(2,'0');
+    el.textContent = `Updated ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  }
+}
+
+fetchAllTrends();
+setInterval(fetchAllTrends, 5*60*1000);
+
+// ===================================================================
+// LIVE AI ANALYSIS — Twelve Data (M15 candle)
+// Hitung: EMA50, RSI14, Volume Confirmation, lalu scoring otomatis
+// ===================================================================
+function calcRSI(closes, period=14){
+  let gains=0, losses=0;
+  for(let i=1;i<=period;i++){
+    const diff = closes[i]-closes[i-1];
+    if(diff>=0) gains+=diff; else losses+=Math.abs(diff);
+  }
+  let avgGain=gains/period, avgLoss=losses/period;
+  for(let i=period+1;i<closes.length;i++){
+    const diff=closes[i]-closes[i-1];
+    avgGain=(avgGain*(period-1)+(diff>=0?diff:0))/period;
+    avgLoss=(avgLoss*(period-1)+(diff<0?Math.abs(diff):0))/period;
+  }
+  if(avgLoss===0) return 100;
+  const rs=avgGain/avgLoss;
+  return 100-(100/(1+rs));
+}
+
+function setAI(id, icon, text, color){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.className='ico'+(color==='red'?' off':'');
+  el.style.color=color==='gold'?'var(--gold)':color==='red'?'var(--red)':'var(--green)';
+  el.textContent=icon+' '+text;
+}
+
+async function fetchAIAnalysis(){
+  const url=`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(TD_SYMBOL)}&interval=15min&outputsize=80&apikey=${TD_KEY}`;
+  try{
+    const res=await fetch(url);
+    const data=await res.json();
+    if(!data.values||!data.values.length) throw new Error('no data');
+    const vals=[...data.values].reverse();
+    const closes=vals.map(v=>parseFloat(v.close));
+    const vols=vals.map(v=>parseFloat(v.volume||0));
+    const price=closes[closes.length-1];
+
+    // EMA50
+    const ema50=calcEMA(closes,50);
+    const aboveEMA=price>ema50;
+    setAI('ai-ema', aboveEMA?'✔':'✕', aboveEMA?'YES':'NO', aboveEMA?'green':'red');
+
+    // Trend Direction dari H1 (pakai hasil trend MTF yang sudah di-fetch)
+    const trendEl=document.getElementById('trend-h1');
+    const trendText=trendEl?trendEl.textContent:'';
+    const isBull=trendText.includes('BULLISH');
+    const isBear=trendText.includes('BEARISH');
+    setAI('ai-trend', isBull?'✔':isBear?'✕':'⦿', isBull?'BULLISH':isBear?'BEARISH':'NEUTRAL', isBull?'green':isBear?'red':'gold');
+
+    // RSI14
+    const rsi=calcRSI(closes,14);
+    let rsiTxt, rsiColor, rsiIcon;
+    if(rsi<40){rsiTxt=`OVERSOLD (${rsi.toFixed(0)})`;rsiColor='green';rsiIcon='✔';}
+    else if(rsi>60){rsiTxt=`OVERBOUGHT (${rsi.toFixed(0)})`;rsiColor='red';rsiIcon='✕';}
+    else{rsiTxt=`NEUTRAL (${rsi.toFixed(0)})`;rsiColor='gold';rsiIcon='⦿';}
+    setAI('ai-rsi',rsiIcon,rsiTxt,rsiColor);
+
+    // Volume Confirmation — bandingkan vol candle terakhir vs avg 20 candle
+    const avgVol=vols.slice(-21,-1).reduce((a,b)=>a+b,0)/20;
+    const lastVol=vols[vols.length-1];
+    const volOk=lastVol>avgVol*1.1;
+    setAI('ai-vol',volOk?'✔':'✕',volOk?'YES':'LOW',volOk?'green':'red');
+
+    // Scoring — tiap item live bernilai 1 poin
+    let score=0, total=0;
+    // Trend
+    if(isBull||isBear){total++;if(isBull)score++;}
+    // EMA
+    total++;if(aboveEMA)score++;
+    // RSI
+    total++;if(rsi<40)score++;else if(rsi<=60)score+=0.5;
+    // Volume
+    total++;if(volOk)score++;
+    // Mock items yg selalu partial
+    total+=4; score+=2; // OB, FVG, Liq, News (mock neutral)
+
+    const pct=Math.round((score/total)*100);
+    const scoreEl=document.getElementById('ai-score-num');
+    const barEl=document.getElementById('ai-score-bar');
+    const labelEl=document.getElementById('ai-score-label');
+    const recWord=document.getElementById('ai-rec-word');
+    const recSub=document.getElementById('ai-rec-sub');
+    if(scoreEl) scoreEl.textContent=pct+'%';
+    if(barEl) barEl.style.width=pct+'%';
+
+    if(pct>=75){
+      if(labelEl){labelEl.textContent='High Probability Setup';labelEl.style.color='var(--green)';}
+      if(isBull){
+        if(recWord) recWord.textContent='BUY';
+        if(recSub) recSub.textContent='Conditions met for BUY entry. Confirm candle close.';
+        if(recWord) recWord.style.color='var(--green)';
+      } else {
+        if(recWord) recWord.textContent='SELL';
+        if(recSub) recSub.textContent='Conditions met for SELL entry. Confirm candle close.';
+        if(recWord) recWord.style.color='var(--red)';
+      }
+    } else if(pct>=50){
+      if(labelEl){labelEl.textContent='Medium Probability Setup';labelEl.style.color='var(--gold)';}
+      if(recWord){recWord.textContent='WAIT';recWord.style.color='var(--gold)';}
+      if(recSub) recSub.textContent='Wait for stronger confirmation before entering.';
+    } else {
+      if(labelEl){labelEl.textContent='Low Probability — Stay Out';labelEl.style.color='var(--red)';}
+      if(recWord){recWord.textContent='NO TRADE';recWord.style.color='var(--red)';}
+      if(recSub) recSub.textContent='Conditions not met. Avoid entry.';
+    }
+  } catch(e){
+    ['ai-trend','ai-ema','ai-vol','ai-rsi'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el){el.className='ico';el.style.color='var(--muted)';el.textContent='— ERROR';}
+    });
+  }
+}
+
+fetchAIAnalysis();
+setInterval(fetchAIAnalysis, 5*60*1000);
+
+// ===================================================================
+// LIVE RISK CALCULATOR — harga & ATR dari Twelve Data
+// ===================================================================
+let rcPrice = 0, rcATR = 0;
+
+function calcATR(vals, period=14){
+  const trs = [];
+  for(let i=1;i<vals.length;i++){
+    const h=parseFloat(vals[i-1].high), l=parseFloat(vals[i-1].low), pc=parseFloat(vals[i].close);
+    trs.push(Math.max(h-l, Math.abs(h-pc), Math.abs(l-pc)));
+  }
+  if(trs.length<period) return 0;
+  let atr=trs.slice(0,period).reduce((a,b)=>a+b,0)/period;
+  for(let i=period;i<trs.length;i++) atr=(atr*(period-1)+trs[i])/period;
+  return atr;
+}
+
+function updateRC(){
+  if(!rcPrice||!rcATR) return;
+  const balance = parseFloat(document.getElementById('rc-balance').value)||5000;
+  const riskPct = parseFloat(document.getElementById('rc-risk').value)||1;
+  const dir     = document.getElementById('rc-dir').value;
+  const mult    = parseFloat(document.getElementById('rc-atr-mult').value)||1;
+
+  const riskAmt  = balance * riskPct / 100;
+  const slDist   = rcATR * mult;
+
+  // BUY: SL di bawah entry, TP di atas
+  // SELL: SL di atas entry, TP di bawah
+  const isBuy = dir === 'buy';
+  const sl  = isBuy ? rcPrice - slDist : rcPrice + slDist;
+  const tp1 = isBuy ? rcPrice + slDist*2 : rcPrice - slDist*2;
+  const tp2 = isBuy ? rcPrice + slDist*4 : rcPrice - slDist*4;
+
+  // Lot size XAUUSD:
+  // 1 lot = 100 oz, nilai per pip ($0.01) = $1 per lot
+  // slDist dalam dollar (misal 4.5 = $4.5 per oz)
+  // Risk ($) = lotSize * slDist * 100
+  // lotSize = riskAmt / (slDist * 100)
+  // Tapi kalau balance kecil, tampilkan dalam mini lot (0.01)
+  const lotSize  = riskAmt / (slDist * 100);
+  const profit1  = riskAmt * 2;  // R:R 1:2
+  const profit2  = riskAmt * 4;  // R:R 1:4
+
+  const fmt  = n => n.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3});
+  const fmtD = n => '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  document.getElementById('rc-entry').textContent    = fmt(rcPrice);
+  document.getElementById('rc-atr').textContent      = fmt(rcATR);
+
+  // SL — selalu merah
+  const slEl = document.getElementById('rc-sl');
+  slEl.textContent = fmt(sl);
+  slEl.style.color = 'var(--red)';
+
+  // TP — selalu hijau
+  document.getElementById('rc-tp1').textContent = fmt(tp1);
+  document.getElementById('rc-tp2').textContent = fmt(tp2);
+
+  // Direction label di entry price
+  const entryEl = document.getElementById('rc-entry');
+  entryEl.style.color = isBuy ? 'var(--green)' : 'var(--red)';
+
+  document.getElementById('rc-risk-amt').textContent = fmtD(riskAmt);
+  document.getElementById('rc-lot').textContent      = lotSize < 0.01 ? '< 0.01' : lotSize.toFixed(2);
+  document.getElementById('rc-profit1').textContent  = fmtD(profit1);
+  document.getElementById('rc-profit2').textContent  = fmtD(profit2);
+}
+
+async function fetchRCData(){
+  const url=`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(TD_SYMBOL)}&interval=15min&outputsize=60&apikey=${TD_KEY}`;
+  try{
+    const res=await fetch(url);
+    const data=await res.json();
+    if(!data.values||!data.values.length) throw new Error('no data');
+    const vals=[...data.values];
+    rcPrice = parseFloat(vals[0].close);
+    rcATR   = calcATR(vals, 14);
+    updateRC();
+
+    // ===== MARKET CONDITION =====
+    const closes = vals.map(v=>parseFloat(v.close)).reverse();
+    const vols   = vals.map(v=>parseFloat(v.volume||0)).reverse();
+    const highs  = vals.map(v=>parseFloat(v.high));
+    const lows   = vals.map(v=>parseFloat(v.low));
+
+    // Trend Strength — slope EMA50 vs 5 candle lalu
+    const ema50now  = calcEMA(closes, Math.min(50,closes.length));
+    const ema50prev = calcEMA(closes.slice(0,-5), Math.min(50,closes.length-5));
+    const slope = Math.abs((ema50now - ema50prev) / ema50prev * 100);
+    let strength, strengthColor;
+    if(slope > 0.15){strength='STRONG';strengthColor='var(--gold)';}
+    else if(slope > 0.05){strength='MODERATE';strengthColor='var(--gold)';}
+    else{strength='WEAK';strengthColor='var(--muted)';}
+
+    // Volatility — ATR % of price
+    const atrPct = (rcATR / rcPrice) * 100;
+    let vol, volColor;
+    if(atrPct > 0.4){vol='HIGH';volColor='var(--gold)';}
+    else if(atrPct > 0.2){vol='MEDIUM';volColor='var(--gold)';}
+    else{vol='LOW';volColor='var(--muted)';}
+
+    // Volume trend
+    const avgVol20 = vols.slice(-21,-1).reduce((a,b)=>a+b,0)/20;
+    const lastVol  = vols[vols.length-1];
+    const prev3Vol = vols.slice(-4,-1).reduce((a,b)=>a+b,0)/3;
+    let volTrend, volTrendColor;
+    if(lastVol > avgVol20*1.2){volTrend='INCREASING';volTrendColor='var(--green)';}
+    else if(lastVol < avgVol20*0.8){volTrend='DECREASING';volTrendColor='var(--red)';}
+    else{volTrend='NORMAL';volTrendColor='var(--muted)';}
+
+    // Spread — high-low candle terbaru dalam points (0.1 = 1 point untuk XAU)
+    const spread = ((highs[0] - lows[0]) * 10).toFixed(0);
+
+    const setMC = (id, text, color) => {
+      const el = document.getElementById(id);
+      if(el){ el.textContent=text; el.style.color=color; }
+    };
+    setMC('mc-strength',  strength,  strengthColor);
+    setMC('mc-volatility',vol,       volColor);
+    setMC('mc-volume',    volTrend,  volTrendColor);
+    setMC('mc-spread',    spread+' points', 'var(--text)');
+    setMC('mc-atr',       rcATR.toFixed(1), 'var(--text)');
+
+    const now=new Date();
+    const pad=n=>String(n).padStart(2,'0');
+    const el=document.getElementById('rc-updated');
+    if(el) el.textContent=`Price updated ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  } catch(e){ console.error('RC fetch error',e); }
+}
+
+// input listeners
+['rc-balance','rc-risk','rc-dir','rc-atr-mult'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el) el.addEventListener('input', updateRC);
+});
+
+fetchRCData();
+setInterval(fetchRCData, 5*60*1000); // refresh tiap 5 menit
+</script>
+
+</body>
+</html>

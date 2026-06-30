@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>AGS — Analysis & Growth System</title>
+<link rel="manifest" href="manifest.json">
+<link rel="config" href="config.js>
+<meta name="theme-color" content="#0a0f0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AGS">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root {
+  --bg: #0a0f0a;
+  --sidebar: #0d130d;
+  --panel: #111a11;
+  --panel2: #0e160e;
+  --line: #1e2d1e;
+  --green: #22c55e;
+  --green2: #16a34a;
+  --gold: #f0b429;
+  --red: #ef4444;
+  --blue: #3b82f6;
+  --text: #e2ede2;
+  --muted: #6b7f6b;
+  --mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  --sans: 'Inter', -apple-system, sans-serif;
+  --sidebar-w: 220px;
+}
+html[data-theme="light"] {
+  --bg: #f0f7f0; --sidebar: #e8f5e8; --panel: #ffffff;
+  --panel2: #f0f7f0; --line: #d0e8d0; --text: #1a2e1a; --muted: #5a7a5a;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); display: flex; min-height: 100vh; }
+
+/* SIDEBAR */
+.sidebar {
+  width: var(--sidebar-w); background: var(--sidebar); border-right: 1px solid var(--line);
+  display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100;
+  transition: transform .3s;
+}
+.sidebar-logo { padding: 20px 16px 16px; border-bottom: 1px solid var(--line); }
+.sidebar-logo .logo-icon { font-size: 28px; margin-bottom: 4px; }
+.sidebar-logo .logo-name { font-size: 18px; font-weight: 800; color: var(--green); letter-spacing: .5px; }
+.sidebar-logo .logo-sub { font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 1px; }
+.sidebar-nav { flex: 1; padding: 12px 8px; overflow-y: auto; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  border-radius: 8px; cursor: pointer; font-size: 13.5px; font-weight: 500;
+  color: var(--muted); margin-bottom: 2px; transition: .15s; border: 1px solid transparent;
+}
+.nav-item:hover { background: var(--panel2); color: var(--text); }
+.nav-item.active { background: rgba(34,197,94,.12); color: var(--green); border-color: rgba(34,197,94,.3); font-weight: 700; }
+.nav-item .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+.sidebar-bottom { padding: 12px 8px; border-top: 1px solid var(--line); }
+.discipline-box { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 10px; text-align: center; }
+.discipline-box .disc-label { font-size: 10px; color: var(--muted); margin-bottom: 6px; }
+.disc-ring { position: relative; display: inline-flex; align-items: center; justify-content: center; margin: 4px 0; }
+.disc-ring svg { transform: rotate(-90deg); }
+.disc-ring .disc-num { position: absolute; font-size: 18px; font-weight: 800; color: var(--green); font-family: var(--mono); }
+.disc-msg { font-size: 10px; color: var(--muted); margin-top: 4px; }
+.theme-btn {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  background: var(--panel2); border: 1px solid var(--line); color: var(--muted);
+  padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-family: var(--sans);
+}
+
+/* MAIN */
+.main { margin-left: var(--sidebar-w); flex: 1; min-height: 100vh; }
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px; border-bottom: 1px solid var(--line);
+  background: var(--sidebar); position: sticky; top: 0; z-index: 50;
+}
+.topbar-left .greeting { font-size: 18px; font-weight: 800; }
+.topbar-left .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.topbar-right { text-align: right; font-size: 12px; color: var(--muted); font-family: var(--mono); }
+.topbar-right .live-time { font-size: 15px; font-weight: 700; color: var(--text); }
+
+.content { padding: 16px 20px; }
+
+/* CARDS */
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+.card-title { font-size: 10px; text-transform: uppercase; letter-spacing: .8px; color: var(--green); font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+
+/* GRID LAYOUTS */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+.gap-14 { gap: 14px; }
+.mb-14 { margin-bottom: 14px; }
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+
+/* DASHBOARD GRID */
+.dash-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto;
+  gap: 14px;
+}
+.dash-grid .span-2 { grid-column: span 2; }
+
+/* MISSION */
+.mission-item { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.mission-item:last-child { border-bottom: none; }
+.mission-done { display: flex; align-items: center; gap: 6px; }
+.mission-done .ico { font-size: 14px; }
+.mission-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; font-family: var(--mono); }
+.badge-green { background: rgba(34,197,94,.15); color: var(--green); border: 1px solid rgba(34,197,94,.3); }
+.badge-gold { background: rgba(240,180,41,.15); color: var(--gold); border: 1px solid rgba(240,180,41,.3); }
+.badge-red { background: rgba(239,68,68,.15); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
+.mission-quote { font-size: 11px; color: var(--green); margin-top: 8px; font-style: italic; }
+
+/* MARKET OVERVIEW */
+.market-card { border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+.market-name { font-size: 10px; color: var(--muted); font-weight: 600; letter-spacing: .5px; }
+.market-price { font-size: 20px; font-weight: 800; font-family: var(--mono); margin: 3px 0; }
+.market-change { font-size: 11px; margin-bottom: 6px; }
+.market-sparkline { height: 36px; }
+.market-trend { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 10px; border-radius: 20px; margin-top: 4px; }
+.trend-bull { background: rgba(34,197,94,.15); color: var(--green); border: 1px solid rgba(34,197,94,.3); }
+.trend-bear { background: rgba(239,68,68,.15); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
+.trend-side { background: rgba(240,180,41,.15); color: var(--gold); border: 1px solid rgba(240,180,41,.3); }
+
+/* JOURNAL TABLE */
+.tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+.tbl th { color: var(--muted); font-weight: 600; text-align: left; padding: 6px 8px; font-size: 10px; letter-spacing: .5px; border-bottom: 1px solid var(--line); }
+.tbl td { padding: 8px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tr:hover td { background: var(--panel2); }
+.sym-icon { width: 24px; height: 24px; border-radius: 6px; background: var(--green); display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; margin-right: 6px; }
+.badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+.buy { color: var(--green); } .sell { color: var(--red); }
+.win { color: var(--green); font-weight: 700; }
+.loss { color: var(--red); font-weight: 700; }
+.be { color: var(--gold); font-weight: 700; }
+.open { color: var(--blue); font-weight: 700; }
+.pl-pos { color: var(--green); font-family: var(--mono); font-weight: 700; }
+.pl-neg { color: var(--red); font-family: var(--mono); font-weight: 700; }
+
+/* UPCOMING / NEWS */
+.news-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 12.5px; }
+.news-item:last-child { border-bottom: none; }
+.news-time { font-family: var(--mono); font-size: 11px; color: var(--muted); width: 40px; flex-shrink: 0; }
+.news-flag { font-size: 16px; }
+.news-name { flex: 1; }
+.news-impact { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.high { background: var(--red); box-shadow: 0 0 5px var(--red); }
+.med { background: var(--gold); }
+.low { background: var(--green); }
+
+/* QUICK ACTION */
+.qa-btn {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
+  background: var(--panel2); border: 1px solid var(--line); border-radius: 10px;
+  padding: 12px 14px; cursor: pointer; transition: .15s; width: 100%; text-align: left;
+}
+.qa-btn:hover { border-color: var(--green); background: rgba(34,197,94,.05); }
+.qa-btn .qa-icon { font-size: 20px; margin-bottom: 4px; }
+.qa-btn .qa-title { font-size: 12.5px; font-weight: 700; color: var(--green); }
+.qa-btn .qa-sub { font-size: 10.5px; color: var(--muted); }
+
+/* STATS */
+.stat-num { font-size: 28px; font-weight: 800; font-family: var(--mono); color: var(--green); }
+.stat-label { font-size: 10px; color: var(--muted); margin-top: 2px; }
+.progress-ring { display: inline-block; }
+
+/* FORM MODAL */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.modal-overlay.show { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+  padding: 20px; width: 90%; max-width: 560px; max-height: 90vh; overflow-y: auto;
+  transform: translateY(20px); transition: transform .2s;
+}
+.modal-overlay.show .modal { transform: translateY(0); }
+.modal-title { font-size: 15px; font-weight: 800; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+.modal-close { cursor: pointer; color: var(--muted); font-size: 18px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-group.span-2 { grid-column: span 2; }
+.form-label { font-size: 10px; color: var(--muted); font-weight: 600; letter-spacing: .5px; }
+.form-input, .form-select, .form-textarea {
+  background: var(--panel2); border: 1px solid var(--line); color: var(--text);
+  border-radius: 8px; padding: 8px 10px; font-size: 13px; font-family: var(--sans);
+  transition: border-color .15s; width: 100%;
+}
+.form-input:focus, .form-select:focus { outline: none; border-color: var(--green); }
+.form-textarea { resize: vertical; min-height: 60px; }
+.form-select option { background: var(--panel); }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: .15s; border: none; font-family: var(--sans); }
+.btn-primary { background: var(--green); color: #fff; }
+.btn-primary:hover { background: var(--green2); }
+.btn-ghost { background: var(--panel2); border: 1px solid var(--line); color: var(--muted); }
+.btn-red { background: rgba(239,68,68,.15); border: 1px solid var(--red); color: var(--red); }
+
+/* TOAST */
+.toast {
+  position: fixed; bottom: 20px; right: 20px; background: var(--panel);
+  border: 1px solid var(--green); color: var(--green); padding: 10px 16px;
+  border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 300;
+  transform: translateY(60px); transition: transform .3s; box-shadow: 0 4px 20px rgba(0,0,0,.3);
+}
+.toast.show { transform: translateY(0); }
+.toast.error { border-color: var(--red); color: var(--red); }
+
+/* LOADING */
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--line); border-top-color: var(--green); border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-state { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 30px; color: var(--muted); font-size: 13px; }
+
+/* PAGES */
+.page { display: none; }
+.page.active { display: block; }
+
+/* STATS PAGE */
+.stats-card { text-align: center; }
+.equity-chart { width: 100%; height: 160px; }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; }
+  .dash-grid { grid-template-columns: 1fr; }
+  .dash-grid .span-2 { grid-column: span 1; }
+  .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }
+  .hamburger { display: flex !important; }
+}
+.hamburger { display: none; align-items: center; justify-content: center; width: 36px; height: 36px; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; cursor: pointer; font-size: 16px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">📊</div>
+    <div class="logo-name">AGS</div>
+    <div class="logo-sub">Analysis & Growth System</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-item active" data-page="dashboard"><span class="nav-icon">🏠</span> Dashboard</div>
+    <div class="nav-item" data-page="gold"><span class="nav-icon">🥇</span> Gold</div>
+    <div class="nav-item" data-page="saham"><span class="nav-icon">📈</span> Saham</div>
+    <div class="nav-item" data-page="journal"><span class="nav-icon">📋</span> Trading Journal</div>
+    <div class="nav-item" data-page="statistics"><span class="nav-icon">🥧</span> Statistics</div>
+    <div class="nav-item" data-page="about"><span class="nav-icon">ℹ️</span> About</div>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="discipline-box">
+      <div class="disc-label">Discipline Today</div>
+      <div class="disc-ring">
+        <svg width="72" height="72" viewBox="0 0 72 72">
+          <circle cx="36" cy="36" r="30" fill="none" stroke="var(--line)" stroke-width="6"/>
+          <circle cx="36" cy="36" r="30" fill="none" stroke="var(--green)" stroke-width="6"
+            stroke-dasharray="188.5" id="discArc" stroke-dashoffset="188.5" stroke-linecap="round"/>
+        </svg>
+        <span class="disc-num" id="discNum">—</span>
+      </div>
+      <div class="disc-msg" id="discMsg">Loading...</div>
+    </div>
+    <button class="theme-btn" id="themeBtn">🌙 <span id="themeLabel">Dark</span></button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <header class="topbar">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="hamburger" id="hamburger">☰</div>
+      <div class="topbar-left">
+        <div class="greeting" id="greeting">Good Morning, Azis 👋</div>
+        <div class="sub">Focus, Plan, Execute, Review, Improve.</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-time" id="liveTime">--:--:--</div>
+      <div id="liveDate">--</div>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- ===== DASHBOARD PAGE ===== -->
+    <div class="page active" id="page-dashboard">
+      <div class="dash-grid mb-14">
+
+        <!-- TODAY'S MISSION -->
+        <div class="card">
+          <div class="card-title">🎯 Today's Mission</div>
+          <div id="missionList"><div class="loading-state"><span class="spinner"></span> Loading...</div></div>
+          <div class="mission-quote" id="missionQuote">Disiplin adalah kunci konsistensi.</div>
+        </div>
+
+        <!-- MARKET OVERVIEW -->
+        <div class="card">
+          <div class="card-title">📊 Market Overview</div>
+          <div class="grid-3" id="marketCards">
+            <div class="market-card">
+              <div class="market-name">🥇 GOLD (XAUUSD)</div>
+              <div class="market-price" id="mkt-gold-price">—</div>
+              <div class="market-change" id="mkt-gold-chg">—</div>
+              <canvas class="market-sparkline" id="spark-gold"></canvas>
+              <div class="market-trend" id="mkt-gold-trend">—</div>
+            </div>
+            <div class="market-card">
+              <div class="market-name">📈 IHSG</div>
+              <div class="market-price" id="mkt-ihsg-price">—</div>
+              <div class="market-change" id="mkt-ihsg-chg">—</div>
+              <canvas class="market-sparkline" id="spark-ihsg"></canvas>
+              <div class="market-trend" id="mkt-ihsg-trend">—</div>
+            </div>
+            <div class="market-card">
+              <div class="market-name">💵 USD/IDR</div>
+              <div class="market-price" id="mkt-usd-price">—</div>
+              <div class="market-change" id="mkt-usd-chg">—</div>
+              <canvas class="market-sparkline" id="spark-usd"></canvas>
+              <div class="market-trend" id="mkt-usd-trend">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RECENT JOURNAL -->
+        <div class="card">
+          <div class="card-title" style="justify-content:space-between;">
+            <span>📋 Recent Journal</span>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;" onclick="switchPage('journal')">View All</button>
+          </div>
+          <div id="recentJournal"><div class="loading-state"><span class="spinner"></span></div></div>
+        </div>
+
+        <!-- UPCOMING FOCUS -->
+        <div class="card">
+          <div class="card-title" style="justify-content:space-between;">
+            <span>⚡ Upcoming Focus</span>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;" onclick="switchPage('journal')">View Calendar</button>
+          </div>
+          <div id="upcomingFocus"><div class="loading-state"><span class="spinner"></span></div></div>
+        </div>
+
+        <!-- QUICK ACTION -->
+        <div class="card span-2">
+          <div class="card-title">⚡ Quick Action</div>
+          <div class="grid-4">
+            <button class="qa-btn" onclick="openModal('journal')">
+              <span class="qa-icon">📊</span>
+              <span class="qa-title">Analyze Gold</span>
+              <span class="qa-sub">Mulai analisa XAUUSD</span>
+            </button>
+            <button class="qa-btn" onclick="switchPage('saham')">
+              <span class="qa-icon">📈</span>
+              <span class="qa-title">Analyze Saham</span>
+              <span class="qa-sub">Pilih saham untuk dianalisa</span>
+            </button>
+            <button class="qa-btn" onclick="openModal('journal')">
+              <span class="qa-icon">📋</span>
+              <span class="qa-title">New Journal</span>
+              <span class="qa-sub">Catat trade baru</span>
+            </button>
+            <button class="qa-btn" onclick="switchPage('statistics')">
+              <span class="qa-icon">🥧</span>
+              <span class="qa-title">View Statistics</span>
+              <span class="qa-sub">Lihat performa trading</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== JOURNAL PAGE ===== -->
+    <div class="page" id="page-journal">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div style="font-size:16px;font-weight:800;">📋 Trading Journal</div>
+        <button class="btn btn-primary" onclick="openModal('journal')">+ New Entry</button>
+      </div>
+
+      <!-- Filters -->
+      <div class="card mb-14" style="padding:10px 14px;">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <select class="form-select" style="width:auto;" id="filterMarket">
+            <option value="">All Market</option>
+            <option>XAUUSD</option>
+            <option>Saham</option>
+          </select>
+          <select class="form-select" style="width:auto;" id="filterResult">
+            <option value="">All Result</option>
+            <option>Win</option><option>Loss</option><option>Break Even</option><option>Open</option>
+          </select>
+          <input type="date" class="form-input" style="width:auto;" id="filterDate">
+          <button class="btn btn-ghost" onclick="applyFilter()">Filter</button>
+          <button class="btn btn-ghost" onclick="clearFilter()">Clear</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div id="journalTable"><div class="loading-state"><span class="spinner"></span> Loading journal...</div></div>
+      </div>
+    </div>
+
+    <!-- ===== GOLD PAGE ===== -->
+    <div class="page" id="page-gold">
+      <div style="font-size:16px;font-weight:800;margin-bottom:14px;">🥇 Gold Analysis (XAUUSD)</div>
+      <div class="card" style="min-height:600px;">
+        <div class="tradingview-widget-container" style="height:600px;">
+          <div class="tradingview-widget-container__widget" style="height:100%;"></div>
+          <script
+  src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js"
+  async
+  dangerouslySetInnerHTML={{
+    __html: JSON.stringify({
+      autosize: true,
+      symbol: "OANDA:XAUUSD",
+      interval: "15",
+      timezone: "Asia/Makassar",
+      theme: "dark",
+      style: "1",
+      locale: "id",
+      allow_symbol_change: true,
+      studies: [
+        "MASimple@tv-basicstudies",
+        "RSI@tv-basicstudies"
+      ]
+    })
+  }}
+/>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SAHAM PAGE ===== -->
+    <div class="page" id="page-saham">
+      <div style="font-size:16px;font-weight:800;margin-bottom:14px;">📈 Saham Analysis</div>
+      <div class="card mb-14" style="padding:10px 14px;">
+        <div style="display:flex;gap:10px;align-items:center;">
+          <input type="text" class="form-input" style="width:200px;" id="sahamSymbol" placeholder="e.g. IDX:BBCA" value="IDX:BBCA">
+          <button class="btn btn-primary" onclick="loadSahamChart()">Load Chart</button>
+        </div>
+      </div>
+      <div class="card" style="min-height:600px;">
+        <div id="sahamChartContainer" style="height:600px;">
+          <div class="tradingview-widget-container" style="height:100%;">
+            <div class="tradingview-widget-container__widget" id="sahamWidget" style="height:100%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== STATISTICS PAGE ===== -->
+    <div class="page" id="page-statistics">
+      <div style="font-size:16px;font-weight:800;margin-bottom:14px;">🥧 Statistics</div>
+      <div id="statsContent"><div class="loading-state"><span class="spinner"></span> Calculating...</div></div>
+    </div>
+
+    <!-- ===== ABOUT PAGE ===== -->
+    <div class="page" id="page-about">
+      <div style="font-size:16px;font-weight:800;margin-bottom:14px;">ℹ️ About AGS</div>
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-title">✅ Entry Rules (Buy)</div>
+          <div style="font-size:13px;display:flex;flex-direction:column;gap:7px;">
+            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--green)">✔</span> Trend Bullish (H1+H4)</div>
+            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--green)">✔</span> Price Retrace to Bullish OB</div>
+            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--green)">✔</span> FVG Filled</div>
+            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--green)">✔</span> Liquidity Sweep (EQ Low)</div>
+            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--green)">✔</span> RSI Rebound Above 40</div>
+            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--green)">✔</span> Volume Increasing</div>
+            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--green)">✔</span> No High Impact News</div>
+            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--green)">✔</span> Min R:R 1:2</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="color:var(--red);">🔻 Entry Rules (Sell)</div>
+          <div style="font-size:13px;display:flex;flex-direction:column;gap:7px;">
+            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--red)">✔</span> Trend Bearish (H1+H4)</div>
+            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--red)">✔</span> Price Retrace to Bearish OB</div>
+            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--red)">✔</span> FVG Filled</div>
+            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--red)">✔</span> Liquidity Sweep (EQ High)</div>
+            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--red)">✔</span> RSI Rejection Below 60</div>
+            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--red)">✔</span> Volume Increasing</div>
+            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--red)">✔</span> No High Impact News</div>
+            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--red)">✔</span> Min R:R 1:2</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">📖 How To Use</div>
+          <div style="font-size:13px;display:flex;flex-direction:column;gap:7px;counter-reset:steps;">
+            <div>1. Check Trend &amp; AI Score</div>
+            <div>2. Wait for Price Retrace to OB</div>
+            <div>3. Wait for Liquidity Sweep</div>
+            <div>4. Confirm with FVG + RSI + Volume</div>
+            <div>5. Set SL &amp; TP with Risk Calculator</div>
+            <div>6. Execute with Discipline</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ===== MODAL: NEW JOURNAL ===== -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">
+      <span id="modalTitle">New Journal Entry</span>
+      <span class="modal-close" onclick="closeModal()">✕</span>
+    </div>
+    <div class="form-grid" id="modalForm">
+      <div class="form-group">
+        <label class="form-label">Market</label>
+        <select class="form-select" id="f-market">
+          <option>XAUUSD</option><option>Saham</option><option>Crypto</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Symbol</label>
+        <input class="form-input" id="f-symbol" placeholder="e.g. XAUUSD / BBCA">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Direction</label>
+        <select class="form-select" id="f-direction">
+          <option>Buy</option><option>Sell</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Timeframe</label>
+        <select class="form-select" id="f-timeframe">
+          <option>M15</option><option>M5</option><option>H1</option><option>H4</option><option>D1</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Entry</label>
+        <input class="form-input" id="f-entry" type="number" step="0.001">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stop Loss</label>
+        <input class="form-input" id="f-sl" type="number" step="0.001">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Take Profit</label>
+        <input class="form-input" id="f-tp" type="number" step="0.001">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Risk (%)</label>
+        <input class="form-input" id="f-risk" type="number" step="0.1" value="1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">RR</label>
+        <input class="form-input" id="f-rr" type="number" step="0.1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Result</label>
+        <select class="form-select" id="f-result">
+          <option>Open</option><option>Win</option><option>Loss</option><option>Break Even</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">P/L (Point)</label>
+        <input class="form-input" id="f-pl" type="number">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Emotion</label>
+        <select class="form-select" id="f-emotion">
+          <option>Calm</option><option>Greedy</option><option>Fear</option><option>Confident</option><option>FOMO</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Strategy</label>
+        <input class="form-input" id="f-strategy" placeholder="e.g. OB + FVG">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confidence (%)</label>
+        <input class="form-input" id="f-conf" type="number" min="0" max="100" value="75">
+      </div>
+      <div class="form-group span-2">
+        <label class="form-label">Lesson Learned</label>
+        <textarea class="form-textarea" id="f-lesson" placeholder="Apa yang dipelajari dari trade ini?"></textarea>
+      </div>
+      <div class="form-group span-2">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" id="f-notes" placeholder="Catatan tambahan..."></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="submitBtn" onclick="submitJournal()">💾 Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ================================================================
+// CONFIG — ganti dengan URL Apps Script kamu setelah deploy Code.gs
+// Spreadsheet: 1_6SdqHmcglIr2qA6LQnkQgBls66wRjkkLiN2xSEoync
+// Lihat instruksi deploy di bagian atas file Code.gs
+// ================================================================
+const GAS_URL = 'PASTE_YOUR_APPS_SCRIPT_URL_HERE';
+const TD_KEY  = '5f52a74cd9f24b49a4729b5b8e599505';
+
+// ================================================================
+// STATE
+// ================================================================
+let journals = [];
+let dashData = {};
+let editingId = null;
+
+// ================================================================
+// INIT
+// ================================================================
+document.addEventListener('DOMContentLoaded', () => {
+  startClock();
+  applyTheme(getSaved('ags_theme') || 'dark');
+  loadDashboard();
+  setupNav();
+  document.getElementById('hamburger').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('open');
+  });
+  document.getElementById('themeBtn').addEventListener('click', () => {
+    const cur = document.documentElement.getAttribute('data-theme');
+    applyTheme(cur === 'dark' ? 'light' : 'dark');
+  });
+});
+
+// ================================================================
+// CLOCK
+// ================================================================
+function startClock() {
+  function tick() {
+    const now = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    document.getElementById('liveTime').textContent =
+      `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+    const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    document.getElementById('liveDate').textContent =
+      `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+  }
+  tick(); setInterval(tick, 1000);
+}
+
+// ================================================================
+// THEME
+// ================================================================
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  document.getElementById('themeLabel').textContent = t === 'dark' ? 'Dark' : 'Light';
+  document.getElementById('themeBtn').firstChild.textContent = t === 'dark' ? '🌙 ' : '☀️ ';
+  save('ags_theme', t);
+}
+
+// ================================================================
+// STORAGE (sessionStorage with fallback)
+// ================================================================
+function save(k, v) { try { sessionStorage.setItem(k, v); } catch(e) {} }
+function getSaved(k) { try { return sessionStorage.getItem(k); } catch(e) { return null; } }
+
+// ================================================================
+// API CALLS
+// ================================================================
+async function gasGet(action) {
+  if (GAS_URL === 'PASTE_YOUR_APPS_SCRIPT_URL_HERE') return getMockData(action);
+  const res = await fetch(`${GAS_URL}?action=${action}`);
+  return res.json();
+}
+
+async function gasPost(body) {
+  if (GAS_URL === 'PASTE_YOUR_APPS_SCRIPT_URL_HERE') return { success: true, mock: true };
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+// ================================================================
+// MOCK DATA (saat GAS_URL belum diisi)
+// ================================================================
+function getMockData(action) {
+  if (action === 'getDashboard') return {
+    success: true,
+    data: {
+      greeting: getGreetingLocal(),
+      disciplineScore: 85,
+      mission: [
+        { label: 'Maksimal 2 Trade', target: 2, current: 2, done: true },
+        { label: 'Risk Maksimal 1%', target: 1, current: 1, done: true },
+        { label: 'Wajib Isi Journal', target: 1, current: 1, done: true },
+        { label: 'Tidak FOMO', done: true },
+        { label: 'Tunggu Candle Close', done: true },
+      ],
+      recentJournal: [
+        { ID:'TRD-001', Date:'28/06', Symbol:'XAUUSD', Direction:'Buy', Result:'Win', 'Profit/Loss':'+320', Time:'14:12' },
+        { ID:'TRD-002', Date:'28/06', Symbol:'BBCA', Direction:'Buy', Result:'Loss', 'Profit/Loss':'-150', Time:'11:05' },
+        { ID:'TRD-003', Date:'27/06', Symbol:'XAUUSD', Direction:'Sell', Result:'Win', 'Profit/Loss':'+280', Time:'16:45' },
+        { ID:'TRD-004', Date:'27/06', Symbol:'ANTM', Direction:'Buy', Result:'Win', 'Profit/Loss':'+90', Time:'13:22' },
+        { ID:'TRD-005', Date:'27/06', Symbol:'XAUUSD', Direction:'Buy', Result:'Loss', 'Profit/Loss':'-200', Time:'10:11' },
+      ],
+      upcomingPlans: [
+        { Time:'15:30', Flag:'🇺🇸', Name:'Core PCE Price Index (MoM)', Impact:'High' },
+        { Time:'19:30', Flag:'🇺🇸', Name:'Unemployment Claims', Impact:'Medium' },
+        { Time:'21:00', Flag:'🇺🇸', Name:'Pending Home Sales (MoM)', Impact:'Medium' },
+      ],
+      stats: { totalTrade: 120, winRate: 65, avgRR: 1.68, profitFactor: 1.72 }
+    }
+  };
+  if (action === 'getJournal') return { success: true, data: [] };
+  if (action === 'getStats') return { success: true, data: { totalTrade:120, winRate:65, avgRR:1.68, profitFactor:1.72, wins:78, losses:36, equity:[], strategies:[], sessions:{} } };
+  return { success: true, data: [] };
+}
+
+function getGreetingLocal() {
+  const h = new Date().getHours();
+  if(h<12) return 'Good Morning, Azis 👋';
+  if(h<15) return 'Good Afternoon, Azis 👋';
+  if(h<19) return 'Good Evening, Azis 👋';
+  return 'Good Night, Azis 👋';
+}
+
+// ================================================================
+// LOAD DASHBOARD
+// ================================================================
+async function loadDashboard() {
+  const res = await gasGet('getDashboard');
+  if (!res.success) return;
+  dashData = res.data;
+
+  // Greeting
+  document.getElementById('greeting').textContent = dashData.greeting || getGreetingLocal();
+
+  // Discipline
+  updateDiscipline(dashData.disciplineScore || 0);
+
+  // Mission
+  renderMission(dashData.mission || []);
+
+  // Recent Journal
+  renderRecentJournal(dashData.recentJournal || []);
+
+  // Upcoming
+  renderUpcoming(dashData.upcomingPlans || []);
+
+  // Market data from Twelve Data
+  fetchMarketData();
+}
+
+// ================================================================
+// DISCIPLINE RING
+// ================================================================
+function updateDiscipline(score) {
+  const arc = document.getElementById('discArc');
+  const num = document.getElementById('discNum');
+  const msg = document.getElementById('discMsg');
+  const circ = 188.5;
+  arc.style.strokeDashoffset = circ - (circ * score / 100);
+  arc.style.stroke = score >= 80 ? 'var(--green)' : score >= 50 ? 'var(--gold)' : 'var(--red)';
+  num.textContent = score + '%';
+  msg.textContent = score >= 80 ? 'Keep it up, Azis! 🔥' : score >= 50 ? 'Stay focused! 💪' : 'Perlu lebih disiplin ⚠️';
+}
+
+// ================================================================
+// RENDER MISSION
+// ================================================================
+function renderMission(missions) {
+  const el = document.getElementById('missionList');
+  el.innerHTML = missions.map(m => `
+    <div class="mission-item">
+      <div class="mission-done">
+        <span class="ico">${m.done ? '✅' : '⬜'}</span>
+        <span>${m.label}</span>
+      </div>
+      ${m.target !== undefined
+        ? `<span class="mission-badge ${m.done?'badge-green':'badge-gold'}">${m.current}/${m.target}</span>`
+        : `<span class="mission-badge ${m.done?'badge-green':'badge-gold'}">${m.done?'Done':'—'}</span>`
+      }
+    </div>
+  `).join('');
+}
+
+// ================================================================
+// RENDER RECENT JOURNAL
+// ================================================================
+function renderRecentJournal(rows) {
+  if (!rows.length) {
+    document.getElementById('recentJournal').innerHTML = '<div class="loading-state">Belum ada journal hari ini.</div>';
+    return;
+  }
+  const symColor = s => s.includes('XAU')?'#f0b429':s.includes('BCA')||s.includes('ANTM')||s.includes('BRI')?'#22c55e':'#3b82f6';
+  document.getElementById('recentJournal').innerHTML = `
+    <table class="tbl">
+      <thead><tr>
+        <th>MARKET</th><th>DIRECTION</th><th>RESULT</th><th>P/L (POINT)</th><th>TIME</th>
+      </tr></thead>
+      <tbody>${rows.map(r => {
+        const pl = parseFloat(r['Profit/Loss']||0);
+        return `<tr>
+          <td><span class="sym-icon" style="background:${symColor(r.Symbol||'')}">
+            ${(r.Symbol||'?').slice(0,2)}</span>${r.Symbol||'-'}</td>
+          <td class="${(r.Direction||'').toLowerCase()}">${r.Direction||'-'}</td>
+          <td class="${(r.Result||'open').toLowerCase()}">${r.Result||'Open'}</td>
+          <td class="${pl>=0?'pl-pos':'pl-neg'}">${pl>=0?'+':''}${r['Profit/Loss']||0}</td>
+          <td style="color:var(--muted);font-size:11px;">${r.Date||''} ${r.Time||''}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+}
+
+// ================================================================
+// RENDER UPCOMING
+// ================================================================
+function renderUpcoming(plans) {
+  const el = document.getElementById('upcomingFocus');
+  if (!plans.length) { el.innerHTML = '<div class="loading-state">Tidak ada event upcoming.</div>'; return; }
+  el.innerHTML = plans.map(p => `
+    <div class="news-item">
+      <span class="news-time">${p.Time||''}</span>
+      <span class="news-flag">${p.Flag||'🌐'}</span>
+      <span class="news-name">${p.Name||p.Plan||p.label||'-'}</span>
+      <span class="news-impact ${(p.Impact||p.Priority||'').toLowerCase()==='high'?'high':(p.Impact||p.Priority||'').toLowerCase()==='medium'?'med':'low'}"></span>
+      <span style="font-size:10px;color:var(--muted);">${p.Impact||p.Priority||''}</span>
+    </div>
+  `).join('') + `<div style="margin-top:10px;background:rgba(240,180,41,.08);border:1px solid rgba(240,180,41,.3);border-radius:8px;padding:8px 10px;font-size:11.5px;">
+    💡 <span style="color:var(--gold);font-weight:700;">Catatan:</span>
+    <span style="color:var(--muted);">Perhatikan volatilitas saat rilis berita high impact.</span>
+  </div>`;
+}
+
+// ================================================================
+// MARKET DATA (Twelve Data)
+// ================================================================
+async function fetchMarketData() {
+  fetchMarket('XAU/USD', 'gold');
+  fetchMarket('JKSE', 'ihsg');   // FIX: simbol lama 'IDX/IDR' salah/tidak valid -> selalu gagal diam-diam
+  fetchMarket('USD/IDR', 'usd');
+}
+
+async function fetchMarket(symbol, key) {
+  const priceEl = document.getElementById(`mkt-${key}-price`);
+  const chgEl   = document.getElementById(`mkt-${key}-chg`);
+  const trendEl = document.getElementById(`mkt-${key}-trend`);
+  try {
+    const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=1h&outputsize=24&apikey=${TD_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.values || !data.values.length) {
+      // FIX: dulu kalau gagal, UI dibiarkan kosong selamanya ("—"). Sekarang dikasih pesan jelas.
+      if (priceEl) priceEl.textContent = 'N/A';
+      if (chgEl) { chgEl.textContent = data.message || 'Data tidak tersedia di plan API ini'; chgEl.style.color = 'var(--muted)'; }
+      console.warn(`[fetchMarket] ${key} (${symbol}) gagal:`, data.message || data);
+      return;
+    }
+    const vals = [...data.values].reverse();
+    const price = parseFloat(vals[vals.length-1].close);
+    const open  = parseFloat(vals[0].open);
+    const chg   = price - open;
+    const chgPct = (chg/open*100).toFixed(2);
+    const closes = vals.map(v=>parseFloat(v.close));
+
+    if(priceEl) priceEl.textContent = price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    if(chgEl) {
+      chgEl.textContent = `${chg>=0?'+':''}${chg.toFixed(2)} (${chg>=0?'+':''}${chgPct}%)`;
+      chgEl.style.color = chg>=0?'var(--green)':'var(--red)';
+    }
+
+    // Trend
+    const ema = closes.slice(-10).reduce((a,b)=>a+b,0)/10;
+    const trend = price > ema*1.001 ? 'BULLISH' : price < ema*0.999 ? 'BEARISH' : 'SIDEWAYS';
+    if(trendEl) {
+      trendEl.textContent = trend;
+      trendEl.className = `market-trend ${trend==='BULLISH'?'trend-bull':trend==='BEARISH'?'trend-bear':'trend-side'}`;
+    }
+
+    // Sparkline
+    drawSparkline(`spark-${key}`, closes, chg>=0?'#22c55e':'#ef4444');
+  } catch(e) {
+    console.error(key, e);
+    if (priceEl) priceEl.textContent = 'Error';
+    if (chgEl) { chgEl.textContent = 'Gagal ambil data'; chgEl.style.color = 'var(--red)'; }
+  }
+}
+
+function drawSparkline(id, data, color) {
+  const canvas = document.getElementById(id);
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth || 120;
+  canvas.height = 36;
+  const min = Math.min(...data), max = Math.max(...data), range = max-min||1;
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0,0,w,h);
+  ctx.beginPath();
+  data.forEach((v,i) => {
+    const x = (i/(data.length-1))*w;
+    const y = h - ((v-min)/range)*(h-4) - 2;
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke();
+  // Fill
+  ctx.lineTo(w,h); ctx.lineTo(0,h); ctx.closePath();
+  ctx.fillStyle = color+'22'; ctx.fill();
+}
+
+// ================================================================
+// LOAD JOURNAL PAGE
+// ================================================================
+async function loadJournalPage() {
+  const res = await gasGet('getJournal');
+  if(res.success) { journals = res.data; renderJournalTable(journals); }
+}
+
+function renderJournalTable(rows) {
+  if(!rows.length) {
+    document.getElementById('journalTable').innerHTML = '<div class="loading-state">Belum ada journal. Tap "+ New Entry" untuk mulai.</div>';
+    return;
+  }
+  document.getElementById('journalTable').innerHTML = `
+    <table class="tbl">
+      <thead><tr>
+        <th>ID</th><th>DATE</th><th>SYMBOL</th><th>DIR</th><th>ENTRY</th>
+        <th>SL</th><th>TP</th><th>RISK%</th><th>RR</th>
+        <th>RESULT</th><th>P/L</th><th>STRATEGY</th><th>ACTION</th>
+      </tr></thead>
+      <tbody>${rows.map(r => {
+        const pl = parseFloat(r['Profit/Loss']||0);
+        return `<tr>
+          <td style="font-family:var(--mono);font-size:10px;color:var(--muted);">${r.ID||'-'}</td>
+          <td style="font-size:11px;white-space:nowrap;">${r.Date||''} ${r.Time||''}</td>
+          <td><b>${r.Symbol||'-'}</b></td>
+          <td class="${(r.Direction||'').toLowerCase()}">${r.Direction||'-'}</td>
+          <td style="font-family:var(--mono);">${r.Entry||'-'}</td>
+          <td style="font-family:var(--mono);color:var(--red);">${r.Stop_Loss||'-'}</td>
+          <td style="font-family:var(--mono);color:var(--green);">${r.Take_profit||'-'}</td>
+          <td>${r['Risk(%)']||'-'}%</td>
+          <td style="font-family:var(--mono);">${r.RR||'-'}</td>
+          <td class="${(r.Result||'open').toLowerCase()}">${r.Result||'Open'}</td>
+          <td class="${pl>=0?'pl-pos':'pl-neg'}">${pl>=0?'+':''}${r['Profit/Loss']||0}</td>
+          <td style="font-size:11px;color:var(--muted);">${r.Strategy||'-'}</td>
+          <td>
+            <button class="btn btn-ghost" style="font-size:10px;padding:3px 8px;" onclick="editJournal('${r.ID}')">✏️</button>
+            <button class="btn btn-red" style="font-size:10px;padding:3px 8px;" onclick="deleteJournal('${r.ID}')">🗑</button>
+          </td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+}
+
+function applyFilter() {
+  const market = document.getElementById('filterMarket').value;
+  const result = document.getElementById('filterResult').value;
+  const date   = document.getElementById('filterDate').value;
+  let filtered = [...journals];
+  if(market) filtered = filtered.filter(r => r.Market===market || r.Symbol===market);
+  if(result) filtered = filtered.filter(r => r.Result===result);
+  if(date) { const d = new Date(date); const ds = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; filtered = filtered.filter(r => r.Date===ds); }
+  renderJournalTable(filtered);
+}
+
+function clearFilter() {
+  document.getElementById('filterMarket').value='';
+  document.getElementById('filterResult').value='';
+  document.getElementById('filterDate').value='';
+  renderJournalTable(journals);
+}
+
+// ================================================================
+// LOAD STATISTICS
+// ================================================================
+async function loadStats() {
+  const res = await gasGet('getStats');
+  if(!res.success) return;
+  const d = res.data;
+  document.getElementById('statsContent').innerHTML = `
+    <div class="grid-4 mb-14">
+      <div class="card stats-card"><div class="stat-num">${d.totalTrade||0}</div><div class="stat-label">Total Trade</div></div>
+      <div class="card stats-card"><div class="stat-num" style="color:${parseFloat(d.winRate)>=60?'var(--green)':'var(--red)'};">${d.winRate||0}%</div><div class="stat-label">Win Rate</div></div>
+      <div class="card stats-card"><div class="stat-num">${d.avgRR||0}</div><div class="stat-label">Avg R:R</div></div>
+      <div class="card stats-card"><div class="stat-num" style="color:var(--gold);">${d.profitFactor||0}</div><div class="stat-label">Profit Factor</div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">📊 Win/Loss</div>
+        <div style="display:flex;gap:20px;align-items:center;padding:10px 0;">
+          <div style="text-align:center;"><div style="font-size:32px;font-weight:800;color:var(--green);">${d.wins||0}</div><div style="font-size:11px;color:var(--muted);">WIN</div></div>
+          <div style="flex:1;height:12px;background:var(--panel2);border-radius:6px;overflow:hidden;">
+            <div style="height:100%;width:${d.totalTrade?((d.wins||0)/d.totalTrade*100).toFixed(0):0}%;background:var(--green);border-radius:6px;"></div>
+          </div>
+          <div style="text-align:center;"><div style="font-size:32px;font-weight:800;color:var(--red);">${d.losses||0}</div><div style="font-size:11px;color:var(--muted);">LOSS</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">🏆 Best Strategy</div>
+        ${(d.strategies||[]).slice(0,3).map(s=>`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:12.5px;">
+            <span>${s.name}</span>
+            <span style="font-family:var(--mono);color:var(--green);font-weight:700;">${s.winRate}% <span style="color:var(--muted);font-size:10px;">(${s.total} trade)</span></span>
+          </div>`).join('') || '<div style="color:var(--muted);font-size:12px;padding:10px 0;">Belum ada data.</div>'}
+      </div>
+    </div>`;
+}
+
+// ================================================================
+// JOURNAL MODAL
+// ================================================================
+function openModal(type) {
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'New Journal Entry';
+  document.getElementById('submitBtn').textContent = '💾 Save Entry';
+  // Reset form
+  ['f-market','f-symbol','f-direction','f-timeframe','f-entry','f-sl','f-tp','f-risk','f-rr','f-result','f-pl','f-emotion','f-strategy','f-conf','f-lesson','f-notes'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = el.tagName==='SELECT'?el.options[0]?.value:id==='f-risk'?'1':id==='f-conf'?'75':'';
+  });
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function editJournal(id) {
+  const row = journals.find(r=>r.ID===id);
+  if(!row) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = 'Edit Journal — ' + id;
+  document.getElementById('submitBtn').textContent = '💾 Update Entry';
+  const set = (fid, val) => { const el=document.getElementById(fid); if(el) el.value=val||''; };
+  set('f-market', row.Market); set('f-symbol', row.Symbol);
+  set('f-direction', row.Direction); set('f-timeframe', row.Timeframe);
+  set('f-entry', row.Entry); set('f-sl', row.Stop_Loss);
+  set('f-tp', row.Take_profit); set('f-risk', row['Risk(%)']);
+  set('f-rr', row.RR); set('f-result', row.Result);
+  set('f-pl', row['Profit/Loss']); set('f-emotion', row.Emotion);
+  set('f-strategy', row.Strategy); set('f-conf', row.Confidence);
+  set('f-lesson', row.Lession_Learned); set('f-notes', row.Noted);
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function closeModal(e) {
+  if(e && e.target !== document.getElementById('modalOverlay')) return;
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+
+async function submitJournal() {
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = '⏳ Saving...';
+  const data = {
+    Market: document.getElementById('f-market').value,
+    Symbol: document.getElementById('f-symbol').value,
+    Direction: document.getElementById('f-direction').value,
+    Timeframe: document.getElementById('f-timeframe').value,
+    Entry: document.getElementById('f-entry').value,
+    Stop_Loss: document.getElementById('f-sl').value,
+    Take_profit: document.getElementById('f-tp').value,
+    'Risk(%)': document.getElementById('f-risk').value,
+    RR: document.getElementById('f-rr').value,
+    Result: document.getElementById('f-result').value,
+    'Profit/Loss': document.getElementById('f-pl').value,
+    Emotion: document.getElementById('f-emotion').value,
+    Strategy: document.getElementById('f-strategy').value,
+    Confidence: document.getElementById('f-conf').value,
+    Lession_Learned: document.getElementById('f-lesson').value,
+    Noted: document.getElementById('f-notes').value,
+  };
+  try {
+    let res;
+    if(editingId) {
+      res = await gasPost({ action:'updateJournal', id:editingId, data });
+    } else {
+      res = await gasPost({ action:'addJournal', data });
+    }
+    if(res.success||res.mock) {
+      showToast(editingId?'Journal diupdate! ✅':'Journal disimpan! ✅');
+      closeModal();
+      loadJournalPage();
+      loadDashboard();
+    } else { showToast('Gagal menyimpan: '+(res.error||'Unknown error'), true); }
+  } catch(e) { showToast('Error: '+e.message, true); }
+  btn.disabled=false; btn.textContent=editingId?'💾 Update Entry':'💾 Save Entry';
+}
+
+async function deleteJournal(id) {
+  if(!confirm('Hapus journal '+id+'?')) return;
+  const res = await gasPost({ action:'deleteJournal', id });
+  if(res.success||res.mock) { showToast('Journal dihapus!'); loadJournalPage(); }
+  else showToast('Gagal menghapus', true);
+}
+
+// ================================================================
+// NAVIGATION
+// ================================================================
+function setupNav() {
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const page = el.dataset.page;
+      switchPage(page);
+      document.getElementById('sidebar').classList.remove('open');
+    });
+  });
+}
+
+function switchPage(page) {
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.page===page));
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  const target = document.getElementById('page-'+page);
+  if(target) target.classList.add('active');
+
+  if(page==='journal') loadJournalPage();
+  if(page==='statistics') loadStats();
+  if(page==='saham') loadSahamChart();
+}
+
+// ================================================================
+// SAHAM CHART
+// ================================================================
+function loadSahamChart() {
+  const sym = document.getElementById('sahamSymbol')?.value || 'IDX:BBCA';
+  const container = document.getElementById('sahamWidget');
+  if(!container) return;
+  container.innerHTML = '';
+  const script = document.createElement('script');
+  script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+  script.async = true;
+  script.innerHTML = JSON.stringify({
+    autosize:true, symbol:sym, interval:'D', timezone:'Asia/Makassar',
+    theme: document.documentElement.getAttribute('data-theme')||'dark',
+    style:'1', locale:'id', allow_symbol_change:true,
+    studies:['MASimple@tv-basicstudies','RSI@tv-basicstudies'],
+    support_host:'https://www.tradingview.com'
+  });
+  container.appendChild(script);
+}
+
+// ================================================================
+// TOAST
+// ================================================================
+function showToast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError?' error':'');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
