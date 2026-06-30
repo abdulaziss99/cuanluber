@@ -152,6 +152,51 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
 .med { background: var(--gold); }
 .low { background: var(--green); }
 
+/* ====== TOP ROW (mission + market overview / global news / berita id) ====== */
+.dash-top { display: grid; grid-template-columns: 1fr 1.35fr 1.35fr; gap: 14px; align-items: start; }
+.dash-left-col { display: flex; flex-direction: column; gap: 14px; }
+.dash-bottom { display: grid; grid-template-columns: 1.4fr 0.9fr 1.4fr; gap: 14px; margin-top: 14px; align-items: start; }
+@media (max-width: 1100px) {
+  .dash-top, .dash-bottom { grid-template-columns: 1fr; }
+}
+
+/* MARKET OVERVIEW (mini, mockup style: gold/usd/dxy stacked) */
+.mkt-mini-grid { display: flex; flex-direction: column; gap: 10px; }
+.mkt-mini { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; }
+.mkt-mini-icon { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; background: var(--panel2); }
+.mkt-mini-body { flex: 1; min-width: 0; }
+.mkt-mini-label { font-size: 9.5px; color: var(--muted); letter-spacing: .3px; }
+.mkt-mini-sub { font-size: 9px; color: var(--muted); }
+.mkt-mini-price { font-size: 16px; font-weight: 800; font-family: var(--mono); }
+.mkt-mini-chg { font-size: 10.5px; font-weight: 600; }
+.mkt-mini-spark { width: 60px; height: 28px; flex-shrink: 0; }
+.mkt-mini-range { display: flex; justify-content: space-between; font-size: 9.5px; color: var(--muted); margin-top: 4px; font-family: var(--mono); }
+
+/* NEWS LIST WITH THUMBNAIL */
+.news-card-list { display: flex; flex-direction: column; }
+.news-row { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.news-row:last-child { border-bottom: none; }
+.news-thumb { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: var(--panel2); }
+.news-row-body { flex: 1; min-width: 0; }
+.news-row-title { font-size: 12.5px; font-weight: 700; line-height: 1.35; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.news-row-meta { font-size: 10.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.news-row-tag { font-size: 9.5px; font-weight: 700; padding: 2px 8px; border-radius: 20px; flex-shrink: 0; height: fit-content; }
+.card-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.card-source-sub { font-size: 9.5px; color: var(--muted); margin: -6px 0 8px; }
+.news-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.news-tab { font-size: 11px; padding: 4px 10px; border-radius: 20px; cursor: pointer; color: var(--muted); border: 1px solid transparent; }
+.news-tab.active { background: rgba(34,197,94,.15); color: var(--green); border-color: rgba(34,197,94,.3); font-weight: 700; }
+
+/* MARKET IMPACT */
+.impact-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.impact-row:last-child { border-bottom: none; }
+.impact-icon { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.impact-body { flex: 1; min-width: 0; }
+.impact-top { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; }
+.impact-bias { font-size: 10px; font-weight: 700; margin-bottom: 4px; }
+.impact-bar-bg { height: 5px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.impact-bar-fill { height: 100%; border-radius: 4px; }
+
 /* QUICK ACTION */
 .qa-btn {
   display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
@@ -291,89 +336,118 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
 
     <!-- ===== DASHBOARD PAGE ===== -->
     <div class="page active" id="page-dashboard">
-      <div class="dash-grid mb-14">
 
-        <!-- TODAY'S MISSION -->
-        <div class="card">
-          <div class="card-title">🎯 Today's Mission</div>
-          <div id="missionList"><div class="loading-state"><span class="spinner"></span> Loading...</div></div>
-          <div class="mission-quote" id="missionQuote">Disiplin adalah kunci konsistensi.</div>
-        </div>
+      <!-- ===== TOP ROW ===== -->
+      <div class="dash-top">
 
-        <!-- MARKET OVERVIEW -->
-        <div class="card">
-          <div class="card-title">📊 Market Overview</div>
-          <div class="grid-3" id="marketCards">
-            <div class="market-card">
-              <div class="market-name">🥇 GOLD (XAUUSD)</div>
-              <div class="market-price" id="mkt-gold-price">—</div>
-              <div class="market-change" id="mkt-gold-chg">—</div>
-              <canvas class="market-sparkline" id="spark-gold"></canvas>
-              <div class="market-trend" id="mkt-gold-trend">—</div>
-            </div>
-            <div class="market-card">
-              <div class="market-name">📈 IHSG</div>
-              <div class="market-price" id="mkt-ihsg-price">—</div>
-              <div class="market-change" id="mkt-ihsg-chg">—</div>
-              <canvas class="market-sparkline" id="spark-ihsg"></canvas>
-              <div class="market-trend" id="mkt-ihsg-trend">—</div>
-            </div>
-            <div class="market-card">
-              <div class="market-name">💵 USD/IDR</div>
-              <div class="market-price" id="mkt-usd-price">—</div>
-              <div class="market-change" id="mkt-usd-chg">—</div>
-              <canvas class="market-sparkline" id="spark-usd"></canvas>
-              <div class="market-trend" id="mkt-usd-trend">—</div>
+        <!-- LEFT COL: MISSION + MARKET OVERVIEW -->
+        <div class="dash-left-col">
+          <div class="card">
+            <div class="card-title">🎯 Today's Mission</div>
+            <div id="missionList"><div class="loading-state"><span class="spinner"></span> Loading...</div></div>
+            <div class="mission-quote" id="missionQuote">Disiplin adalah kunci konsistensi.</div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">📊 Market Overview</div>
+            <div class="mkt-mini-grid" id="marketCards">
+              <div class="mkt-mini">
+                <div class="mkt-mini-icon">🥇</div>
+                <div class="mkt-mini-body">
+                  <div class="mkt-mini-label">XAU/USD</div>
+                  <div class="mkt-mini-sub">Gold Spot</div>
+                  <div class="mkt-mini-price" id="mkt-gold-price">—</div>
+                  <div class="mkt-mini-chg" id="mkt-gold-chg">—</div>
+                  <div class="mkt-mini-range"><span id="mkt-gold-high">High —</span><span id="mkt-gold-low">Low —</span></div>
+                </div>
+                <canvas class="mkt-mini-spark" id="spark-gold"></canvas>
+              </div>
+              <div class="mkt-mini">
+                <div class="mkt-mini-icon">💵</div>
+                <div class="mkt-mini-body">
+                  <div class="mkt-mini-label">USD/IDR</div>
+                  <div class="mkt-mini-sub">US Dollar / Rupiah</div>
+                  <div class="mkt-mini-price" id="mkt-usd-price">—</div>
+                  <div class="mkt-mini-chg" id="mkt-usd-chg">—</div>
+                  <div class="mkt-mini-range"><span id="mkt-usd-high">High —</span><span id="mkt-usd-low">Low —</span></div>
+                </div>
+                <canvas class="mkt-mini-spark" id="spark-usd"></canvas>
+              </div>
+              <div class="mkt-mini">
+                <div class="mkt-mini-icon">🌐</div>
+                <div class="mkt-mini-body">
+                  <div class="mkt-mini-label">DXY</div>
+                  <div class="mkt-mini-sub">US Dollar Index</div>
+                  <div class="mkt-mini-price" id="mkt-dxy-price">—</div>
+                  <div class="mkt-mini-chg" id="mkt-dxy-chg">—</div>
+                  <div class="mkt-mini-range"><span id="mkt-dxy-high">High —</span><span id="mkt-dxy-low">Low —</span></div>
+                </div>
+                <canvas class="mkt-mini-spark" id="spark-dxy"></canvas>
+              </div>
             </div>
           </div>
+        </div>
+
+        <!-- GLOBAL MARKET NEWS (NewsData.io) -->
+        <div class="card">
+          <div class="card-title-row">
+            <div class="card-title" style="margin-bottom:0;">🌐 Global Market News</div>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;" onclick="fetchGlobalNews()">Refresh</button>
+          </div>
+          <div class="card-source-sub">Sumber: NewsData.io</div>
+          <div id="globalNews" class="news-card-list"><div class="loading-state"><span class="spinner"></span> Loading...</div></div>
+        </div>
+
+        <!-- BERITA INDONESIA (Bisnis.com) -->
+        <div class="card">
+          <div class="card-title-row">
+            <div class="card-title" style="margin-bottom:0;">🇮🇩 Berita Indonesia (Bisnis.com)</div>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;" onclick="fetchIndonesiaNews()">Refresh</button>
+          </div>
+          <div class="card-source-sub">Sumber: Bisnis.com</div>
+          <div id="indoNews" class="news-card-list"><div class="loading-state"><span class="spinner"></span> Loading...</div></div>
+        </div>
+      </div>
+
+      <!-- ===== BOTTOM ROW ===== -->
+      <div class="dash-bottom">
+
+        <!-- MARKET NEWS COMBINED -->
+        <div class="card">
+          <div class="card-title-row">
+            <div class="card-title" style="margin-bottom:0;">📰 Market News (Combined)</div>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;" onclick="fetchCombinedNews()">Refresh</button>
+          </div>
+          <div class="news-tabs" id="newsTabs">
+            <span class="news-tab active" data-cat="" onclick="filterCombinedNews('',this)">Semua</span>
+            <span class="news-tab" data-cat="gold" onclick="filterCombinedNews('gold',this)">Gold</span>
+            <span class="news-tab" data-cat="forex" onclick="filterCombinedNews('forex',this)">Forex</span>
+            <span class="news-tab" data-cat="economy" onclick="filterCombinedNews('economy',this)">Economy</span>
+            <span class="news-tab" data-cat="commodities" onclick="filterCombinedNews('commodities',this)">Commodities</span>
+            <span class="news-tab" data-cat="stock" onclick="filterCombinedNews('stock',this)">Stock</span>
+          </div>
+          <div id="combinedNews" class="news-card-list"><div class="loading-state"><span class="spinner"></span> Loading...</div></div>
+        </div>
+
+        <!-- MARKET IMPACT -->
+        <div class="card">
+          <div class="card-title-row">
+            <div class="card-title" style="margin-bottom:0;">⚡ Market Impact</div>
+            <span style="font-size:11px;color:var(--muted);cursor:help;" title="Bias dihitung otomatis dari pergerakan harga real-time">ⓘ</span>
+          </div>
+          <div id="marketImpact" style="margin-top:8px;"><div class="loading-state"><span class="spinner"></span> Loading...</div></div>
         </div>
 
         <!-- RECENT JOURNAL -->
         <div class="card">
-          <div class="card-title" style="justify-content:space-between;">
-            <span>📋 Recent Journal</span>
-            <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;" onclick="switchPage('journal')">View All</button>
+          <div class="card-title-row">
+            <div class="card-title" style="margin-bottom:0;">📋 Recent Journal</div>
+            <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;" onclick="switchPage('journal')">Lihat Semua</button>
           </div>
-          <div id="recentJournal"><div class="loading-state"><span class="spinner"></span></div></div>
+          <div id="recentJournal" style="margin-top:8px;"><div class="loading-state"><span class="spinner"></span></div></div>
         </div>
-
-        <!-- UPCOMING FOCUS -->
-        <div class="card">
-          <div class="card-title" style="justify-content:space-between;">
-            <span>⚡ Upcoming Focus</span>
-            <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;" onclick="switchPage('journal')">View Calendar</button>
-          </div>
-          <div id="upcomingFocus"><div class="loading-state"><span class="spinner"></span></div></div>
-        </div>
-
-        <!-- QUICK ACTION -->
-        <div class="card span-2">
-          <div class="card-title">⚡ Quick Action</div>
-          <div class="grid-4">
-            <button class="qa-btn" onclick="openModal('journal')">
-              <span class="qa-icon">📊</span>
-              <span class="qa-title">Analyze Gold</span>
-              <span class="qa-sub">Mulai analisa XAUUSD</span>
-            </button>
-            <button class="qa-btn" onclick="switchPage('saham')">
-              <span class="qa-icon">📈</span>
-              <span class="qa-title">Analyze Saham</span>
-              <span class="qa-sub">Pilih saham untuk dianalisa</span>
-            </button>
-            <button class="qa-btn" onclick="openModal('journal')">
-              <span class="qa-icon">📋</span>
-              <span class="qa-title">New Journal</span>
-              <span class="qa-sub">Catat trade baru</span>
-            </button>
-            <button class="qa-btn" onclick="switchPage('statistics')">
-              <span class="qa-icon">🥧</span>
-              <span class="qa-title">View Statistics</span>
-              <span class="qa-sub">Lihat performa trading</span>
-            </button>
-          </div>
-        </div>
-
       </div>
+
     </div>
 
     <!-- ===== JOURNAL PAGE ===== -->
@@ -584,6 +658,10 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
 // ================================================================
 const GAS_URL = 'PASTE_YOUR_APPS_SCRIPT_URL_HERE';
 const TD_KEY  = '5f52a74cd9f24b49a4729b5b8e599505';
+const NEWSDATA_KEY = 'pub_47e6cda858f64a87b264b4a8aa6a031b';
+
+// cache untuk kombinasi berita (global + indonesia)
+let newsCache = { global: [], indo: [] };
 
 // ================================================================
 // STATE
@@ -724,11 +802,13 @@ async function loadDashboard() {
   // Recent Journal
   renderRecentJournal(dashData.recentJournal || []);
 
-  // Upcoming
-  renderUpcoming(dashData.upcomingPlans || []);
-
-  // Market data from Twelve Data
+  // Market data from Twelve Data (Gold, USD/IDR, DXY)
   fetchMarketData();
+
+  // News & impact
+  fetchGlobalNews();
+  fetchIndonesiaNews();
+  fetchMarketImpact();
 }
 
 // ================================================================
@@ -813,26 +893,26 @@ function renderUpcoming(plans) {
 }
 
 // ================================================================
-// MARKET DATA (Twelve Data)
+// MARKET DATA (Twelve Data) — XAU/USD, USD/IDR, DXY
 // ================================================================
 async function fetchMarketData() {
   fetchMarket('XAU/USD', 'gold');
-  fetchMarket('JKSE', 'ihsg');   // FIX: simbol lama 'IDX/IDR' salah/tidak valid -> selalu gagal diam-diam
   fetchMarket('USD/IDR', 'usd');
+  fetchMarket('DXY', 'dxy');
 }
 
 async function fetchMarket(symbol, key) {
   const priceEl = document.getElementById(`mkt-${key}-price`);
   const chgEl   = document.getElementById(`mkt-${key}-chg`);
-  const trendEl = document.getElementById(`mkt-${key}-trend`);
+  const highEl  = document.getElementById(`mkt-${key}-high`);
+  const lowEl   = document.getElementById(`mkt-${key}-low`);
   try {
     const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=1h&outputsize=24&apikey=${TD_KEY}`;
     const res = await fetch(url);
     const data = await res.json();
     if (!data.values || !data.values.length) {
-      // FIX: dulu kalau gagal, UI dibiarkan kosong selamanya ("—"). Sekarang dikasih pesan jelas.
       if (priceEl) priceEl.textContent = 'N/A';
-      if (chgEl) { chgEl.textContent = data.message || 'Data tidak tersedia di plan API ini'; chgEl.style.color = 'var(--muted)'; }
+      if (chgEl) { chgEl.textContent = data.message || 'Data tidak tersedia'; chgEl.style.color = 'var(--muted)'; }
       console.warn(`[fetchMarket] ${key} (${symbol}) gagal:`, data.message || data);
       return;
     }
@@ -842,28 +922,181 @@ async function fetchMarket(symbol, key) {
     const chg   = price - open;
     const chgPct = (chg/open*100).toFixed(2);
     const closes = vals.map(v=>parseFloat(v.close));
+    const highs  = vals.map(v=>parseFloat(v.high));
+    const lows   = vals.map(v=>parseFloat(v.low));
+    const dayHigh = Math.max(...highs), dayLow = Math.min(...lows);
+    const fmt = n => n >= 1000 ? n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : n.toFixed(2);
 
-    if(priceEl) priceEl.textContent = price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    if(priceEl) priceEl.textContent = fmt(price);
     if(chgEl) {
       chgEl.textContent = `${chg>=0?'+':''}${chg.toFixed(2)} (${chg>=0?'+':''}${chgPct}%)`;
       chgEl.style.color = chg>=0?'var(--green)':'var(--red)';
     }
-
-    // Trend
-    const ema = closes.slice(-10).reduce((a,b)=>a+b,0)/10;
-    const trend = price > ema*1.001 ? 'BULLISH' : price < ema*0.999 ? 'BEARISH' : 'SIDEWAYS';
-    if(trendEl) {
-      trendEl.textContent = trend;
-      trendEl.className = `market-trend ${trend==='BULLISH'?'trend-bull':trend==='BEARISH'?'trend-bear':'trend-side'}`;
-    }
+    if(highEl) highEl.textContent = `High ${fmt(dayHigh)}`;
+    if(lowEl) lowEl.textContent = `Low ${fmt(dayLow)}`;
 
     // Sparkline
     drawSparkline(`spark-${key}`, closes, chg>=0?'#22c55e':'#ef4444');
+
+    // simpan untuk Market Impact
+    marketSnapshot[key] = { price, chg, chgPct: parseFloat(chgPct) };
   } catch(e) {
     console.error(key, e);
     if (priceEl) priceEl.textContent = 'Error';
     if (chgEl) { chgEl.textContent = 'Gagal ambil data'; chgEl.style.color = 'var(--red)'; }
   }
+}
+
+// ================================================================
+// MARKET IMPACT — bias dihitung dari data harga real-time (Twelve Data)
+// ================================================================
+let marketSnapshot = {};
+const IMPACT_INSTRUMENTS = [
+  { key: 'gold',  symbol: 'XAU/USD', label: 'Gold (XAUUSD)', icon: '🥇', iconBg: 'rgba(240,180,41,.18)' },
+  { key: 'usd',   symbol: 'USD/IDR', label: 'USD/IDR',       icon: '💵', iconBg: 'rgba(59,130,246,.18)' },
+  { key: 'dxy',   symbol: 'DXY',     label: 'USD (DXY)',     icon: '🌐', iconBg: 'rgba(239,68,68,.18)' },
+  { key: 'oil',   symbol: 'WTI/USD', label: 'Oil (WTI)',     icon: '🛢️', iconBg: 'rgba(239,68,68,.18)' },
+  { key: 'ihsg',  symbol: 'IHSG',    label: 'IHSG',          icon: '🏢', iconBg: 'rgba(240,180,41,.18)' },
+];
+
+async function fetchMarketImpact() {
+  const el = document.getElementById('marketImpact');
+  // ambil instrumen yang belum ada datanya (oil & ihsg belum diambil oleh fetchMarketData)
+  await Promise.all(IMPACT_INSTRUMENTS.filter(i => !marketSnapshot[i.key]).map(async i => {
+    try {
+      const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(i.symbol)}&interval=1h&outputsize=24&apikey=${TD_KEY}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (!data.values || !data.values.length) return;
+      const vals = [...data.values].reverse();
+      const price = parseFloat(vals[vals.length-1].close);
+      const open  = parseFloat(vals[0].open);
+      const chg   = price - open;
+      const chgPct = parseFloat((chg/open*100).toFixed(2));
+      marketSnapshot[i.key] = { price, chg, chgPct };
+    } catch(e) { console.error('impact', i.key, e); }
+  }));
+  renderMarketImpact();
+}
+
+function renderMarketImpact() {
+  const el = document.getElementById('marketImpact');
+  const rows = IMPACT_INSTRUMENTS.map(i => {
+    const snap = marketSnapshot[i.key];
+    if (!snap) return `<div class="impact-row">
+      <div class="impact-icon" style="background:${i.iconBg};">${i.icon}</div>
+      <div class="impact-body"><div class="impact-top"><span>${i.label}</span><span style="color:var(--muted);">N/A</span></div></div>
+    </div>`;
+    // confidence: skala |%chg| jadi 50-95%, makin besar pergerakan makin "yakin"
+    const mag = Math.min(Math.abs(snap.chgPct), 2);
+    const confidence = Math.round(50 + (mag/2)*45);
+    const bias = snap.chgPct > 0.03 ? 'Bullish' : snap.chgPct < -0.03 ? 'Bearish' : 'Neutral';
+    const color = bias === 'Bullish' ? 'var(--green)' : bias === 'Bearish' ? 'var(--red)' : 'var(--gold)';
+    const arrow = bias === 'Bullish' ? '▲' : bias === 'Bearish' ? '▼' : '#';
+    return `<div class="impact-row">
+      <div class="impact-icon" style="background:${i.iconBg};">${i.icon}</div>
+      <div class="impact-body">
+        <div class="impact-top"><span>${i.label}</span><span style="color:${color};">${confidence}%</span></div>
+        <div class="impact-bias" style="color:${color};">${arrow} ${bias}</div>
+        <div class="impact-bar-bg"><div class="impact-bar-fill" style="width:${confidence}%;background:${color};"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+  el.innerHTML = rows;
+}
+
+// ================================================================
+// NEWS — NewsData.io (Global Market News) & Bisnis.com (Berita Indonesia)
+// ================================================================
+const NEWS_TAG_COLOR = {
+  business: { bg:'rgba(34,197,94,.15)', c:'var(--green)' },
+  economy: { bg:'rgba(168,85,247,.18)', c:'#c084fc' },
+  world: { bg:'rgba(59,130,246,.18)', c:'var(--blue)' },
+  politics: { bg:'rgba(59,130,246,.18)', c:'var(--blue)' },
+  top: { bg:'rgba(240,180,41,.18)', c:'var(--gold)' },
+  default: { bg:'rgba(107,127,107,.2)', c:'var(--muted)' },
+};
+function tagStyle(cat) {
+  const t = NEWS_TAG_COLOR[(cat||'').toLowerCase()] || NEWS_TAG_COLOR.default;
+  return `background:${t.bg};color:${t.c};`;
+}
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr.replace(' ', 'T') + 'Z');
+  if (isNaN(d)) return dateStr;
+  const diffMin = Math.round((Date.now() - d.getTime())/60000);
+  if (diffMin < 1) return 'Baru saja';
+  if (diffMin < 60) return `${diffMin} menit lalu`;
+  const diffH = Math.round(diffMin/60);
+  if (diffH < 24) return `${diffH} jam lalu`;
+  return `${Math.round(diffH/24)} hari lalu`;
+}
+
+function renderNewsList(elId, items, emptyMsg) {
+  const el = document.getElementById(elId);
+  if (!items.length) { el.innerHTML = `<div class="loading-state">${emptyMsg}</div>`; return; }
+  el.innerHTML = items.map(n => `
+    <div class="news-row">
+      ${n.image_url ? `<img class="news-thumb" src="${n.image_url}" onerror="this.style.display='none'" />` : ''}
+      <div class="news-row-body">
+        <div class="news-row-title">${n.title || ''}</div>
+        <div class="news-row-meta">
+          <span>${n.source_id || n.source || ''}</span><span>•</span><span>${timeAgo(n.pubDate)}</span>
+        </div>
+      </div>
+      ${n.category && n.category[0] ? `<span class="news-row-tag" style="${tagStyle(n.category[0])}">${n.category[0]}</span>` : ''}
+    </div>
+  `).join('');
+}
+
+async function fetchGlobalNews() {
+  document.getElementById('globalNews').innerHTML = '<div class="loading-state"><span class="spinner"></span> Loading...</div>';
+  try {
+    const url = `https://newsdata.io/api/1/latest?apikey=${NEWSDATA_KEY}&q=gold%20OR%20forex%20OR%20%22interest%20rate%22%20OR%20inflation&language=en&category=business`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.status !== 'success') throw new Error(data.message || 'NewsData error');
+    newsCache.global = (data.results || []).slice(0, 8);
+    renderNewsList('globalNews', newsCache.global, 'Tidak ada berita global.');
+    fetchCombinedNews();
+  } catch(e) {
+    console.error('globalNews', e);
+    document.getElementById('globalNews').innerHTML = '<div class="loading-state">Gagal memuat berita global.</div>';
+  }
+}
+
+async function fetchIndonesiaNews() {
+  document.getElementById('indoNews').innerHTML = '<div class="loading-state"><span class="spinner"></span> Loading...</div>';
+  try {
+    const url = `https://newsdata.io/api/1/latest?apikey=${NEWSDATA_KEY}&domain=bisnis&language=id`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.status !== 'success') throw new Error(data.message || 'NewsData error');
+    newsCache.indo = (data.results || []).slice(0, 8);
+    renderNewsList('indoNews', newsCache.indo, 'Tidak ada berita dari Bisnis.com.');
+    fetchCombinedNews();
+  } catch(e) {
+    console.error('indoNews', e);
+    document.getElementById('indoNews').innerHTML = '<div class="loading-state">Gagal memuat berita Indonesia.</div>';
+  }
+}
+
+function fetchCombinedNews() {
+  const all = [...newsCache.global, ...newsCache.indo]
+    .sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate));
+  window._combinedNewsAll = all;
+  filterCombinedNews(window._combinedNewsActiveCat || '', document.querySelector('.news-tab.active'));
+}
+
+function filterCombinedNews(cat, tabEl) {
+  window._combinedNewsActiveCat = cat;
+  if (tabEl) {
+    document.querySelectorAll('.news-tab').forEach(t => t.classList.remove('active'));
+    tabEl.classList.add('active');
+  }
+  const all = window._combinedNewsAll || [];
+  const filtered = cat ? all.filter(n => (n.category||[]).some(c => c.toLowerCase().includes(cat)) || (n.title||'').toLowerCase().includes(cat)) : all;
+  renderNewsList('combinedNews', filtered.slice(0, 10), 'Tidak ada berita untuk kategori ini.');
 }
 
 function drawSparkline(id, data, color) {
