@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>AZIS GOLD SYSTEM</title>
+<title>AZIS GOLD SYSTEM — AGS Lite</title>
 
 <!-- ===== ADD TO HOME SCREEN SETUP ===== -->
 <!-- Android (Chrome): pakai manifest.json -->
@@ -156,6 +156,58 @@
   .check-item .ico{color:var(--green); font-size:13px;}
   .check-item .ico.off{color:var(--red);}
 
+  /* ===== MARKET VALIDATION TABLE ===== */
+  .mv-table{width:100%; border-collapse:collapse; margin-top:2px;}
+  .mv-table thead th{
+    text-align:left; font-size:9.5px; text-transform:uppercase; letter-spacing:.4px;
+    color:var(--muted); font-weight:700; padding:0 0 8px 0; border-bottom:1px solid var(--line);
+  }
+  .mv-table thead th:last-child, .mv-table thead th:nth-child(3){text-align:right;}
+  .mv-table tbody tr{border-bottom:1px solid var(--line);}
+  .mv-table tbody tr:last-child{border-bottom:none;}
+  .mv-table td{padding:9px 0; vertical-align:middle;}
+  .mv-comp .name{font-size:12.5px; font-weight:700; display:flex; align-items:center; gap:6px;}
+  .mv-comp .desc{font-size:10.5px; color:var(--muted); margin-top:1px;}
+  .mv-status{
+    display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700;
+    padding:3px 8px; border-radius:999px; white-space:nowrap;
+  }
+  .mv-status.ok{color:var(--green); background:rgba(34,197,94,.12);}
+  .mv-status.bad{color:var(--red); background:rgba(239,68,68,.12);}
+  .mv-status.warn{color:var(--gold); background:rgba(240,180,41,.12);}
+  .mv-status.neutral{color:var(--muted); background:var(--panel2);}
+  .mv-score{font-family:var(--mono); font-weight:800; font-size:12.5px; text-align:right; white-space:nowrap;}
+  .mv-score.ok{color:var(--green);}
+  .mv-score.bad{color:var(--red);}
+  .mv-score.warn{color:var(--gold);}
+
+  .setup-score-box{margin-top:16px;}
+  .setup-score-box .ssb-head{display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.5px;}
+  .setup-score-box .ssb-num{font-family:var(--mono); font-size:30px; font-weight:800; margin:4px 0 8px;}
+  .setup-score-box .ssb-bar{height:9px; background:var(--panel2); border-radius:5px; overflow:hidden;}
+  .setup-score-box .ssb-fill{height:100%; border-radius:5px; transition:width .4s ease, background .4s ease;}
+  .setup-score-legend{display:flex; justify-content:space-between; margin-top:8px; font-size:9.5px; color:var(--muted);}
+  .setup-score-legend span{display:flex; align-items:center; gap:4px;}
+  .setup-score-legend .dot{width:7px; height:7px; border-radius:50%;}
+
+  .final-decision-box{
+    margin-top:14px; border-radius:12px; padding:14px;
+    display:flex; align-items:center; gap:12px; justify-content:space-between;
+    border:1px solid var(--line);
+  }
+  .final-decision-box .fd-left{display:flex; align-items:center; gap:12px;}
+  .final-decision-box .fd-icon{
+    width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:20px; flex:none;
+  }
+  .final-decision-box .fd-label{font-size:10px; color:var(--muted); font-weight:700; letter-spacing:.5px; text-transform:uppercase;}
+  .final-decision-box .fd-word{font-size:21px; font-weight:800; margin-top:1px;}
+  .final-decision-box .fd-sub{font-size:10.5px; color:var(--muted); margin-top:3px; max-width:230px; line-height:1.35;}
+  .final-decision-box .fd-conf{text-align:right; flex:none;}
+  .final-decision-box .fd-conf .pct{font-family:var(--mono); font-weight:800; font-size:22px;}
+  .final-decision-box .fd-conf .lbl{font-size:9px; color:var(--muted); font-weight:700; letter-spacing:.4px;}
+  .fd-tip{display:flex; gap:8px; align-items:flex-start; font-size:10.5px; color:var(--muted); margin-top:10px; line-height:1.4;}
+
   /* chart panel */
   .chart-card{flex:1; display:flex; flex-direction:column; min-height:680px;}
   .chart-head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; flex-wrap:wrap; gap:8px;}
@@ -205,9 +257,19 @@
 <body>
 
 <div class="topbar">
-  <div class="brand"><span class="dot pulse"></span>CUAN GOLD SYSTEM <span style="color:var(--muted); font-weight:500;"></span></div>
+  <div class="brand"><span class="dot pulse"></span>AZIS GOLD SYSTEM <span style="color:var(--muted); font-weight:500;">v1.0</span></div>
   <div class="symbol-pill">XAUUSD · M15</div>
-  <div style="flex:1;"></div>
+  <nav class="tabs" id="tabs">
+    <button class="active" data-tab="dashboard">Dashboard</button>
+    <button data-tab="trend">Trend</button>
+    <button data-tab="sr">S&amp;R</button>
+    <button data-tab="liquidity">Liquidity</button>
+    <button data-tab="ob">Order Block</button>
+    <button data-tab="fvg">FVG</button>
+    <button data-tab="news">News</button>
+    <button data-tab="ai">Market Validation</button>
+    <button data-tab="about">About</button>
+  </nav>
   <button class="theme-toggle" id="themeToggle">🌙 <span id="themeLabel">Dark</span></button>
   <div class="conn">● CONNECTED</div>
 </div>
@@ -227,7 +289,7 @@
     </div>
 
     <div class="card">
-      <h3>⭐ AI Score</h3>
+      <h3>⭐ AI Score <span class="mock-tag" style="text-transform:none; font-size:9.5px;">(mock)</span></h3>
       <div class="score-block">
         <div class="score-head"><span>BUY SCORE</span><span class="pct bull">82%</span></div>
         <div class="bar-track green" id="buyBar"></div>
@@ -296,28 +358,90 @@
   <!-- RIGHT COLUMN -->
   <div class="col">
     <div class="card">
-      <h3>🤖 AI Analysis</h3>
-      <div class="check-item"><span>Trend Direction</span><span class="ico" id="ai-trend">— LOADING</span></div>
-      <div class="check-item"><span>Price Above EMA50</span><span class="ico" id="ai-ema">— LOADING</span></div>
-      <div class="check-item"><span>Pullback to Order Block</span><span class="ico" id="ai-ob">⦿ MOCK</span></div>
-      <div class="check-item"><span>FVG Filled</span><span class="ico" id="ai-fvg">⦿ MOCK</span></div>
-      <div class="check-item"><span>Liquidity Sweep</span><span class="ico" id="ai-liq">⦿ MOCK</span></div>
-      <div class="check-item"><span>Volume Confirmation</span><span class="ico" id="ai-vol">— LOADING</span></div>
-      <div class="check-item"><span>RSI Condition</span><span class="ico" id="ai-rsi">— LOADING</span></div>
-      <div class="check-item"><span>News Filter</span><span class="ico off" id="ai-news">✕ HIGH IMPACT</span></div>
+      <h3>🛡️ Market Validation</h3>
+      <div style="font-size:10.5px;color:var(--muted);margin:-6px 0 10px;">Validasi kondisi market berdasarkan sistem rule AGS</div>
 
-      <div class="ai-score-big">
-        <div style="font-size:11px; color:var(--muted); font-weight:700; letter-spacing:.5px;">CONFIDENCE LEVEL</div>
-        <div class="num" id="ai-score-num">—%</div>
-        <div class="barwrap"><div class="barfill" id="ai-score-bar" style="width:0%"></div></div>
-        <div style="font-size:11.5px; margin-top:4px; font-weight:600;" id="ai-score-label">Calculating...</div>
+      <table class="mv-table">
+        <thead>
+          <tr><th>Komponen</th><th>Status</th><th>Skor</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mv-comp"><div class="name">Trend (EMA50)</div><div class="desc">Harga di atas EMA50</div></td>
+            <td><span class="mv-status neutral" id="mv-trend-status">— LOADING</span></td>
+            <td class="mv-score" id="mv-trend-score">—/20</td>
+          </tr>
+          <tr>
+            <td class="mv-comp"><div class="name">Structure</div><div class="desc">BOS / CHoCH</div></td>
+            <td><span class="mv-status neutral" id="mv-structure-status">— LOADING</span></td>
+            <td class="mv-score" id="mv-structure-score">—/15</td>
+          </tr>
+          <tr>
+            <td class="mv-comp"><div class="name">Order Block</div><div class="desc">Valid Bullish/Bearish OB</div></td>
+            <td><span class="mv-status neutral" id="mv-ob-status">— LOADING</span></td>
+            <td class="mv-score" id="mv-ob-score">—/15</td>
+          </tr>
+          <tr>
+            <td class="mv-comp"><div class="name">Fair Value Gap</div><div class="desc">FVG Terisi</div></td>
+            <td><span class="mv-status neutral" id="mv-fvg-status">— LOADING</span></td>
+            <td class="mv-score" id="mv-fvg-score">—/10</td>
+          </tr>
+          <tr>
+            <td class="mv-comp"><div class="name">Liquidity Sweep</div><div class="desc">Liquidity Sudah Diambil</div></td>
+            <td><span class="mv-status neutral" id="mv-liq-status">— LOADING</span></td>
+            <td class="mv-score" id="mv-liq-score">—/10</td>
+          </tr>
+          <tr>
+            <td class="mv-comp"><div class="name">EMA50</div><div class="desc">Harga di atas EMA50</div></td>
+            <td><span class="mv-status neutral" id="mv-ema-status">— LOADING</span></td>
+            <td class="mv-score" id="mv-ema-score">—/10</td>
+          </tr>
+          <tr>
+            <td class="mv-comp"><div class="name">Volume</div><div class="desc">Volume vs rata-rata</div></td>
+            <td><span class="mv-status neutral" id="mv-vol-status">— LOADING</span></td>
+            <td class="mv-score" id="mv-vol-score">—/10</td>
+          </tr>
+          <tr>
+            <td class="mv-comp"><div class="name">News Filter</div><div class="desc">Cek High Impact News</div></td>
+            <td><span class="mv-status neutral" id="mv-news-status">— LOADING</span></td>
+            <td class="mv-score" id="mv-news-score">—/10</td>
+          </tr>
+          <tr>
+            <td class="mv-comp"><div class="name">Session</div><div class="desc">Sesi Trading Aktif</div></td>
+            <td><span class="mv-status neutral" id="mv-session-status">— LOADING</span></td>
+            <td class="mv-score" id="mv-session-score">—/0</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="setup-score-box">
+        <div class="ssb-head"><span>Setup Score</span><span style="opacity:.5;">ⓘ</span></div>
+        <div class="ssb-num" id="ssb-num">— / 100</div>
+        <div class="ssb-bar"><div class="ssb-fill" id="ssb-fill" style="width:0%;background:var(--muted);"></div></div>
+        <div class="setup-score-legend">
+          <span><span class="dot" style="background:var(--green);"></span>81–100 A+ Setup</span>
+          <span><span class="dot" style="background:var(--blue);"></span>61–80 Good Setup</span>
+          <span><span class="dot" style="background:var(--gold);"></span>41–60 Wait</span>
+          <span><span class="dot" style="background:var(--red);"></span>0–40 No Trade</span>
+        </div>
       </div>
 
-      <div class="rec-box" id="ai-rec-box">
-        <div class="tag">RECOMMENDATION</div>
-        <div class="word" id="ai-rec-word">—</div>
-        <div class="sub" id="ai-rec-sub">Fetching data...</div>
+      <div class="final-decision-box" id="fd-box">
+        <div class="fd-left">
+          <div class="fd-icon" id="fd-icon" style="background:var(--panel2);color:var(--muted);">◎</div>
+          <div>
+            <div class="fd-label">Final Decision</div>
+            <div class="fd-word" id="fd-word" style="font-size:12.5px;font-weight:700;color:var(--muted);">CALCULATING…</div>
+            <div class="fd-word" id="fd-action" style="font-size:22px;">—</div>
+            <div class="fd-sub" id="fd-sub">Mengolah data sesuai rule AGS.</div>
+          </div>
+        </div>
+        <div class="fd-conf">
+          <div class="pct" id="fd-pct">—%</div>
+          <div class="lbl">CONFIDENCE</div>
+        </div>
       </div>
+      <div class="fd-tip">💡 <span>Selalu gunakan manajemen risiko yang ketat. Tidak ada setup yang 100% pasti.</span></div>
     </div>
 
     <div class="card">
@@ -428,10 +552,22 @@
 </footer>
 
 <script>
+// ===== Tabs =====
+document.getElementById('tabs').addEventListener('click', e=>{
+  if(e.target.tagName==='BUTTON'){
+    document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('active'));
+    e.target.classList.add('active');
+    const tab = e.target.dataset.tab;
+    const isAbout = tab === 'about';
+    document.querySelector('.layout').style.display = isAbout ? 'none' : '';
+    document.getElementById('dashboardBottom').style.display = isAbout ? 'none' : '';
+    document.getElementById('aboutPage').style.display = isAbout ? 'block' : 'none';
+  }
+});
+
 // ===== Buy/Sell segmented bars =====
 function buildBar(id, pct, total=20){
   const el = document.getElementById(id);
-  el.innerHTML = '';
   const on = Math.round((pct/100)*total);
   for(let i=0;i<total;i++){
     const s = document.createElement('div');
@@ -439,11 +575,8 @@ function buildBar(id, pct, total=20){
     el.appendChild(s);
   }
 }
-// Tampilan default sementara nunggu data live (biar gak blank)
-buildBar('buyBar', 0);
-buildBar('sellBar', 0);
-document.querySelector('#buyBar')?.closest('.score-block')?.querySelector('.pct')?.replaceChildren(document.createTextNode('—%'));
-document.querySelector('#sellBar')?.closest('.score-block')?.querySelector('.pct')?.replaceChildren(document.createTextNode('—%'));
+buildBar('buyBar', 82);
+buildBar('sellBar', 21);
 
 // ===== News countdown =====
 let secs = 45*60+20;
@@ -695,112 +828,239 @@ function setAI(id, icon, text, color){
   el.textContent=icon+' '+text;
 }
 
+// ===================================================================
+// MARKET VALIDATION ENGINE (AGS Rule) — sesuai flowchart:
+// Trend(EMA50) > Structure(BOS/CHoCH) > Order Block > FVG >
+// Liquidity Sweep > EMA50 Position > Volume > News Filter > Session
+// ===================================================================
+
+function setMV(key, label, cls, score, max){
+  const st=document.getElementById('mv-'+key+'-status');
+  const sc=document.getElementById('mv-'+key+'-score');
+  if(st){ st.className='mv-status '+cls; st.textContent=label; }
+  if(sc){ sc.className='mv-score '+cls; sc.textContent=score+'/'+max; }
+}
+
+// simple 5-bar fractal swing detection
+function findSwings(highs, lows){
+  const swH=[], swL=[];
+  for(let i=2;i<highs.length-2;i++){
+    if(highs[i]>highs[i-1]&&highs[i]>highs[i-2]&&highs[i]>highs[i+1]&&highs[i]>highs[i+2]) swH.push({i,price:highs[i]});
+    if(lows[i]<lows[i-1]&&lows[i]<lows[i-2]&&lows[i]<lows[i+1]&&lows[i]<lows[i+2]) swL.push({i,price:lows[i]});
+  }
+  return {swH, swL};
+}
+
+function detectStructure(highs, lows, closes){
+  const {swH, swL} = findSwings(highs, lows);
+  const lastClose = closes[closes.length-1];
+  const lastSwH = swH.length ? swH[swH.length-1].price : null;
+  const lastSwL = swL.length ? swL[swL.length-1].price : null;
+  if(lastSwH!==null && lastClose>lastSwH) return {dir:'bull', type:'BOS'};
+  if(lastSwL!==null && lastClose<lastSwL) return {dir:'bear', type:'BOS'};
+  // CHoCH: price reclaiming most recent opposite swing inside range
+  if(lastSwL!==null && lastClose>lastSwL && lows[lows.length-1]<=lastSwL*1.0008) return {dir:'bull', type:'CHoCH'};
+  if(lastSwH!==null && lastClose<lastSwH && highs[highs.length-1]>=lastSwH*0.9992) return {dir:'bear', type:'CHoCH'};
+  return {dir:null, type:null};
+}
+
+function detectOrderBlock(opens, highs, lows, closes, bias){
+  // cari candle berlawanan arah tepat sebelum impulsive move 3 candle searah bias
+  const n=closes.length;
+  for(let i=n-15;i<n-3;i++){
+    if(i<1) continue;
+    const candleBear = closes[i]<opens[i];
+    const candleBull = closes[i]>opens[i];
+    if(bias==='bull' && candleBear){
+      const c1=closes[i+1]>opens[i+1], c2=closes[i+2]>opens[i+2], c3=closes[i+3]>opens[i+3];
+      if(c1&&c2&&c3){
+        const obLow=lows[i], obHigh=highs[i];
+        const priceNow=closes[n-1];
+        const mitigated = priceNow<=obHigh && priceNow>=obLow*0.998;
+        return {valid:true, mitigated, low:obLow, high:obHigh};
+      }
+    }
+    if(bias==='bear' && candleBull){
+      const c1=closes[i+1]<opens[i+1], c2=closes[i+2]<opens[i+2], c3=closes[i+3]<opens[i+3];
+      if(c1&&c2&&c3){
+        const obLow=lows[i], obHigh=highs[i];
+        const priceNow=closes[n-1];
+        const mitigated = priceNow>=obLow && priceNow<=obHigh*1.002;
+        return {valid:true, mitigated, low:obLow, high:obHigh};
+      }
+    }
+  }
+  return {valid:false};
+}
+
+function detectFVG(highs, lows, closes, bias){
+  const n=closes.length;
+  for(let i=n-1;i>=Math.max(2,n-20);i--){
+    if(bias==='bull' && lows[i]>highs[i-2]){
+      const gapLow=highs[i-2], gapHigh=lows[i];
+      const filled = closes[n-1]<=gapHigh && closes[n-1]>=gapLow;
+      return {found:true, filled};
+    }
+    if(bias==='bear' && highs[i]<lows[i-2]){
+      const gapLow=highs[i], gapHigh=lows[i-2];
+      const filled = closes[n-1]>=gapLow && closes[n-1]<=gapHigh;
+      return {found:true, filled};
+    }
+  }
+  return {found:false};
+}
+
+function detectLiquiditySweep(highs, lows, closes, bias){
+  const {swH, swL} = findSwings(highs, lows);
+  const n=closes.length;
+  if(bias==='bull' && swL.length){
+    const prevLow = swL[swL.length-1].price;
+    for(let i=Math.max(0,n-6);i<n;i++){
+      if(lows[i]<prevLow && closes[i]>prevLow) return {taken:true};
+    }
+  }
+  if(bias==='bear' && swH.length){
+    const prevHigh = swH[swH.length-1].price;
+    for(let i=Math.max(0,n-6);i<n;i++){
+      if(highs[i]>prevHigh && closes[i]<prevHigh) return {taken:true};
+    }
+  }
+  return {taken:false};
+}
+
 async function fetchAIAnalysis(){
-  const url=`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(TD_SYMBOL)}&interval=15min&outputsize=80&apikey=${TD_KEY}`;
+  const url=`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(TD_SYMBOL)}&interval=15min&outputsize=100&apikey=${TD_KEY}`;
   try{
     const res=await fetch(url);
     const data=await res.json();
     if(!data.values||!data.values.length) throw new Error('no data');
     const vals=[...data.values].reverse();
+    const opens=vals.map(v=>parseFloat(v.open));
+    const highs=vals.map(v=>parseFloat(v.high));
+    const lows=vals.map(v=>parseFloat(v.low));
     const closes=vals.map(v=>parseFloat(v.close));
     const vols=vals.map(v=>parseFloat(v.volume||0));
     const price=closes[closes.length-1];
 
-    // EMA50
+    let total=0;
+
+    // 1) TREND (EMA50)
     const ema50=calcEMA(closes,50);
     const aboveEMA=price>ema50;
-    setAI('ai-ema', aboveEMA?'✔':'✕', aboveEMA?'YES':'NO', aboveEMA?'green':'red');
+    const bias = aboveEMA ? 'bull' : 'bear';
+    const trendScore = aboveEMA ? 20 : 0;
+    setMV('trend', aboveEMA?'▲ BULLISH':'▼ BEARISH', aboveEMA?'ok':'bad', trendScore, 20);
+    total+=trendScore;
 
-    // Trend Direction dari H1 (pakai hasil trend MTF yang sudah di-fetch)
-    const trendEl=document.getElementById('trend-h1');
-    const trendText=trendEl?trendEl.textContent:'';
-    const isBull=trendText.includes('BULLISH');
-    const isBear=trendText.includes('BEARISH');
-    setAI('ai-trend', isBull?'✔':isBear?'✕':'⦿', isBull?'BULLISH':isBear?'BEARISH':'NEUTRAL', isBull?'green':isBear?'red':'gold');
+    // 2) STRUCTURE (BOS / CHoCH)
+    const struct = detectStructure(highs, lows, closes);
+    let structScore=0, structLabel='⦿ NO STRUCTURE', structCls='neutral';
+    if(struct.dir===bias){
+      structScore = struct.type==='BOS' ? 15 : 8;
+      structLabel = (struct.type==='BOS'?'▲ ':'⟲ ') + (bias==='bull'?'BULLISH ':'BEARISH ') + struct.type;
+      structCls='ok';
+    } else if(struct.dir && struct.dir!==bias){
+      structLabel = '✕ '+struct.type+' (OPPOSITE)'; structCls='bad';
+    }
+    setMV('structure', structLabel, structCls, structScore, 15);
+    total+=structScore;
 
-    // RSI14
-    const rsi=calcRSI(closes,14);
-    let rsiTxt, rsiColor, rsiIcon;
-    if(rsi<40){rsiTxt=`OVERSOLD (${rsi.toFixed(0)})`;rsiColor='green';rsiIcon='✔';}
-    else if(rsi>60){rsiTxt=`OVERBOUGHT (${rsi.toFixed(0)})`;rsiColor='red';rsiIcon='✕';}
-    else{rsiTxt=`NEUTRAL (${rsi.toFixed(0)})`;rsiColor='gold';rsiIcon='⦿';}
-    setAI('ai-rsi',rsiIcon,rsiTxt,rsiColor);
+    // 3) ORDER BLOCK
+    const ob = detectOrderBlock(opens, highs, lows, closes, bias);
+    let obScore=0, obLabel='✕ NOT FOUND', obCls='bad';
+    if(ob.valid){
+      obScore = ob.mitigated ? 15 : 8;
+      obLabel = ob.mitigated ? '✔ VALID (MITIGATED)' : '⦿ FORMED (WAITING)';
+      obCls = ob.mitigated ? 'ok' : 'warn';
+    }
+    setMV('ob', obLabel, obCls, obScore, 15);
+    total+=obScore;
 
-    // Volume Confirmation — bandingkan vol candle terakhir vs avg 20 candle
+    // 4) FAIR VALUE GAP
+    const fvg = detectFVG(highs, lows, closes, bias);
+    let fvgScore=0, fvgLabel='✕ NO FVG', fvgCls='bad';
+    if(fvg.found){
+      fvgScore = fvg.filled ? 10 : 5;
+      fvgLabel = fvg.filled ? '✔ FILLED' : '⦿ OPEN';
+      fvgCls = fvg.filled ? 'ok' : 'warn';
+    }
+    setMV('fvg', fvgLabel, fvgCls, fvgScore, 10);
+    total+=fvgScore;
+
+    // 5) LIQUIDITY SWEEP
+    const liq = detectLiquiditySweep(highs, lows, closes, bias);
+    const liqScore = liq.taken ? 10 : 0;
+    setMV('liq', liq.taken?'✔ TAKEN':'✕ NOT TAKEN', liq.taken?'ok':'bad', liqScore, 10);
+    total+=liqScore;
+
+    // 6) EMA50 POSITION
+    const emaScore = aboveEMA ? 10 : (bias==='bear' ? 10 : 0);
+    setMV('ema', aboveEMA?'▲ ABOVE':'▼ BELOW', 'ok', 10, 10);
+    total+=10; // posisi EMA selalu konsisten dgn bias karena dipakai sbg acuan
+
+    // 7) VOLUME
     const avgVol=vols.slice(-21,-1).reduce((a,b)=>a+b,0)/20;
     const lastVol=vols[vols.length-1];
-    const volOk=lastVol>avgVol*1.1;
-    setAI('ai-vol',volOk?'✔':'✕',volOk?'YES':'LOW',volOk?'green':'red');
+    const volOk=lastVol>avgVol*1.05;
+    const volScore = volOk?10:0;
+    setMV('vol', volOk?'▲ HIGH':'▽ NORMAL', volOk?'ok':'neutral', volScore, 10);
+    total+=volScore;
 
-    // Scoring — tiap item live bernilai 1 poin
-    // Scoring — dipisah jadi 2 arah: BUY score & SELL score
-    let bullScore=0, bearScore=0, totalEach=0;
+    // 8) NEWS FILTER — pakai countdown high-impact news yg sudah berjalan di halaman
+    const newsSoon = secs <= 30*60; // <=30 menit ke high impact news
+    const newsScore = newsSoon ? 0 : 10;
+    setMV('news', newsSoon?'⚠ HIGH IMPACT':'✔ CLEAR', newsSoon?'warn':'ok', newsScore, 10);
+    total+=newsScore;
 
-    // Trend
-    totalEach++;
-    if(isBull) bullScore++;
-    if(isBear) bearScore++;
+    // 9) SESSION (informational, max skor 0 sesuai rule AGS)
+    const hUTC=new Date().getUTCHours();
+    const activeSessions = SESSIONS.filter(s=>sessIsActive(s,hUTC)).map(s=>s.name);
+    const primary = activeSessions.find(n=>n==='LONDON'||n==='NEW YORK') || activeSessions[0];
+    setMV('session', primary?('● '+primary):'○ CLOSED', primary?'ok':'neutral', 0, 0);
 
-    // EMA50
-    totalEach++;
-    if(aboveEMA) bullScore++; else bearScore++;
+    // ===== SETUP SCORE =====
+    const pct = Math.max(0, Math.min(100, Math.round(total)));
+    const ssbNum=document.getElementById('ssb-num');
+    const ssbFill=document.getElementById('ssb-fill');
+    if(ssbNum) ssbNum.textContent=pct+' / 100';
+    let barColor='var(--red)', category='No Trade';
+    if(pct>=81){barColor='var(--green)'; category='A+ Setup';}
+    else if(pct>=61){barColor='var(--blue)'; category='Good Setup';}
+    else if(pct>=41){barColor='var(--gold)'; category='Wait Confirmation';}
+    if(ssbFill){ ssbFill.style.width=pct+'%'; ssbFill.style.background=barColor; }
+    if(ssbNum) ssbNum.style.color=barColor;
 
-    // RSI — oversold mendukung BUY, overbought mendukung SELL
-    totalEach++;
-    if(rsi<40) bullScore++;
-    else if(rsi>60) bearScore++;
-    else { bullScore+=0.5; bearScore+=0.5; }
+    // ===== FINAL DECISION =====
+    const fdWord=document.getElementById('fd-word');
+    const fdAction=document.getElementById('fd-action');
+    const fdSub=document.getElementById('fd-sub');
+    const fdPct=document.getElementById('fd-pct');
+    const fdIcon=document.getElementById('fd-icon');
+    const fdBox=document.getElementById('fd-box');
+    if(fdPct) fdPct.textContent=pct+'%';
+    if(fdPct) fdPct.style.color=barColor;
 
-    // Volume confirmation — dukung arah trend yang lagi jalan
-    totalEach++;
-    if(volOk){ if(isBull) bullScore++; else if(isBear) bearScore++; else { bullScore+=0.5; bearScore+=0.5; } }
-    else { bullScore+=0.25; bearScore+=0.25; }
-
-    // Mock items (OB, FVG, Liquidity, News) — netral, separuh utk kedua arah
-    totalEach+=4; bullScore+=2; bearScore+=2;
-
-    const bullPct = Math.round((bullScore/totalEach)*100);
-    const bearPct = Math.round((bearScore/totalEach)*100);
-    const pct = Math.max(bullPct, bearPct);
-    const finalDir = bullPct >= bearPct ? 'buy' : 'sell';
-
-    buildBar('buyBar', bullPct);
-buildBar('sellBar', bearPct);
-const buyPctEl = document.querySelector('#buyBar')?.closest('.score-block')?.querySelector('.pct');
-const sellPctEl = document.querySelector('#sellBar')?.closest('.score-block')?.querySelector('.pct');
-if(buyPctEl) buyPctEl.textContent = bullPct + '%';
-if(sellPctEl) sellPctEl.textContent = bearPct + '%';
-
-    const scoreEl=document.getElementById('ai-score-num');
-    const barEl=document.getElementById('ai-score-bar');
-    const labelEl=document.getElementById('ai-score-label');
-    const recWord=document.getElementById('ai-rec-word');
-    const recSub=document.getElementById('ai-rec-sub');
-    if(scoreEl) scoreEl.textContent=pct+'%';
-    if(barEl) barEl.style.width=pct+'%';
-
-    if(pct>=75){
-      if(labelEl){labelEl.textContent='High Probability Setup';labelEl.style.color='var(--green)';}
-      if(finalDir==='buy'){
-        if(recWord){recWord.textContent='BUY';recWord.style.color='var(--green)';}
-        if(recSub) recSub.textContent='Conditions met for BUY entry. Confirm candle close.';
-      } else {
-        if(recWord){recWord.textContent='SELL';recWord.style.color='var(--red)';}
-        if(recSub) recSub.textContent='Conditions met for SELL entry. Confirm candle close.';
-      }
-    } else if(pct>=50){
-      if(labelEl){labelEl.textContent='Medium Probability Setup';labelEl.style.color='var(--gold)';}
-      if(recWord){recWord.textContent='WAIT';recWord.style.color='var(--gold)';}
-      if(recSub) recSub.textContent='Wait for stronger confirmation before entering.';
-    } else {
-      if(labelEl){labelEl.textContent='Low Probability — Stay Out';labelEl.style.color='var(--red)';}
-      if(recWord){recWord.textContent='NO TRADE';recWord.style.color='var(--red)';}
-      if(recSub) recSub.textContent='Conditions not met. Avoid entry.';
+    let actionWord='NO TRADE', actionColor='var(--red)', subTxt='Kondisi market belum memenuhi syarat AGS. Hindari entry.', icon='✕';
+    if(pct>=61){
+      actionWord = bias==='bull' ? 'BUY' : 'SELL';
+      actionColor = bias==='bull' ? 'var(--green)' : 'var(--red)';
+      subTxt = 'Tunggu konfirmasi entry terbaik. Selalu gunakan manajemen risiko.';
+      icon = bias==='bull' ? '▲' : '▼';
+    } else if(pct>=41){
+      actionWord='WAIT CONFIRMATION'; actionColor='var(--gold)';
+      subTxt='Setup belum cukup kuat. Tunggu konfirmasi tambahan sebelum entry.';
+      icon='⏳';
     }
+    if(fdWord){ fdWord.textContent=category.toUpperCase(); fdWord.style.color=barColor; }
+    if(fdAction){ fdAction.textContent=actionWord; fdAction.style.color=actionColor; }
+    if(fdSub) fdSub.textContent=subTxt;
+    if(fdIcon){ fdIcon.textContent=icon; fdIcon.style.color=actionColor; fdIcon.style.background=actionColor.replace('var(--','rgba(').replace(')','').length?'':''; fdIcon.style.background=actionColor+'22'; }
+    if(fdBox) fdBox.style.borderColor=actionColor+'55';
+
   } catch(e){
-    ['ai-trend','ai-ema','ai-vol','ai-rsi'].forEach(id=>{
-      const el=document.getElementById(id);
-      if(el){el.className='ico';el.style.color='var(--muted)';el.textContent='— ERROR';}
+    ['trend','structure','ob','fvg','liq','ema','vol','news'].forEach(k=>{
+      const st=document.getElementById('mv-'+k+'-status');
+      if(st){ st.className='mv-status neutral'; st.textContent='— ERROR'; }
     });
   }
 }
@@ -940,13 +1200,11 @@ async function fetchRCData(){
 }
 
 // input listeners
-['rc-balance','rc-risk','rc-atr-mult'].forEach(id=>{
+['rc-balance','rc-risk','rc-dir','rc-atr-mult'].forEach(id=>{
   const el=document.getElementById(id);
   if(el) el.addEventListener('input', updateRC);
 });
 
-const rcDirEl = document.getElementById('rc-dir');
-if(rcDirEl) rcDirEl.addEventListener('change', updateRC);
 fetchRCData();
 setInterval(fetchRCData, 5*60*1000); // refresh tiap 5 menit
 </script>
