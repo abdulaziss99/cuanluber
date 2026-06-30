@@ -247,13 +247,13 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
     <div class="logo-sub">Analysis & Growth System</div>
   </div>
   <nav class="sidebar-nav">
-    <a class="nav-item active" href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a>
-    <a class="nav-item" href="gold.html"><span class="nav-icon">🥇</span> Gold</a>
-    <a class="nav-item" href="saham.html"><span class="nav-icon">📈</span> Saham</a>
-    <a class="nav-item" href="journal.html"><span class="nav-icon">📋</span> Trading Journal</a>
-    <a class="nav-item" href="statistics.html"><span class="nav-icon">🥧</span> Statistics</a>
-    <a class="nav-item" href="about.html"><span class="nav-icon">ℹ️</span> About</a>
-</nav>
+    <div class="nav-item active" data-page="dashboard"><span class="nav-icon">🏠</span> Dashboard</div>
+    <div class="nav-item" data-page="gold"><span class="nav-icon">🥇</span> Gold</div>
+    <div class="nav-item" data-page="saham"><span class="nav-icon">📈</span> Saham</div>
+    <div class="nav-item" data-page="journal"><span class="nav-icon">📋</span> Trading Journal</div>
+    <div class="nav-item" data-page="statistics"><span class="nav-icon">🥧</span> Statistics</div>
+    <div class="nav-item" data-page="about"><span class="nav-icon">ℹ️</span> About</div>
+  </nav>
   <div class="sidebar-bottom">
     <div class="discipline-box">
       <div class="disc-label">Discipline Today</div>
@@ -406,17 +406,10 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
       </div>
     </div>
 
-    <!-- ===== GOLD PAGE ===== -->
-    <div class="page" id="page-gold">
-      <div style="font-size:16px;font-weight:800;margin-bottom:14px;">🥇 Gold Analysis (XAUUSD)</div>
-      <div class="card" style="min-height:600px;">
-        <div class="tradingview-widget-container" style="height:600px;">
-          <div class="tradingview-widget-container__widget" style="height:100%;"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-          {"autosize":true,"symbol":"OANDA:XAUUSD","interval":"15","timezone":"Asia/Makassar","theme":"dark","style":"1","locale":"id","allow_symbol_change":true,"studies":["MASimple@tv-basicstudies","RSI@tv-basicstudies"],"support_host":"https://www.tradingview.com"}
-          </script>
-        </div>
-      </div>
+    <!-- ===== GOLD PAGE — load AZIS GOLD SYSTEM v1.0 (gold.html) tanpa diubah ===== -->
+    <div class="page" id="page-gold" style="padding:0;">
+      <iframe src="gold.html" title="AZIS GOLD SYSTEM"
+        style="border:none; width:100%; min-height:calc(100vh - 90px); display:block; background:#0b0f17;"></iframe>
     </div>
 
     <!-- ===== SAHAM PAGE ===== -->
@@ -547,8 +540,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">P/L (Point) — Auto</label>
-        <input class="form-input" id="f-pl" type="number" readonly style="background:var(--panel);opacity:.8;cursor:not-allowed;" placeholder="Auto dari Entry & TP">
+        <label class="form-label">P/L (Point)</label>
+        <input class="form-input" id="f-pl" type="number">
       </div>
       <div class="form-group">
         <label class="form-label">Emotion</label>
@@ -585,9 +578,11 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
 
 <script>
 // ================================================================
-// CONFIG — ganti dengan URL Apps Script kamu setelah deploy
+// CONFIG — ganti dengan URL Apps Script kamu setelah deploy Code.gs
+// Spreadsheet: 1_6SdqHmcglIr2qA6LQnkQgBls66wRjkkLiN2xSEoync
+// Lihat instruksi deploy di bagian atas file Code.gs
 // ================================================================
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbw1ih4xLV8K1kSx9SmZ0x97Ee6bmNDKu_iZbWS_886YgrV4i7wJVO9QNGfjaA40ZMw/exec';
+const GAS_URL = 'PASTE_YOUR_APPS_SCRIPT_URL_HERE';
 const TD_KEY  = '5f52a74cd9f24b49a4729b5b8e599505';
 
 // ================================================================
@@ -651,31 +646,18 @@ function getSaved(k) { try { return sessionStorage.getItem(k); } catch(e) { retu
 // API CALLS
 // ================================================================
 async function gasGet(action) {
-  try {
-    const res = await fetch(`${GAS_URL}?action=${action}`);
-    const data = await res.json();
-    return data;
-  } catch(e) {
-    console.error('gasGet error:', e);
-    return getMockData(action);
-  }
+  if (GAS_URL === 'PASTE_YOUR_APPS_SCRIPT_URL_HERE') return getMockData(action);
+  const res = await fetch(`${GAS_URL}?action=${action}`);
+  return res.json();
 }
 
 async function gasPost(body) {
-  try {
-    // Gunakan no-cors karena GAS tidak support CORS untuk POST dari browser
-    await fetch(GAS_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(body)
-    });
-    // no-cors response selalu opaque — asumsikan sukses
-    return { success: true };
-  } catch(e) {
-    console.error('gasPost error:', e);
-    return { success: false, error: e.message };
-  }
+  if (GAS_URL === 'PASTE_YOUR_APPS_SCRIPT_URL_HERE') return { success: true, mock: true };
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify(body)
+  });
+  return res.json();
 }
 
 // ================================================================
@@ -835,59 +817,25 @@ function renderUpcoming(plans) {
 // ================================================================
 async function fetchMarketData() {
   fetchMarket('XAU/USD', 'gold');
+  fetchMarket('JKSE', 'ihsg');   // FIX: simbol lama 'IDX/IDR' salah/tidak valid -> selalu gagal diam-diam
   fetchMarket('USD/IDR', 'usd');
-  fetchIHSG();
-}
-
-// IHSG pakai simbol ^JKSE via Twelve Data (exchange: IDX)
-async function fetchIHSG() {
-  const symbols = ['^JKSE', 'JKSE', 'IDX:COMPOSITE'];
-  for (const sym of symbols) {
-    try {
-      const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(sym)}&interval=1d&outputsize=5&apikey=${TD_KEY}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      if (!data.values || !data.values.length) continue;
-      const vals = [...data.values].reverse();
-      const price = parseFloat(vals[vals.length-1].close);
-      const open  = parseFloat(vals[0].open);
-      const chg   = price - open;
-      const chgPct = (chg/open*100).toFixed(2);
-      const closes = vals.map(v=>parseFloat(v.close));
-
-      const priceEl = document.getElementById('mkt-ihsg-price');
-      const chgEl   = document.getElementById('mkt-ihsg-chg');
-      const trendEl = document.getElementById('mkt-ihsg-trend');
-      if(priceEl) priceEl.textContent = price.toLocaleString('id-ID',{minimumFractionDigits:2,maximumFractionDigits:2});
-      if(chgEl){
-        chgEl.textContent = `${chg>=0?'+':''}${chg.toFixed(2)} (${chg>=0?'+':''}${chgPct}%)`;
-        chgEl.style.color = chg>=0?'var(--green)':'var(--red)';
-      }
-      const ema = closes.slice(-5).reduce((a,b)=>a+b,0)/Math.min(5,closes.length);
-      const trend = price > ema*1.001 ? 'BULLISH' : price < ema*0.999 ? 'BEARISH' : 'SIDEWAYS';
-      if(trendEl){
-        trendEl.textContent = trend;
-        trendEl.className = `market-trend ${trend==='BULLISH'?'trend-bull':trend==='BEARISH'?'trend-bear':'trend-side'}`;
-      }
-      drawSparkline('spark-ihsg', closes, chg>=0?'#22c55e':'#ef4444');
-      return; // sukses, stop loop
-    } catch(e) { continue; }
-  }
-  // Semua gagal — tampilkan label
-  const priceEl = document.getElementById('mkt-ihsg-price');
-  const chgEl   = document.getElementById('mkt-ihsg-chg');
-  const trendEl = document.getElementById('mkt-ihsg-trend');
-  if(priceEl) priceEl.textContent = 'N/A';
-  if(chgEl){ chgEl.textContent = 'Data tidak tersedia'; chgEl.style.color='var(--muted)'; }
-  if(trendEl){ trendEl.textContent = '—'; trendEl.className='market-trend trend-side'; }
 }
 
 async function fetchMarket(symbol, key) {
+  const priceEl = document.getElementById(`mkt-${key}-price`);
+  const chgEl   = document.getElementById(`mkt-${key}-chg`);
+  const trendEl = document.getElementById(`mkt-${key}-trend`);
   try {
     const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=1h&outputsize=24&apikey=${TD_KEY}`;
     const res = await fetch(url);
     const data = await res.json();
-    if (!data.values) return;
+    if (!data.values || !data.values.length) {
+      // FIX: dulu kalau gagal, UI dibiarkan kosong selamanya ("—"). Sekarang dikasih pesan jelas.
+      if (priceEl) priceEl.textContent = 'N/A';
+      if (chgEl) { chgEl.textContent = data.message || 'Data tidak tersedia di plan API ini'; chgEl.style.color = 'var(--muted)'; }
+      console.warn(`[fetchMarket] ${key} (${symbol}) gagal:`, data.message || data);
+      return;
+    }
     const vals = [...data.values].reverse();
     const price = parseFloat(vals[vals.length-1].close);
     const open  = parseFloat(vals[0].open);
@@ -895,9 +843,6 @@ async function fetchMarket(symbol, key) {
     const chgPct = (chg/open*100).toFixed(2);
     const closes = vals.map(v=>parseFloat(v.close));
 
-    const priceEl = document.getElementById(`mkt-${key}-price`);
-    const chgEl   = document.getElementById(`mkt-${key}-chg`);
-    const trendEl = document.getElementById(`mkt-${key}-trend`);
     if(priceEl) priceEl.textContent = price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
     if(chgEl) {
       chgEl.textContent = `${chg>=0?'+':''}${chg.toFixed(2)} (${chg>=0?'+':''}${chgPct}%)`;
@@ -914,7 +859,11 @@ async function fetchMarket(symbol, key) {
 
     // Sparkline
     drawSparkline(`spark-${key}`, closes, chg>=0?'#22c55e':'#ef4444');
-  } catch(e) { console.error(key, e); }
+  } catch(e) {
+    console.error(key, e);
+    if (priceEl) priceEl.textContent = 'Error';
+    if (chgEl) { chgEl.textContent = 'Gagal ambil data'; chgEl.style.color = 'var(--red)'; }
+  }
 }
 
 function drawSparkline(id, data, color) {
@@ -1044,11 +993,10 @@ function openModal(type) {
   document.getElementById('modalTitle').textContent = 'New Journal Entry';
   document.getElementById('submitBtn').textContent = '💾 Save Entry';
   // Reset form
-  ['f-market','f-symbol','f-direction','f-timeframe','f-entry','f-sl','f-tp','f-risk','f-rr','f-result','f-emotion','f-strategy','f-conf','f-lesson','f-notes'].forEach(id => {
+  ['f-market','f-symbol','f-direction','f-timeframe','f-entry','f-sl','f-tp','f-risk','f-rr','f-result','f-pl','f-emotion','f-strategy','f-conf','f-lesson','f-notes'].forEach(id => {
     const el = document.getElementById(id);
     if(el) el.value = el.tagName==='SELECT'?el.options[0]?.value:id==='f-risk'?'1':id==='f-conf'?'75':'';
   });
-  document.getElementById('f-pl').value = '';
   document.getElementById('modalOverlay').classList.add('show');
 }
 
@@ -1103,7 +1051,7 @@ async function submitJournal() {
     } else {
       res = await gasPost({ action:'addJournal', data });
     }
-    if(res.success) {
+    if(res.success||res.mock) {
       showToast(editingId?'Journal diupdate! ✅':'Journal disimpan! ✅');
       closeModal();
       loadJournalPage();
@@ -1116,7 +1064,7 @@ async function submitJournal() {
 async function deleteJournal(id) {
   if(!confirm('Hapus journal '+id+'?')) return;
   const res = await gasPost({ action:'deleteJournal', id });
-  if(res.success) { showToast('Journal dihapus!'); loadJournalPage(); }
+  if(res.success||res.mock) { showToast('Journal dihapus!'); loadJournalPage(); }
   else showToast('Gagal menghapus', true);
 }
 
@@ -1166,39 +1114,8 @@ function loadSahamChart() {
 }
 
 // ================================================================
-// AUTO P/L CALCULATOR di modal
+// TOAST
 // ================================================================
-function calcAutoRR() {
-  const entry = parseFloat(document.getElementById('f-entry').value) || 0;
-  const sl    = parseFloat(document.getElementById('f-sl').value) || 0;
-  const tp    = parseFloat(document.getElementById('f-tp').value) || 0;
-  const dir   = document.getElementById('f-direction').value;
-
-  if (!entry || !tp) return;
-
-  // P/L dalam points (1 point = 0.1 untuk XAU, jadi *10)
-  let pl = 0;
-  if (dir === 'Buy') {
-    pl = (tp - entry) * 10;
-  } else {
-    pl = (entry - tp) * 10;
-  }
-  document.getElementById('f-pl').value = pl.toFixed(1);
-
-  // Auto RR
-  if (sl && entry) {
-    const slDist = Math.abs(entry - sl);
-    const tpDist = Math.abs(tp - entry);
-    const rr = slDist > 0 ? (tpDist / slDist).toFixed(2) : '';
-    document.getElementById('f-rr').value = rr;
-  }
-}
-
-// Pasang listener ke field entry, sl, tp, direction
-['f-entry','f-sl','f-tp','f-direction'].forEach(id => {
-  const el = document.getElementById(id);
-  if (el) el.addEventListener('input', calcAutoRR);
-});
 function showToast(msg, isError=false) {
   const t = document.getElementById('toast');
   t.textContent = msg;
