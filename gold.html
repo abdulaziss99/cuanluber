@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>AZIS GOLD SYSTEM — AGS Lite</title>
+<title>AZIS GOLD SYSTEM</title>
 
 <!-- ===== ADD TO HOME SCREEN SETUP ===== -->
 <!-- Android (Chrome): pakai manifest.json -->
@@ -205,19 +205,9 @@
 <body>
 
 <div class="topbar">
-  <div class="brand"><span class="dot pulse"></span>AZIS GOLD SYSTEM <span style="color:var(--muted); font-weight:500;">v1.0</span></div>
+  <div class="brand"><span class="dot pulse"></span>CUAN GOLD SYSTEM <span style="color:var(--muted); font-weight:500;"></span></div>
   <div class="symbol-pill">XAUUSD · M15</div>
-  <nav class="tabs" id="tabs">
-    <button class="active" data-tab="dashboard">Dashboard</button>
-    <button data-tab="trend">Trend</button>
-    <button data-tab="sr">S&amp;R</button>
-    <button data-tab="liquidity">Liquidity</button>
-    <button data-tab="ob">Order Block</button>
-    <button data-tab="fvg">FVG</button>
-    <button data-tab="news">News</button>
-    <button data-tab="ai">AI Analysis</button>
-    <button data-tab="about">About</button>
-  </nav>
+  <div style="flex:1;"></div>
   <button class="theme-toggle" id="themeToggle">🌙 <span id="themeLabel">Dark</span></button>
   <div class="conn">● CONNECTED</div>
 </div>
@@ -438,19 +428,6 @@
 </footer>
 
 <script>
-// ===== Tabs =====
-document.getElementById('tabs').addEventListener('click', e=>{
-  if(e.target.tagName==='BUTTON'){
-    document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('active'));
-    e.target.classList.add('active');
-    const tab = e.target.dataset.tab;
-    const isAbout = tab === 'about';
-    document.querySelector('.layout').style.display = isAbout ? 'none' : '';
-    document.getElementById('dashboardBottom').style.display = isAbout ? 'none' : '';
-    document.getElementById('aboutPage').style.display = isAbout ? 'block' : 'none';
-  }
-});
-
 // ===== Buy/Sell segmented bars =====
 function buildBar(id, pct, total=20){
   const el = document.getElementById(id);
