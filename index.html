@@ -398,13 +398,13 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
           <div id="globalNews" class="news-card-list"><div class="loading-state"><span class="spinner"></span> Loading...</div></div>
         </div>
 
-        <!-- BERITA INDONESIA (Bisnis.com) -->
+        <!-- BERITA INDONESIA (Bloomberg Technoz) -->
         <div class="card">
           <div class="card-title-row">
-            <div class="card-title" style="margin-bottom:0;">🇮🇩 Berita Indonesia (Bisnis.com)</div>
+            <div class="card-title" style="margin-bottom:0;">🇮🇩 Berita Indonesia (Bloomberg Technoz)</div>
             <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;" onclick="fetchIndonesiaNews()">Refresh</button>
           </div>
-          <div class="card-source-sub">Sumber: Bisnis.com</div>
+          <div class="card-source-sub">Sumber: Bloomberg Technoz</div>
           <div id="indoNews" class="news-card-list"><div class="loading-state"><span class="spinner"></span> Loading...</div></div>
         </div>
       </div>
@@ -418,6 +418,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
             <div class="card-title" style="margin-bottom:0;">📰 Market News (Combined)</div>
             <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;" onclick="fetchCombinedNews()">Refresh</button>
           </div>
+          <div class="card-source-sub">Sumber: Investor.id</div>
           <div class="news-tabs" id="newsTabs">
             <span class="news-tab active" data-cat="" onclick="filterCombinedNews('',this)">Semua</span>
             <span class="news-tab" data-cat="gold" onclick="filterCombinedNews('gold',this)">Gold</span>
@@ -660,8 +661,8 @@ const GAS_URL = 'PASTE_YOUR_APPS_SCRIPT_URL_HERE';
 const TD_KEY  = '5f52a74cd9f24b49a4729b5b8e599505';
 const NEWSDATA_KEY = 'pub_47e6cda858f64a87b264b4a8aa6a031b';
 
-// cache untuk kombinasi berita (global + indonesia)
-let newsCache = { global: [], indo: [] };
+// cache untuk berita
+let newsCache = { global: [], indo: [], combined: [] };
 
 // ================================================================
 // STATE
@@ -808,6 +809,7 @@ async function loadDashboard() {
   // News & impact
   fetchGlobalNews();
   fetchIndonesiaNews();
+  fetchCombinedNews();
   fetchMarketImpact();
 }
 
@@ -1006,7 +1008,10 @@ function renderMarketImpact() {
 }
 
 // ================================================================
-// NEWS — NewsData.io (Global Market News) & Bisnis.com (Berita Indonesia)
+// NEWS — NewsData.io
+// Global Market News: query umum (en)
+// Berita Indonesia: domain Bloomberg Technoz (bloombergtechnoz.com)
+// Market News (Combined): domain Investor.id (investor.id)
 // ================================================================
 const NEWS_TAG_COLOR = {
   business: { bg:'rgba(34,197,94,.15)', c:'var(--green)' },
@@ -1058,34 +1063,43 @@ async function fetchGlobalNews() {
     if (data.status !== 'success') throw new Error(data.message || 'NewsData error');
     newsCache.global = (data.results || []).slice(0, 8);
     renderNewsList('globalNews', newsCache.global, 'Tidak ada berita global.');
-    fetchCombinedNews();
   } catch(e) {
     console.error('globalNews', e);
     document.getElementById('globalNews').innerHTML = '<div class="loading-state">Gagal memuat berita global.</div>';
   }
 }
 
+// Berita Indonesia — sumber: Bloomberg Technoz (bloombergtechnoz.com)
 async function fetchIndonesiaNews() {
   document.getElementById('indoNews').innerHTML = '<div class="loading-state"><span class="spinner"></span> Loading...</div>';
   try {
-    const url = `https://newsdata.io/api/1/latest?apikey=${NEWSDATA_KEY}&domain=bisnis&language=id`;
+    const url = `https://newsdata.io/api/1/latest?apikey=${NEWSDATA_KEY}&domainurl=bloombergtechnoz.com&language=id`;
     const res = await fetch(url);
     const data = await res.json();
     if (data.status !== 'success') throw new Error(data.message || 'NewsData error');
     newsCache.indo = (data.results || []).slice(0, 8);
-    renderNewsList('indoNews', newsCache.indo, 'Tidak ada berita dari Bisnis.com.');
-    fetchCombinedNews();
+    renderNewsList('indoNews', newsCache.indo, 'Tidak ada berita dari Bloomberg Technoz.');
   } catch(e) {
     console.error('indoNews', e);
-    document.getElementById('indoNews').innerHTML = '<div class="loading-state">Gagal memuat berita Indonesia.</div>';
+    document.getElementById('indoNews').innerHTML = '<div class="loading-state">Gagal memuat berita Bloomberg Technoz.</div>';
   }
 }
 
-function fetchCombinedNews() {
-  const all = [...newsCache.global, ...newsCache.indo]
-    .sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate));
-  window._combinedNewsAll = all;
-  filterCombinedNews(window._combinedNewsActiveCat || '', document.querySelector('.news-tab.active'));
+// Market News (Combined) — sumber: Investor.id (investor.id)
+async function fetchCombinedNews() {
+  document.getElementById('combinedNews').innerHTML = '<div class="loading-state"><span class="spinner"></span> Loading...</div>';
+  try {
+    const url = `https://newsdata.io/api/1/latest?apikey=${NEWSDATA_KEY}&domainurl=investor.id&language=id`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.status !== 'success') throw new Error(data.message || 'NewsData error');
+    newsCache.combined = (data.results || []).slice(0, 15);
+    window._combinedNewsAll = newsCache.combined;
+    filterCombinedNews(window._combinedNewsActiveCat || '', document.querySelector('.news-tab.active'));
+  } catch(e) {
+    console.error('combinedNews', e);
+    document.getElementById('combinedNews').innerHTML = '<div class="loading-state">Gagal memuat berita Investor.id.</div>';
+  }
 }
 
 function filterCombinedNews(cat, tabEl) {
