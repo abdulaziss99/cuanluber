@@ -744,13 +744,13 @@ function getSaved(k) { try { return sessionStorage.getItem(k); } catch(e) { retu
 // API CALLS
 // ================================================================
 async function gasGet(action) {
-  if (GAS_URL === 'https://script.google.com/macros/s/AKfycbxyquv5k4Pe47Dr21GDEyiLpGaLu6I5vhNE0rozQac6zOM1NlC7bqp379WnnTmKd-r4/exec') return getMockData(action);
+  if (GAS_URL === 'PASTE_YOUR_APPS_SCRIPT_URL_HERE') return getMockData(action);
   const res = await fetch(`${GAS_URL}?action=${action}`);
   return res.json();
 }
 
 async function gasPost(body) {
-  if (GAS_URL === 'https://script.google.com/macros/s/AKfycbxyquv5k4Pe47Dr21GDEyiLpGaLu6I5vhNE0rozQac6zOM1NlC7bqp379WnnTmKd-r4/exec') return { success: true, mock: true };
+  if (GAS_URL === 'PASTE_YOUR_APPS_SCRIPT_URL_HERE') return { success: true, mock: true };
   const res = await fetch(GAS_URL, {
     method: 'POST',
     body: JSON.stringify(body)
