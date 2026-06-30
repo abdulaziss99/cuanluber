@@ -772,6 +772,12 @@ function getMockData(action) {
   };
   if (action === 'getJournal') return { success: true, data: [] };
   if (action === 'getStats') return { success: true, data: { totalTrade:120, winRate:65, avgRR:1.68, profitFactor:1.72, wins:78, losses:36, equity:[], strategies:[], sessions:{} } };
+  if (action === 'getBloombergNews') return { success: true, data: [
+    { title: 'Contoh berita Bloomberg Technoz (mock) — isi GAS_URL untuk data live', link: '#', source: 'Bloomberg Technoz', image_url: '' }
+  ]};
+  if (action === 'getInvestorNews') return { success: true, data: [
+    { title: 'Contoh berita Investor.id (mock) — isi GAS_URL untuk data live', link: '#', source: 'Investor.id', image_url: '' }
+  ]};
   return { success: true, data: [] };
 }
 
@@ -1008,10 +1014,10 @@ function renderMarketImpact() {
 }
 
 // ================================================================
-// NEWS — NewsData.io
-// Global Market News: query umum (en)
-// Berita Indonesia: domain Bloomberg Technoz (bloombergtechnoz.com)
-// Market News (Combined): domain Investor.id (investor.id)
+// NEWS
+// Global Market News: tetap pakai NewsData.io (query umum, en)
+// Berita Indonesia: scraping server-side via Apps Script — sumber Bloomberg Technoz
+// Market News (Combined): scraping server-side via Apps Script — sumber Investor.id
 // ================================================================
 const NEWS_TAG_COLOR = {
   business: { bg:'rgba(34,197,94,.15)', c:'var(--green)' },
@@ -1044,9 +1050,9 @@ function renderNewsList(elId, items, emptyMsg) {
     <div class="news-row">
       ${n.image_url ? `<img class="news-thumb" src="${n.image_url}" onerror="this.style.display='none'" />` : ''}
       <div class="news-row-body">
-        <div class="news-row-title">${n.title || ''}</div>
+        <div class="news-row-title">${n.link ? `<a href="${n.link}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">${n.title || ''}</a>` : (n.title || '')}</div>
         <div class="news-row-meta">
-          <span>${n.source_id || n.source || ''}</span><span>•</span><span>${timeAgo(n.pubDate)}</span>
+          <span>${n.source_id || n.source || ''}</span>${n.pubDate ? `<span>•</span><span>${timeAgo(n.pubDate)}</span>` : ''}
         </div>
       </div>
       ${n.category && n.category[0] ? `<span class="news-row-tag" style="${tagStyle(n.category[0])}">${n.category[0]}</span>` : ''}
@@ -1069,16 +1075,13 @@ async function fetchGlobalNews() {
   }
 }
 
-// Berita Indonesia — sumber: Bloomberg Technoz (bloombergtechnoz.com)
+// Berita Indonesia — sumber: Bloomberg Technoz (scraping via Apps Script, server-side)
 async function fetchIndonesiaNews() {
   document.getElementById('indoNews').innerHTML = '<div class="loading-state"><span class="spinner"></span> Loading...</div>';
   try {
-    const url = `https://newsdata.io/api/1/latest?apikey=${NEWSDATA_KEY}&domainurl=bloombergtechnoz.com&language=id`;
-    const res = await fetch(url);
-    const data = await res.json();
-    console.log('[indoNews] raw response:', data);
-    if (data.status !== 'success') throw new Error(JSON.stringify(data));
-    newsCache.indo = (data.results || []).slice(0, 8);
+    const res = await gasGet('getBloombergNews');
+    if (!res.success) throw new Error(res.error || 'Gagal mengambil data dari Apps Script');
+    newsCache.indo = (res.data || []).slice(0, 8);
     renderNewsList('indoNews', newsCache.indo, 'Tidak ada berita dari Bloomberg Technoz.');
   } catch(e) {
     console.error('indoNews', e);
@@ -1086,16 +1089,13 @@ async function fetchIndonesiaNews() {
   }
 }
 
-// Market News (Combined) — sumber: Investor.id (investor.id)
+// Market News (Combined) — sumber: Investor.id (scraping via Apps Script, server-side)
 async function fetchCombinedNews() {
   document.getElementById('combinedNews').innerHTML = '<div class="loading-state"><span class="spinner"></span> Loading...</div>';
   try {
-    const url = `https://newsdata.io/api/1/latest?apikey=${NEWSDATA_KEY}&domainurl=investor.id&language=id`;
-    const res = await fetch(url);
-    const data = await res.json();
-    console.log('[combinedNews] raw response:', data);
-    if (data.status !== 'success') throw new Error(JSON.stringify(data));
-    newsCache.combined = (data.results || []).slice(0, 15);
+    const res = await gasGet('getInvestorNews');
+    if (!res.success) throw new Error(res.error || 'Gagal mengambil data dari Apps Script');
+    newsCache.combined = (res.data || []).slice(0, 15);
     window._combinedNewsAll = newsCache.combined;
     filterCombinedNews(window._combinedNewsActiveCat || '', document.querySelector('.news-tab.active'));
   } catch(e) {
