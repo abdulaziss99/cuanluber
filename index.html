@@ -320,9 +320,12 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
         <div class="sub">Focus, Plan, Execute, Review, Improve.</div>
       </div>
     </div>
-    <div class="topbar-right">
-      <div class="live-time" id="liveTime">--:--:--</div>
-      <div id="liveDate">--</div>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <button class="theme-btn" id="themeBtnTop" style="width:auto;">🌙 <span id="themeLabelTop">Dark</span></button>
+      <div class="topbar-right">
+        <div class="live-time" id="liveTime">--:--:--</div>
+        <div id="liveDate">--</div>
+      </div>
     </div>
   </header>
 
@@ -705,6 +708,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const cur = document.documentElement.getAttribute('data-theme');
     applyTheme(cur === 'dark' ? 'light' : 'dark');
   });
+  document.getElementById('themeBtnTop').addEventListener('click', () => {
+    const cur = document.documentElement.getAttribute('data-theme');
+    applyTheme(cur === 'dark' ? 'light' : 'dark');
+  });
 });
 
 // ================================================================
@@ -731,6 +738,10 @@ function applyTheme(t) {
   document.documentElement.setAttribute('data-theme', t);
   document.getElementById('themeLabel').textContent = t === 'dark' ? 'Dark' : 'Light';
   document.getElementById('themeBtn').firstChild.textContent = t === 'dark' ? '🌙 ' : '☀️ ';
+  const labelTop = document.getElementById('themeLabelTop');
+  const btnTop = document.getElementById('themeBtnTop');
+  if (labelTop) labelTop.textContent = t === 'dark' ? 'Dark' : 'Light';
+  if (btnTop) btnTop.firstChild.textContent = t === 'dark' ? '🌙 ' : '☀️ ';
   save('ags_theme', t);
 }
 
@@ -745,17 +756,32 @@ function getSaved(k) { try { return sessionStorage.getItem(k); } catch(e) { retu
 // ================================================================
 async function gasGet(action) {
   if (GAS_URL === 'PASTE_YOUR_APPS_SCRIPT_URL_HERE') return getMockData(action);
-  const res = await fetch(`${GAS_URL}?action=${action}`);
-  return res.json();
+  try {
+    const ctrl = new AbortController();
+    const timeout = setTimeout(() => ctrl.abort(), 15000);
+    const res = await fetch(`${GAS_URL}?action=${action}`, { signal: ctrl.signal });
+    clearTimeout(timeout);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (err) {
+    console.error(`[gasGet] ${action} gagal:`, err);
+    return { success: false, error: err.message || 'Gagal terhubung ke Apps Script (cek GAS_URL / deployment)' };
+  }
 }
 
 async function gasPost(body) {
   if (GAS_URL === 'PASTE_YOUR_APPS_SCRIPT_URL_HERE') return { success: true, mock: true };
-  const res = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify(body)
-  });
-  return res.json();
+  try {
+    const ctrl = new AbortController();
+    const timeout = setTimeout(() => ctrl.abort(), 15000);
+    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(body), signal: ctrl.signal });
+    clearTimeout(timeout);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (err) {
+    console.error('[gasPost] gagal:', err);
+    return { success: false, error: err.message || 'Gagal terhubung ke Apps Script (cek GAS_URL / deployment)' };
+  }
 }
 
 // ================================================================
@@ -827,34 +853,25 @@ function getGreetingLocal() {
 // ================================================================
 async function loadDashboard() {
   const res = await gasGet('getDashboard');
-  if (!res.success) return;
-  dashData = res.data;
 
-  // Greeting
-  document.getElementById('greeting').textContent = dashData.greeting || getGreetingLocal();
+  if (!res.success) {
+    const errMsg = `<div class="loading-state" style="color:var(--red);flex-direction:column;gap:4px;">⚠️ Gagal load data<br><span style="font-size:10px;color:var(--muted);">${res.error||''}</span></div>`;
+    document.getElementById('missionList').innerHTML = errMsg;
+    document.getElementById('recentJournal').innerHTML = errMsg;
+    document.getElementById('upcomingFocus').innerHTML = errMsg;
+  } else {
+    dashData = res.data;
+    document.getElementById('greeting').textContent = dashData.greeting || getGreetingLocal();
+    updateDiscipline(dashData.disciplineScore || 0);
+    renderMission(dashData.mission || []);
+    renderRecentJournal(dashData.recentJournal || []);
+    renderUpcoming(dashData.upcomingPlans || []);
+  }
 
-  // Discipline
-  updateDiscipline(dashData.disciplineScore || 0);
-
-  // Mission
-  renderMission(dashData.mission || []);
-
-  // Recent Journal
-  renderRecentJournal(dashData.recentJournal || []);
-
-  // Upcoming
-  renderUpcoming(dashData.upcomingPlans || []);
-
-  // Market data from Twelve Data
+  // Loader independen — tetap jalan walau getDashboard gagal
   fetchMarketData();
-
-  // AI Coach (discipline + performance dari GAS, market coach dihitung dari trend live)
   loadAICoach();
-
-  // Trading Plan (dari sheet Trading_plan)
   loadTradingPlan();
-
-  // External sources sesuai flowchart
   fetchMarketNews('all');
   fetchEconCalendar();
   fetchMarketImpact();
@@ -1085,7 +1102,8 @@ async function loadTradingPlan() {
   const res = await gasGet('getTradingPlan');
   const el = document.getElementById('tradingPlanList');
   if (!el) return;
-  const rows = res.success ? (res.data||[]) : [];
+  if (!res.success) { el.innerHTML = `<div class="loading-state" style="color:var(--red);">⚠️ ${res.error||'Gagal load trading plan'}</div>`; return; }
+  const rows = res.data||[];
   if (!rows.length) { el.innerHTML = '<div class="loading-state">Belum ada trading plan.</div>'; return; }
   const statusClass = s => /progress/i.test(s) ? 'status-progress' : /complet/i.test(s) ? 'status-completed' : 'status-pending';
   el.innerHTML = rows.slice(0,6).map(r => `
