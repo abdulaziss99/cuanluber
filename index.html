@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>AGS — Analysis & Growth System</title>
 <link rel="manifest" href="manifest.json">
-<link rel="config" href="config.js>
 <meta name="theme-color" content="#0a0f0a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -248,29 +247,12 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
     <div class="logo-sub">Analysis & Growth System</div>
   </div>
   <nav class="sidebar-nav">
-    <a href="dashboard.html" class="nav-item active">
-    <span class="nav-icon">🏠</span> Dashboard
-</a>
-
-<a href="gold.html" class="nav-item">
-    <span class="nav-icon">🥇</span> Gold
-</a>
-
-<a href="saham.html" class="nav-item">
-    <span class="nav-icon">📈</span> Saham
-</a>
-
-<a href="journal.html" class="nav-item">
-    <span class="nav-icon">📝</span> Trading Journal
-</a>
-
-<a href="statistics.html" class="nav-item">
-    <span class="nav-icon">📊</span> Statistics
-</a>
-
-<a href="about.html" class="nav-item">
-    <span class="nav-icon">ℹ️</span> About
-</a>
+    <div class="nav-item active" data-page="dashboard"><span class="nav-icon">🏠</span> Dashboard</div>
+    <div class="nav-item" data-page="gold"><span class="nav-icon">🥇</span> Gold</div>
+    <div class="nav-item" data-page="saham"><span class="nav-icon">📈</span> Saham</div>
+    <div class="nav-item" data-page="journal"><span class="nav-icon">📋</span> Trading Journal</div>
+    <div class="nav-item" data-page="statistics"><span class="nav-icon">🥧</span> Statistics</div>
+    <div class="nav-item" data-page="about"><span class="nav-icon">ℹ️</span> About</div>
   </nav>
   <div class="sidebar-bottom">
     <div class="discipline-box">
@@ -424,34 +406,10 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
       </div>
     </div>
 
-    <!-- ===== GOLD PAGE ===== -->
-    <div class="page" id="page-gold">
-      <div style="font-size:16px;font-weight:800;margin-bottom:14px;">🥇 Gold Analysis (XAUUSD)</div>
-      <div class="card" style="min-height:600px;">
-        <div class="tradingview-widget-container" style="height:600px;">
-          <div class="tradingview-widget-container__widget" style="height:100%;"></div>
-          <script
-  src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js"
-  async
-  dangerouslySetInnerHTML={{
-    __html: JSON.stringify({
-      autosize: true,
-      symbol: "OANDA:XAUUSD",
-      interval: "15",
-      timezone: "Asia/Makassar",
-      theme: "dark",
-      style: "1",
-      locale: "id",
-      allow_symbol_change: true,
-      studies: [
-        "MASimple@tv-basicstudies",
-        "RSI@tv-basicstudies"
-      ]
-    })
-  }}
-/>
-        </div>
-      </div>
+    <!-- ===== GOLD PAGE — load AZIS GOLD SYSTEM v1.0 (gold.html) tanpa diubah ===== -->
+    <div class="page" id="page-gold" style="padding:0;">
+      <iframe src="gold.html" title="AZIS GOLD SYSTEM"
+        style="border:none; width:100%; min-height:calc(100vh - 90px); display:block; background:#0b0f17;"></iframe>
     </div>
 
     <!-- ===== SAHAM PAGE ===== -->
