@@ -235,45 +235,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
   .hamburger { display: flex !important; }
 }
 .hamburger { display: none; align-items: center; justify-content: center; width: 36px; height: 36px; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; cursor: pointer; font-size: 16px; }
-
-/* AI COACH */
-.coach-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
-.coach-box { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
-.coach-box-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.coach-box-title { font-size: 11.5px; font-weight: 700; }
-.coach-status { font-size: 9px; font-weight: 700; padding: 2px 9px; border-radius: 20px; white-space: nowrap; }
-.coach-line { font-size: 11px; color: var(--muted); padding: 3px 0; display: flex; gap: 6px; align-items: flex-start; line-height: 1.4; }
-.coach-line .ico { flex-shrink: 0; margin-top: 1px; }
-.coach-line.warn { color: var(--gold); }
-.coach-line.ok { color: var(--muted); }
-.coach-line b { color: var(--text); }
-@media (max-width: 900px) { .coach-grid { grid-template-columns: 1fr; } }
-
-/* TRADING PLAN */
-.plan-item { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 12.5px; }
-.plan-item:last-child { border-bottom: none; }
-.plan-status { font-size: 9.5px; font-weight: 700; padding: 2px 9px; border-radius: 20px; }
-.status-progress { background: rgba(59,130,246,.15); color: var(--blue); border: 1px solid rgba(59,130,246,.3); }
-.status-pending { background: rgba(240,180,41,.15); color: var(--gold); border: 1px solid rgba(240,180,41,.3); }
-.status-completed { background: rgba(34,197,94,.15); color: var(--green); border: 1px solid rgba(34,197,94,.3); }
-
-/* MARKET NEWS */
-.news-filters { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
-.news-filter-chip { font-size: 10.5px; padding: 3px 10px; border-radius: 20px; border: 1px solid var(--line); background: var(--panel2); color: var(--muted); cursor: pointer; }
-.news-filter-chip.active { background: rgba(34,197,94,.15); color: var(--green); border-color: rgba(34,197,94,.3); }
-.mnews-item { display: flex; align-items: flex-start; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 12px; }
-.mnews-item:last-child { border-bottom: none; }
-.mnews-badge { font-size: 9px; font-weight: 700; padding: 1px 7px; border-radius: 20px; flex-shrink: 0; margin-top: 2px; }
-.mnews-title { flex: 1; line-height: 1.4; }
-.mnews-meta { font-size: 10px; color: var(--muted); margin-top: 2px; }
-
-/* MARKET IMPACT (SENTIMENT) */
-.impact-item { display: flex; align-items: center; gap: 10px; padding: 7px 0; }
-.impact-label { width: 110px; font-size: 12px; flex-shrink: 0; }
-.impact-tag { width: 56px; font-size: 10px; font-weight: 700; flex-shrink: 0; }
-.impact-bar-wrap { flex: 1; height: 8px; background: var(--panel2); border-radius: 5px; overflow: hidden; }
-.impact-bar-fill { height: 100%; border-radius: 5px; }
-.impact-pct { width: 36px; text-align: right; font-family: var(--mono); font-size: 11px; font-weight: 700; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -320,12 +281,9 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
         <div class="sub">Focus, Plan, Execute, Review, Improve.</div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:14px;">
-      <button class="theme-btn" id="themeBtnTop" style="width:auto;">🌙 <span id="themeLabelTop">Dark</span></button>
-      <div class="topbar-right">
-        <div class="live-time" id="liveTime">--:--:--</div>
-        <div id="liveDate">--</div>
-      </div>
+    <div class="topbar-right">
+      <div class="live-time" id="liveTime">--:--:--</div>
+      <div id="liveDate">--</div>
     </div>
   </header>
 
@@ -340,17 +298,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
           <div class="card-title">🎯 Today's Mission</div>
           <div id="missionList"><div class="loading-state"><span class="spinner"></span> Loading...</div></div>
           <div class="mission-quote" id="missionQuote">Disiplin adalah kunci konsistensi.</div>
-        </div>
-
-        <!-- AI COACH -->
-        <div class="card">
-          <div class="card-title" style="justify-content:space-between;">
-            <span>🧠 AI Coach</span>
-            <span id="coachNewBadge" class="mission-badge badge-gold" style="display:none;">3 NEW</span>
-          </div>
-          <div class="coach-grid" id="aiCoachBoxes">
-            <div class="loading-state" style="grid-column:span 3;"><span class="spinner"></span> Loading...</div>
-          </div>
         </div>
 
         <!-- MARKET OVERVIEW -->
@@ -388,46 +335,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
             <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;" onclick="switchPage('journal')">View All</button>
           </div>
           <div id="recentJournal"><div class="loading-state"><span class="spinner"></span></div></div>
-        </div>
-
-        <!-- TRADING PLAN -->
-        <div class="card">
-          <div class="card-title" style="justify-content:space-between;">
-            <span>📝 Trading Plan</span>
-            <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;" onclick="switchPage('journal')">Lihat Semua</button>
-          </div>
-          <div id="tradingPlanList"><div class="loading-state"><span class="spinner"></span></div></div>
-        </div>
-
-        <!-- MARKET NEWS -->
-        <div class="card span-2">
-          <div class="card-title">📰 Market News <span style="color:var(--muted);font-weight:400;text-transform:none;font-size:10px;margin-left:4px;">Sumber: Finnhub + MarketAux</span></div>
-          <div class="news-filters" id="newsFilters">
-            <span class="news-filter-chip active" data-cat="all">All</span>
-            <span class="news-filter-chip" data-cat="forex">Gold</span>
-            <span class="news-filter-chip" data-cat="general">Indonesia</span>
-            <span class="news-filter-chip" data-cat="merger">Stock</span>
-            <span class="news-filter-chip" data-cat="crypto">Forex</span>
-          </div>
-          <div id="marketNewsList"><div class="loading-state"><span class="spinner"></span> Loading...</div></div>
-        </div>
-
-        <!-- TODAY'S MARKET AGENDA -->
-        <div class="card">
-          <div class="card-title" style="justify-content:space-between;">
-            <span>🗓️ Today's Market Agenda</span>
-            <span style="color:var(--muted);font-weight:400;text-transform:none;font-size:10px;">TradingEconomics</span>
-          </div>
-          <div id="marketAgenda"><div class="loading-state"><span class="spinner"></span></div></div>
-        </div>
-
-        <!-- MARKET IMPACT (SENTIMENT) -->
-        <div class="card">
-          <div class="card-title" style="justify-content:space-between;">
-            <span>📡 Market Impact <span title="Analisis sentimen dari berita terbaru" style="cursor:help;">ⓘ</span></span>
-            <span style="color:var(--muted);font-weight:400;text-transform:none;font-size:10px;">MarketAux AI</span>
-          </div>
-          <div id="marketImpact"><div class="loading-state"><span class="spinner"></span></div></div>
         </div>
 
         <!-- UPCOMING FOCUS -->
@@ -499,10 +406,17 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
       </div>
     </div>
 
-    <!-- ===== GOLD PAGE — load AZIS GOLD SYSTEM v1.0 (gold.html) tanpa diubah ===== -->
-    <div class="page" id="page-gold" style="padding:0;">
-      <iframe src="gold.html" title="AZIS GOLD SYSTEM"
-        style="border:none; width:100%; min-height:calc(100vh - 90px); display:block; background:#0b0f17;"></iframe>
+    <!-- ===== GOLD PAGE ===== -->
+    <div class="page" id="page-gold">
+      <div style="font-size:16px;font-weight:800;margin-bottom:14px;">🥇 Gold Analysis (XAUUSD)</div>
+      <div class="card" style="min-height:600px;">
+        <div class="tradingview-widget-container" style="height:600px;">
+          <div class="tradingview-widget-container__widget" style="height:100%;"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+          {"autosize":true,"symbol":"OANDA:XAUUSD","interval":"15","timezone":"Asia/Makassar","theme":"dark","style":"1","locale":"id","allow_symbol_change":true,"studies":["MASimple@tv-basicstudies","RSI@tv-basicstudies"],"support_host":"https://www.tradingview.com"}
+          </script>
+        </div>
+      </div>
     </div>
 
     <!-- ===== SAHAM PAGE ===== -->
@@ -633,8 +547,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">P/L (Point)</label>
-        <input class="form-input" id="f-pl" type="number">
+        <label class="form-label">P/L (Point) — Auto</label>
+        <input class="form-input" id="f-pl" type="number" readonly style="background:var(--panel);opacity:.8;cursor:not-allowed;" placeholder="Auto dari Entry & TP">
       </div>
       <div class="form-group">
         <label class="form-label">Emotion</label>
@@ -671,20 +585,10 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
 
 <script>
 // ================================================================
-// CONFIG — ganti dengan URL Apps Script kamu setelah deploy Code.gs
-// Spreadsheet: 1_6SdqHmcglIr2qA6LQnkQgBls66wRjkkLiN2xSEoync
-// Lihat instruksi deploy di bagian atas file Code.gs
+// CONFIG — ganti dengan URL Apps Script kamu setelah deploy
 // ================================================================
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxyquv5k4Pe47Dr21GDEyiLpGaLu6I5vhNE0rozQac6zOM1NlC7bqp379WnnTmKd-r4/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbw1ih4xLV8K1kSx9SmZ0x97Ee6bmNDKu_iZbWS_886YgrV4i7wJVO9QNGfjaA40ZMw/exec';
 const TD_KEY  = '5f52a74cd9f24b49a4729b5b8e599505';
-
-// ================================================================
-// EXTERNAL DATA SOURCES (sesuai flowchart) — isi key di bawah ini
-// Kosongkan ('') kalau belum punya -> otomatis fallback ke data mock
-// ================================================================
-const FINNHUB_KEY     = 'd91knkpr01qqfqkcnrngd91knkpr01qqfqkcnro0'; // https://finnhub.io/register
-const MARKETAUX_KEY   = 'PXpmSrBsqe9GLiJQHjJdSNRfTnKFoPD9z0ibBOEd'; // https://www.marketaux.com/account/dashboard
-const TE_KEY          = 'guest:guest'; // https://tradingeconomics.com/api/ (guest:guest = limited demo access)
 
 // ================================================================
 // STATE
@@ -705,10 +609,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('sidebar').classList.toggle('open');
   });
   document.getElementById('themeBtn').addEventListener('click', () => {
-    const cur = document.documentElement.getAttribute('data-theme');
-    applyTheme(cur === 'dark' ? 'light' : 'dark');
-  });
-  document.getElementById('themeBtnTop').addEventListener('click', () => {
     const cur = document.documentElement.getAttribute('data-theme');
     applyTheme(cur === 'dark' ? 'light' : 'dark');
   });
@@ -738,10 +638,6 @@ function applyTheme(t) {
   document.documentElement.setAttribute('data-theme', t);
   document.getElementById('themeLabel').textContent = t === 'dark' ? 'Dark' : 'Light';
   document.getElementById('themeBtn').firstChild.textContent = t === 'dark' ? '🌙 ' : '☀️ ';
-  const labelTop = document.getElementById('themeLabelTop');
-  const btnTop = document.getElementById('themeBtnTop');
-  if (labelTop) labelTop.textContent = t === 'dark' ? 'Dark' : 'Light';
-  if (btnTop) btnTop.firstChild.textContent = t === 'dark' ? '🌙 ' : '☀️ ';
   save('ags_theme', t);
 }
 
@@ -755,32 +651,30 @@ function getSaved(k) { try { return sessionStorage.getItem(k); } catch(e) { retu
 // API CALLS
 // ================================================================
 async function gasGet(action) {
-  if (GAS_URL === 'PASTE_YOUR_APPS_SCRIPT_URL_HERE') return getMockData(action);
   try {
-    const ctrl = new AbortController();
-    const timeout = setTimeout(() => ctrl.abort(), 15000);
-    const res = await fetch(`${GAS_URL}?action=${action}`, { signal: ctrl.signal });
-    clearTimeout(timeout);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    return await res.json();
-  } catch (err) {
-    console.error(`[gasGet] ${action} gagal:`, err);
-    return { success: false, error: err.message || 'Gagal terhubung ke Apps Script (cek GAS_URL / deployment)' };
+    const res = await fetch(`${GAS_URL}?action=${action}`);
+    const data = await res.json();
+    return data;
+  } catch(e) {
+    console.error('gasGet error:', e);
+    return getMockData(action);
   }
 }
 
 async function gasPost(body) {
-  if (GAS_URL === 'PASTE_YOUR_APPS_SCRIPT_URL_HERE') return { success: true, mock: true };
   try {
-    const ctrl = new AbortController();
-    const timeout = setTimeout(() => ctrl.abort(), 15000);
-    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(body), signal: ctrl.signal });
-    clearTimeout(timeout);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    return await res.json();
-  } catch (err) {
-    console.error('[gasPost] gagal:', err);
-    return { success: false, error: err.message || 'Gagal terhubung ke Apps Script (cek GAS_URL / deployment)' };
+    // Gunakan no-cors karena GAS tidak support CORS untuk POST dari browser
+    await fetch(GAS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(body)
+    });
+    // no-cors response selalu opaque — asumsikan sukses
+    return { success: true };
+  } catch(e) {
+    console.error('gasPost error:', e);
+    return { success: false, error: e.message };
   }
 }
 
@@ -817,26 +711,6 @@ function getMockData(action) {
   };
   if (action === 'getJournal') return { success: true, data: [] };
   if (action === 'getStats') return { success: true, data: { totalTrade:120, winRate:65, avgRR:1.68, profitFactor:1.72, wins:78, losses:36, equity:[], strategies:[], sessions:{} } };
-  if (action === 'getAICoach') return {
-    success: true,
-    data: {
-      discipline: { status:'Good', items: [
-        { type:'ok', text:'Kamu sudah disiplin. Risk 1% terjaga.' },
-        { type:'ok', text:'Pertahankan konsistensi!' },
-      ]},
-      performance: { status:'Win Rate 63%', items: [
-        { type:'ok', text:'Win Rate diperbaiki 63%' },
-        { type:'ok', text:'Fokus perbaiki R:R' },
-      ]},
-    }
-  };
-  if (action === 'getTradingPlan') return { success: true, data: [
-    { ID:'PLAN-001', Plan:'Analisa Gold London', Status:'In Progress' },
-    { ID:'PLAN-002', Plan:'Setup Buy XAUUSD', Status:'Pending' },
-    { ID:'PLAN-003', Plan:'Evaluasi Mingguan', Status:'Pending' },
-    { ID:'PLAN-004', Plan:'Saham Watchlist Review', Status:'Completed' },
-    { ID:'PLAN-005', Plan:'Jurnal & Statistik', Status:'In Progress' },
-  ]};
   return { success: true, data: [] };
 }
 
@@ -853,28 +727,26 @@ function getGreetingLocal() {
 // ================================================================
 async function loadDashboard() {
   const res = await gasGet('getDashboard');
+  if (!res.success) return;
+  dashData = res.data;
 
-  if (!res.success) {
-    const errMsg = `<div class="loading-state" style="color:var(--red);flex-direction:column;gap:4px;">⚠️ Gagal load data<br><span style="font-size:10px;color:var(--muted);">${res.error||''}</span></div>`;
-    document.getElementById('missionList').innerHTML = errMsg;
-    document.getElementById('recentJournal').innerHTML = errMsg;
-    document.getElementById('upcomingFocus').innerHTML = errMsg;
-  } else {
-    dashData = res.data;
-    document.getElementById('greeting').textContent = dashData.greeting || getGreetingLocal();
-    updateDiscipline(dashData.disciplineScore || 0);
-    renderMission(dashData.mission || []);
-    renderRecentJournal(dashData.recentJournal || []);
-    renderUpcoming(dashData.upcomingPlans || []);
-  }
+  // Greeting
+  document.getElementById('greeting').textContent = dashData.greeting || getGreetingLocal();
 
-  // Loader independen — tetap jalan walau getDashboard gagal
+  // Discipline
+  updateDiscipline(dashData.disciplineScore || 0);
+
+  // Mission
+  renderMission(dashData.mission || []);
+
+  // Recent Journal
+  renderRecentJournal(dashData.recentJournal || []);
+
+  // Upcoming
+  renderUpcoming(dashData.upcomingPlans || []);
+
+  // Market data from Twelve Data
   fetchMarketData();
-  loadAICoach();
-  loadTradingPlan();
-  fetchMarketNews('all');
-  fetchEconCalendar();
-  fetchMarketImpact();
 }
 
 // ================================================================
@@ -962,27 +834,60 @@ function renderUpcoming(plans) {
 // MARKET DATA (Twelve Data)
 // ================================================================
 async function fetchMarketData() {
-  await fetchMarket('XAU/USD', 'gold');
-  fetchMarket('JKSE', 'ihsg');   // FIX: simbol lama 'IDX/IDR' salah/tidak valid -> selalu gagal diam-diam
+  fetchMarket('XAU/USD', 'gold');
   fetchMarket('USD/IDR', 'usd');
-  loadAICoach(); // refresh Market Coach box sekarang trend gold sudah ada
+  fetchIHSG();
+}
+
+// IHSG pakai simbol ^JKSE via Twelve Data (exchange: IDX)
+async function fetchIHSG() {
+  const symbols = ['^JKSE', 'JKSE', 'IDX:COMPOSITE'];
+  for (const sym of symbols) {
+    try {
+      const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(sym)}&interval=1d&outputsize=5&apikey=${TD_KEY}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (!data.values || !data.values.length) continue;
+      const vals = [...data.values].reverse();
+      const price = parseFloat(vals[vals.length-1].close);
+      const open  = parseFloat(vals[0].open);
+      const chg   = price - open;
+      const chgPct = (chg/open*100).toFixed(2);
+      const closes = vals.map(v=>parseFloat(v.close));
+
+      const priceEl = document.getElementById('mkt-ihsg-price');
+      const chgEl   = document.getElementById('mkt-ihsg-chg');
+      const trendEl = document.getElementById('mkt-ihsg-trend');
+      if(priceEl) priceEl.textContent = price.toLocaleString('id-ID',{minimumFractionDigits:2,maximumFractionDigits:2});
+      if(chgEl){
+        chgEl.textContent = `${chg>=0?'+':''}${chg.toFixed(2)} (${chg>=0?'+':''}${chgPct}%)`;
+        chgEl.style.color = chg>=0?'var(--green)':'var(--red)';
+      }
+      const ema = closes.slice(-5).reduce((a,b)=>a+b,0)/Math.min(5,closes.length);
+      const trend = price > ema*1.001 ? 'BULLISH' : price < ema*0.999 ? 'BEARISH' : 'SIDEWAYS';
+      if(trendEl){
+        trendEl.textContent = trend;
+        trendEl.className = `market-trend ${trend==='BULLISH'?'trend-bull':trend==='BEARISH'?'trend-bear':'trend-side'}`;
+      }
+      drawSparkline('spark-ihsg', closes, chg>=0?'#22c55e':'#ef4444');
+      return; // sukses, stop loop
+    } catch(e) { continue; }
+  }
+  // Semua gagal — tampilkan label
+  const priceEl = document.getElementById('mkt-ihsg-price');
+  const chgEl   = document.getElementById('mkt-ihsg-chg');
+  const trendEl = document.getElementById('mkt-ihsg-trend');
+  if(priceEl) priceEl.textContent = 'N/A';
+  if(chgEl){ chgEl.textContent = 'Data tidak tersedia'; chgEl.style.color='var(--muted)'; }
+  if(trendEl){ trendEl.textContent = '—'; trendEl.className='market-trend trend-side'; }
 }
 
 async function fetchMarket(symbol, key) {
-  const priceEl = document.getElementById(`mkt-${key}-price`);
-  const chgEl   = document.getElementById(`mkt-${key}-chg`);
-  const trendEl = document.getElementById(`mkt-${key}-trend`);
   try {
     const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=1h&outputsize=24&apikey=${TD_KEY}`;
     const res = await fetch(url);
     const data = await res.json();
-    if (!data.values || !data.values.length) {
-      // FIX: dulu kalau gagal, UI dibiarkan kosong selamanya ("—"). Sekarang dikasih pesan jelas.
-      if (priceEl) priceEl.textContent = 'N/A';
-      if (chgEl) { chgEl.textContent = data.message || 'Data tidak tersedia di plan API ini'; chgEl.style.color = 'var(--muted)'; }
-      console.warn(`[fetchMarket] ${key} (${symbol}) gagal:`, data.message || data);
-      return;
-    }
+    if (!data.values) return;
     const vals = [...data.values].reverse();
     const price = parseFloat(vals[vals.length-1].close);
     const open  = parseFloat(vals[0].open);
@@ -990,6 +895,9 @@ async function fetchMarket(symbol, key) {
     const chgPct = (chg/open*100).toFixed(2);
     const closes = vals.map(v=>parseFloat(v.close));
 
+    const priceEl = document.getElementById(`mkt-${key}-price`);
+    const chgEl   = document.getElementById(`mkt-${key}-chg`);
+    const trendEl = document.getElementById(`mkt-${key}-trend`);
     if(priceEl) priceEl.textContent = price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
     if(chgEl) {
       chgEl.textContent = `${chg>=0?'+':''}${chg.toFixed(2)} (${chg>=0?'+':''}${chgPct}%)`;
@@ -1006,11 +914,7 @@ async function fetchMarket(symbol, key) {
 
     // Sparkline
     drawSparkline(`spark-${key}`, closes, chg>=0?'#22c55e':'#ef4444');
-  } catch(e) {
-    console.error(key, e);
-    if (priceEl) priceEl.textContent = 'Error';
-    if (chgEl) { chgEl.textContent = 'Gagal ambil data'; chgEl.style.color = 'var(--red)'; }
-  }
+  } catch(e) { console.error(key, e); }
 }
 
 function drawSparkline(id, data, color) {
@@ -1032,247 +936,6 @@ function drawSparkline(id, data, color) {
   // Fill
   ctx.lineTo(w,h); ctx.lineTo(0,h); ctx.closePath();
   ctx.fillStyle = color+'22'; ctx.fill();
-}
-
-// ================================================================
-// AI COACH — gabungan Discipline+Performance (GAS) & Market (live trend)
-// ================================================================
-async function loadAICoach() {
-  const res = await gasGet('getAICoach');
-  const box = document.getElementById('aiCoachBoxes');
-  if (!box) return;
-  const d = res.success ? res.data : { discipline:{status:'—',items:[]}, performance:{status:'—',items:[]} };
-
-  // Market Coach dihitung dari trend live (mkt-gold-trend sudah/akan terisi oleh fetchMarketData)
-  const marketCoach = computeMarketCoach_();
-
-  const statusColor = s => /watchout|improve/i.test(s) ? 'badge-gold' : /bad|bearish|loss/i.test(s) ? 'badge-red' : 'badge-green';
-  const renderItems = items => (items||[]).map(it => `
-    <div class="coach-line ${it.type==='warn'?'warn':'ok'}">
-      <span class="ico">${it.type==='warn'?'⚠️':'✓'}</span><span>${it.text}</span>
-    </div>`).join('') || '<div class="coach-line ok">Belum ada data.</div>';
-
-  box.innerHTML = `
-    <div class="coach-box">
-      <div class="coach-box-head">
-        <span class="coach-box-title">🧭 Discipline Coach</span>
-        <span class="mission-badge ${statusColor(d.discipline.status)}">${d.discipline.status}</span>
-      </div>
-      ${renderItems(d.discipline.items)}
-    </div>
-    <div class="coach-box">
-      <div class="coach-box-head">
-        <span class="coach-box-title">📈 Market Coach</span>
-        <span class="mission-badge ${statusColor(marketCoach.status)}">${marketCoach.status}</span>
-      </div>
-      ${renderItems(marketCoach.items)}
-    </div>
-    <div class="coach-box">
-      <div class="coach-box-head">
-        <span class="coach-box-title">🏆 Performance Coach</span>
-        <span class="mission-badge ${statusColor(d.performance.status)}">${d.performance.status}</span>
-      </div>
-      ${renderItems(d.performance.items)}
-    </div>`;
-}
-
-function computeMarketCoach_() {
-  const trendEl = document.getElementById('mkt-gold-trend');
-  const trend = trendEl ? trendEl.textContent.trim() : '';
-  if (!trend || trend === '—') {
-    return { status:'Loading', items: [{ type:'ok', text:'Menunggu data harga live...' }] };
-  }
-  const items = [];
-  if (trend === 'BULLISH') items.push({ type:'ok', text:'Gold di atas EMA50 (TradingView) → Bias: <b>Bullish</b>' });
-  else if (trend === 'BEARISH') items.push({ type:'ok', text:'Gold di bawah EMA50 (TradingView) → Bias: <b>Bearish</b>' });
-  else items.push({ type:'warn', text:'Gold sideways di sekitar EMA50 → Bias: <b>Netral</b>, tunggu konfirmasi.' });
-
-  const hasHighImpactSoon = (window.__econEvents||[]).some(ev => ev.Impact === 'High');
-  if (hasHighImpactSoon) items.push({ type:'warn', text:'Ada High Impact News hari ini → Saran: Hindari entry sebelum news.' });
-  else items.push({ type:'ok', text:'Tidak ada High Impact News besar dalam waktu dekat.' });
-
-  const status = trend === 'BULLISH' ? 'Bullish' : trend === 'BEARISH' ? 'Bearish' : 'Watchout';
-  return { status, items };
-}
-
-// ================================================================
-// TRADING PLAN
-// ================================================================
-async function loadTradingPlan() {
-  const res = await gasGet('getTradingPlan');
-  const el = document.getElementById('tradingPlanList');
-  if (!el) return;
-  if (!res.success) { el.innerHTML = `<div class="loading-state" style="color:var(--red);">⚠️ ${res.error||'Gagal load trading plan'}</div>`; return; }
-  const rows = res.data||[];
-  if (!rows.length) { el.innerHTML = '<div class="loading-state">Belum ada trading plan.</div>'; return; }
-  const statusClass = s => /progress/i.test(s) ? 'status-progress' : /complet/i.test(s) ? 'status-completed' : 'status-pending';
-  el.innerHTML = rows.slice(0,6).map(r => `
-    <div class="plan-item">
-      <span>${r.Plan || r.Name || '-'}</span>
-      <span class="plan-status ${statusClass(r.Status)}">${r.Status||'Pending'}</span>
-    </div>`).join('');
-}
-
-// ================================================================
-// MARKET NEWS — Finnhub (general/forex/merger/crypto category)
-// Fallback ke mock kalau FINNHUB_KEY kosong
-// ================================================================
-async function fetchMarketNews(category) {
-  const el = document.getElementById('marketNewsList');
-  if (!el) return;
-  el.innerHTML = '<div class="loading-state"><span class="spinner"></span> Loading...</div>';
-
-  if (!FINNHUB_KEY) {
-    el.innerHTML = renderMarketNews_(MOCK_NEWS);
-    return;
-  }
-  try {
-    const url = `https://finnhub.io/api/v1/news?category=${category==='all'?'general':category}&token=${FINNHUB_KEY}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    if (!Array.isArray(data) || !data.length) throw new Error('no data');
-    el.innerHTML = renderMarketNews_(data.slice(0,6).map(n => ({
-      title: n.headline, source: n.source, time: new Date(n.datetime*1000).toLocaleString('id-ID'),
-      sentiment: 'neutral'
-    })));
-  } catch(e) {
-    console.warn('Finnhub news error', e);
-    el.innerHTML = renderMarketNews_(MOCK_NEWS);
-  }
-}
-
-const MOCK_NEWS = [
-  { title:"Fed Chairman Powell: The Fed is not in a hurry to cut rates", source:'Gold', time:'1 jam lalu', sentiment:'bullish' },
-  { title:"US CPI Data Above Forecast, Inflation Pressure Remains", source:'Forex', time:'2 jam lalu', sentiment:'bearish' },
-  { title:"IHSG Dibuka Menguat, Sektor Bank Jadi Penggerak", source:'Indonesia', time:'3 jam lalu', sentiment:'neutral' },
-  { title:"BBCA Catat Laba Bersih Naik 12% di Kuartal II 2026", source:'Stock', time:'4 jam lalu', sentiment:'bullish' },
-  { title:"Gold Rebounds as Dollar Weakens Ahead of CPI Data", source:'Gold', time:'5 jam lalu', sentiment:'bullish' },
-];
-
-function renderMarketNews_(items) {
-  const badge = s => s==='bullish' ? 'badge-green' : s==='bearish' ? 'badge-red' : 'badge-gold';
-  return items.map(n => `
-    <div class="mnews-item">
-      <span class="mission-badge ${badge(n.sentiment)}">${(n.sentiment||'neutral').toUpperCase()}</span>
-      <div>
-        <div class="mnews-title">${n.title}</div>
-        <div class="mnews-meta">${n.source||''} · ${n.time||''}</div>
-      </div>
-    </div>`).join('');
-}
-
-document.addEventListener('click', e => {
-  const chip = e.target.closest('.news-filter-chip');
-  if (!chip) return;
-  document.querySelectorAll('.news-filter-chip').forEach(c => c.classList.remove('active'));
-  chip.classList.add('active');
-  fetchMarketNews(chip.dataset.cat);
-});
-
-// ================================================================
-// TODAY'S MARKET AGENDA — TradingEconomics economic calendar
-// Fallback ke mock kalau TE_KEY belum diisi key asli (masih guest:guest)
-// ================================================================
-window.__econEvents = [];
-async function fetchEconCalendar() {
-  const el = document.getElementById('marketAgenda');
-  if (!el) return;
-  el.innerHTML = '<div class="loading-state"><span class="spinner"></span></div>';
-  try {
-    const today = new Date().toISOString().slice(0,10);
-    const url = `https://api.tradingeconomics.com/calendar/country/all/${today}/${today}?c=${TE_KEY}&f=json`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('TE request failed (key ' + TE_KEY + ' mungkin terbatas)');
-    const data = await res.json();
-    if (!Array.isArray(data) || !data.length) throw new Error('no data');
-    const events = data.filter(d => d.Importance >= 2).slice(0,6).map(d => ({
-      Time: new Date(d.Date).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}),
-      Flag: '🌐', Name: d.Event, Impact: d.Importance===3?'High':'Medium'
-    }));
-    window.__econEvents = events;
-    renderAgenda_(events);
-  } catch(e) {
-    console.warn('TradingEconomics error (pakai data mock):', e.message);
-    const mock = [
-      { Time:'21:30', Flag:'🇺🇸', Name:'US CPI (MoM)', Impact:'High' },
-      { Time:'22:15', Flag:'🇺🇸', Name:'Fed Chair Powell Speaks', Impact:'High' },
-      { Time:'20:00', Flag:'🇺🇸', Name:'US Core PCE Price Index', Impact:'Medium' },
-      { Time:'09:00', Flag:'🇮🇩', Name:'IHSG Market Open', Impact:'Low' },
-      { Time:'14:20', Flag:'🇮🇩', Name:'BI Rate Decision', Impact:'Medium' },
-    ];
-    window.__econEvents = mock;
-    renderAgenda_(mock);
-  }
-}
-
-function renderAgenda_(events) {
-  const el = document.getElementById('marketAgenda');
-  if (!el) return;
-  if (!events.length) { el.innerHTML = '<div class="loading-state">Tidak ada event hari ini.</div>'; return; }
-  el.innerHTML = events.map(p => `
-    <div class="news-item">
-      <span class="news-time">${p.Time}</span>
-      <span class="news-flag">${p.Flag}</span>
-      <span class="news-name">${p.Name}</span>
-      <span class="news-impact ${p.Impact==='High'?'high':p.Impact==='Medium'?'med':'low'}"></span>
-      <span style="font-size:10px;color:var(--muted);">${p.Impact}</span>
-    </div>`).join('');
-}
-
-// ================================================================
-// MARKET IMPACT — sentiment dari MarketAux
-// Fallback ke mock kalau MARKETAUX_KEY kosong
-// ================================================================
-async function fetchMarketImpact() {
-  const el = document.getElementById('marketImpact');
-  if (!el) return;
-  el.innerHTML = '<div class="loading-state"><span class="spinner"></span></div>';
-
-  if (!MARKETAUX_KEY) { renderImpact_(MOCK_IMPACT); return; }
-  try {
-    const symbols = ['XAUUSD','USD','IHSG'];
-    const url = `https://api.marketaux.com/v1/news/all?symbols=${symbols.join(',')}&filter_entities=true&language=en&api_token=${MARKETAUX_KEY}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    if (!data.data || !data.data.length) throw new Error('no data');
-    // Agregasi sentiment_score per symbol dari entities
-    const agg = {};
-    data.data.forEach(article => {
-      (article.entities||[]).forEach(ent => {
-        if (!agg[ent.symbol]) agg[ent.symbol] = [];
-        if (typeof ent.sentiment_score === 'number') agg[ent.symbol].push(ent.sentiment_score);
-      });
-    });
-    const items = Object.keys(agg).map(sym => {
-      const avg = agg[sym].reduce((a,b)=>a+b,0)/agg[sym].length;
-      const pct = Math.round(((avg+1)/2)*100); // -1..1 -> 0..100
-      return { label: sym, pct, dir: avg>0.15?'Bullish':avg<-0.15?'Bearish':'Neutral' };
-    });
-    renderImpact_(items.length ? items : MOCK_IMPACT);
-  } catch(e) {
-    console.warn('MarketAux error (pakai data mock):', e);
-    renderImpact_(MOCK_IMPACT);
-  }
-}
-
-const MOCK_IMPACT = [
-  { label:'Gold (XAUUSD)', pct:85, dir:'Bullish' },
-  { label:'USD', pct:61, dir:'Bearish' },
-  { label:'IHSG', pct:42, dir:'Neutral' },
-  { label:'Saham Perbankan', pct:74, dir:'Bullish' },
-];
-
-function renderImpact_(items) {
-  const el = document.getElementById('marketImpact');
-  if (!el) return;
-  const color = dir => dir==='Bullish' ? 'var(--green)' : dir==='Bearish' ? 'var(--red)' : 'var(--gold)';
-  el.innerHTML = items.map(it => `
-    <div class="impact-item">
-      <span class="impact-label">${it.label}</span>
-      <span class="impact-tag" style="color:${color(it.dir)};">${it.dir}</span>
-      <div class="impact-bar-wrap"><div class="impact-bar-fill" style="width:${it.pct}%;background:${color(it.dir)};"></div></div>
-      <span class="impact-pct" style="color:${color(it.dir)};">${it.pct}%</span>
-    </div>`).join('') + '<div style="font-size:10px;color:var(--muted);margin-top:8px;">Analisis Sentimen dari MarketAux AI</div>';
 }
 
 // ================================================================
@@ -1381,10 +1044,11 @@ function openModal(type) {
   document.getElementById('modalTitle').textContent = 'New Journal Entry';
   document.getElementById('submitBtn').textContent = '💾 Save Entry';
   // Reset form
-  ['f-market','f-symbol','f-direction','f-timeframe','f-entry','f-sl','f-tp','f-risk','f-rr','f-result','f-pl','f-emotion','f-strategy','f-conf','f-lesson','f-notes'].forEach(id => {
+  ['f-market','f-symbol','f-direction','f-timeframe','f-entry','f-sl','f-tp','f-risk','f-rr','f-result','f-emotion','f-strategy','f-conf','f-lesson','f-notes'].forEach(id => {
     const el = document.getElementById(id);
     if(el) el.value = el.tagName==='SELECT'?el.options[0]?.value:id==='f-risk'?'1':id==='f-conf'?'75':'';
   });
+  document.getElementById('f-pl').value = '';
   document.getElementById('modalOverlay').classList.add('show');
 }
 
@@ -1439,7 +1103,7 @@ async function submitJournal() {
     } else {
       res = await gasPost({ action:'addJournal', data });
     }
-    if(res.success||res.mock) {
+    if(res.success) {
       showToast(editingId?'Journal diupdate! ✅':'Journal disimpan! ✅');
       closeModal();
       loadJournalPage();
@@ -1452,7 +1116,7 @@ async function submitJournal() {
 async function deleteJournal(id) {
   if(!confirm('Hapus journal '+id+'?')) return;
   const res = await gasPost({ action:'deleteJournal', id });
-  if(res.success||res.mock) { showToast('Journal dihapus!'); loadJournalPage(); }
+  if(res.success) { showToast('Journal dihapus!'); loadJournalPage(); }
   else showToast('Gagal menghapus', true);
 }
 
@@ -1502,8 +1166,39 @@ function loadSahamChart() {
 }
 
 // ================================================================
-// TOAST
+// AUTO P/L CALCULATOR di modal
 // ================================================================
+function calcAutoRR() {
+  const entry = parseFloat(document.getElementById('f-entry').value) || 0;
+  const sl    = parseFloat(document.getElementById('f-sl').value) || 0;
+  const tp    = parseFloat(document.getElementById('f-tp').value) || 0;
+  const dir   = document.getElementById('f-direction').value;
+
+  if (!entry || !tp) return;
+
+  // P/L dalam points (1 point = 0.1 untuk XAU, jadi *10)
+  let pl = 0;
+  if (dir === 'Buy') {
+    pl = (tp - entry) * 10;
+  } else {
+    pl = (entry - tp) * 10;
+  }
+  document.getElementById('f-pl').value = pl.toFixed(1);
+
+  // Auto RR
+  if (sl && entry) {
+    const slDist = Math.abs(entry - sl);
+    const tpDist = Math.abs(tp - entry);
+    const rr = slDist > 0 ? (tpDist / slDist).toFixed(2) : '';
+    document.getElementById('f-rr').value = rr;
+  }
+}
+
+// Pasang listener ke field entry, sl, tp, direction
+['f-entry','f-sl','f-tp','f-direction'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', calcAutoRR);
+});
 function showToast(msg, isError=false) {
   const t = document.getElementById('toast');
   t.textContent = msg;
