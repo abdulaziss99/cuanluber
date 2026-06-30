@@ -3,12 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>AZIS GOLD SYSTEM — AGS Lite</title>
+<title>ANALYSIS & GROWTH SYSTEM-v01</title>
 
 <!-- ===== ADD TO HOME SCREEN SETUP ===== -->
 <!-- Android (Chrome): pakai manifest.json -->
 <link rel="manifest" href="manifest.json">
-<link rel="config" href="config.js">
 <meta name="theme-color" content="#0b0f17">
 
 <!-- iPhone (Safari): pakai meta tags khusus Apple -->
@@ -238,7 +237,7 @@
     </div>
 
     <div class="card">
-      <h3>⭐ AI Score <span class="mock-tag" style="text-transform:none; font-size:9.5px;">(mock)</span></h3>
+      <h3>⭐ AI Score</h3>
       <div class="score-block">
         <div class="score-head"><span>BUY SCORE</span><span class="pct bull">82%</span></div>
         <div class="bar-track green" id="buyBar"></div>
@@ -455,6 +454,7 @@ document.getElementById('tabs').addEventListener('click', e=>{
 // ===== Buy/Sell segmented bars =====
 function buildBar(id, pct, total=20){
   const el = document.getElementById(id);
+  el.innerHTML = '';
   const on = Math.round((pct/100)*total);
   for(let i=0;i<total;i++){
     const s = document.createElement('div');
@@ -462,8 +462,11 @@ function buildBar(id, pct, total=20){
     el.appendChild(s);
   }
 }
-buildBar('buyBar', 82);
-buildBar('sellBar', 21);
+// Tampilan default sementara nunggu data live (biar gak blank)
+buildBar('buyBar', 0);
+buildBar('sellBar', 0);
+document.querySelector('#buyBar')?.closest('.score-block')?.querySelector('.pct')?.replaceChildren(document.createTextNode('—%'));
+document.querySelector('#sellBar')?.closest('.score-block')?.querySelector('.pct')?.replaceChildren(document.createTextNode('—%'));
 
 // ===== News countdown =====
 let secs = 45*60+20;
@@ -753,19 +756,44 @@ async function fetchAIAnalysis(){
     setAI('ai-vol',volOk?'✔':'✕',volOk?'YES':'LOW',volOk?'green':'red');
 
     // Scoring — tiap item live bernilai 1 poin
-    let score=0, total=0;
-    // Trend
-    if(isBull||isBear){total++;if(isBull)score++;}
-    // EMA
-    total++;if(aboveEMA)score++;
-    // RSI
-    total++;if(rsi<40)score++;else if(rsi<=60)score+=0.5;
-    // Volume
-    total++;if(volOk)score++;
-    // Mock items yg selalu partial
-    total+=4; score+=2; // OB, FVG, Liq, News (mock neutral)
+    // Scoring — dipisah jadi 2 arah: BUY score & SELL score
+    let bullScore=0, bearScore=0, totalEach=0;
 
-    const pct=Math.round((score/total)*100);
+    // Trend
+    totalEach++;
+    if(isBull) bullScore++;
+    if(isBear) bearScore++;
+
+    // EMA50
+    totalEach++;
+    if(aboveEMA) bullScore++; else bearScore++;
+
+    // RSI — oversold mendukung BUY, overbought mendukung SELL
+    totalEach++;
+    if(rsi<40) bullScore++;
+    else if(rsi>60) bearScore++;
+    else { bullScore+=0.5; bearScore+=0.5; }
+
+    // Volume confirmation — dukung arah trend yang lagi jalan
+    totalEach++;
+    if(volOk){ if(isBull) bullScore++; else if(isBear) bearScore++; else { bullScore+=0.5; bearScore+=0.5; } }
+    else { bullScore+=0.25; bearScore+=0.25; }
+
+    // Mock items (OB, FVG, Liquidity, News) — netral, separuh utk kedua arah
+    totalEach+=4; bullScore+=2; bearScore+=2;
+
+    const bullPct = Math.round((bullScore/totalEach)*100);
+    const bearPct = Math.round((bearScore/totalEach)*100);
+    const pct = Math.max(bullPct, bearPct);
+    const finalDir = bullPct >= bearPct ? 'buy' : 'sell';
+
+    buildBar('buyBar', bullPct);
+buildBar('sellBar', bearPct);
+const buyPctEl = document.querySelector('#buyBar')?.closest('.score-block')?.querySelector('.pct');
+const sellPctEl = document.querySelector('#sellBar')?.closest('.score-block')?.querySelector('.pct');
+if(buyPctEl) buyPctEl.textContent = bullPct + '%';
+if(sellPctEl) sellPctEl.textContent = bearPct + '%';
+
     const scoreEl=document.getElementById('ai-score-num');
     const barEl=document.getElementById('ai-score-bar');
     const labelEl=document.getElementById('ai-score-label');
@@ -776,14 +804,12 @@ async function fetchAIAnalysis(){
 
     if(pct>=75){
       if(labelEl){labelEl.textContent='High Probability Setup';labelEl.style.color='var(--green)';}
-      if(isBull){
-        if(recWord) recWord.textContent='BUY';
+      if(finalDir==='buy'){
+        if(recWord){recWord.textContent='BUY';recWord.style.color='var(--green)';}
         if(recSub) recSub.textContent='Conditions met for BUY entry. Confirm candle close.';
-        if(recWord) recWord.style.color='var(--green)';
       } else {
-        if(recWord) recWord.textContent='SELL';
+        if(recWord){recWord.textContent='SELL';recWord.style.color='var(--red)';}
         if(recSub) recSub.textContent='Conditions met for SELL entry. Confirm candle close.';
-        if(recWord) recWord.style.color='var(--red)';
       }
     } else if(pct>=50){
       if(labelEl){labelEl.textContent='Medium Probability Setup';labelEl.style.color='var(--gold)';}
@@ -937,11 +963,13 @@ async function fetchRCData(){
 }
 
 // input listeners
-['rc-balance','rc-risk','rc-dir','rc-atr-mult'].forEach(id=>{
+['rc-balance','rc-risk','rc-atr-mult'].forEach(id=>{
   const el=document.getElementById(id);
   if(el) el.addEventListener('input', updateRC);
 });
 
+const rcDirEl = document.getElementById('rc-dir');
+if(rcDirEl) rcDirEl.addEventListener('change', updateRC);
 fetchRCData();
 setInterval(fetchRCData, 5*60*1000); // refresh tiap 5 menit
 </script>
