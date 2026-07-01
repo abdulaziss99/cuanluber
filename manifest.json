@@ -1,25 +1,14 @@
 {
-  "name": "Analysis & Growth System",
-  "short_name": "AGS Lite",
-  "description": "Dashboard analisa trading XAUUSD - AGS Lite",
-  "start_url": "/trade/",
-  "scope": "/trade/",
+  "name": "AGS — Analysis & Growth System",
+  "short_name": "AGS",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#0b0f17",
-  "theme_color": "#0b0f17",
-  "orientation": "any",
+  "background_color": "#0a0f0a",
+  "theme_color": "#0a0f0a",
   "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }
