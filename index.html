@@ -72,7 +72,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
 .main { margin-left: var(--sidebar-w); flex: 1; min-height: 100vh; }
 .topbar {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 20px; border-bottom: 1px solid var(--line);
+  padding: calc(14px + env(safe-area-inset-top)) 20px 14px;
+  border-bottom: 1px solid var(--line);
   background: var(--sidebar); position: sticky; top: 0; z-index: 50;
 }
 .topbar-left .greeting { font-size: 18px; font-weight: 800; }
@@ -82,6 +83,11 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
 
 .content { padding: 16px 20px; }
 
+.sidebar-logo { 
+  padding: calc(20px + env(safe-area-inset-top)) 16px 16px; 
+  border-bottom: 1px solid var(--line); 
+}
+  
 /* CARDS */
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
 .card-title { font-size: 10px; text-transform: uppercase; letter-spacing: .8px; color: var(--green); font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
