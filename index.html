@@ -730,8 +730,12 @@ async function gasGet(action) {
   return res.json();
 }
 
+async function gasGet(action) {
+  const res = await fetch(`${GAS_URL}?action=${action}`);
+  return res.json();
+}
+
 async function gasPost(body) {
-  if (GAS_URL === 'https://script.google.com/macros/s/AKfycbw4P-m4vmDGPFPP2vju0cNUP6308bGEM2O03B3QxraoP-mYyDf0nhiQxXe8crdSDqOa/exec') return { success: true, mock: true };
   const res = await fetch(GAS_URL, {
     method: 'POST',
     body: JSON.stringify(body)
