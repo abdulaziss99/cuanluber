@@ -289,15 +289,16 @@
     </div>
 
     <div class="card">
-      <h3>⭐ AI Score <span class="mock-tag" style="text-transform:none; font-size:9.5px;">(mock)</span></h3>
+      <h3>⭐ AI Score</h3>
       <div class="score-block">
-        <div class="score-head"><span>BUY SCORE</span><span class="pct bull">82%</span></div>
+        <div class="score-head"><span>BUY SCORE</span><span class="pct bull" id="buyScorePct">—%</span></div>
         <div class="bar-track green" id="buyBar"></div>
       </div>
       <div class="score-block" style="margin-bottom:0;">
-        <div class="score-head"><span>SELL SCORE</span><span class="pct bear">21%</span></div>
+        <div class="score-head"><span>SELL SCORE</span><span class="pct bear" id="sellScorePct">—%</span></div>
         <div class="bar-track red" id="sellBar"></div>
       </div>
+      <div style="font-size:9px;color:var(--muted);margin-top:8px;font-family:var(--mono);" id="aiScoreUpdated"></div>
     </div>
 
     <div class="card">
@@ -310,10 +311,12 @@
     </div>
 
     <div class="card">
-      <h3>⏰ Next High Impact News</h3>
-      <div style="font-size:13px; font-weight:700; color:var(--red); margin-bottom:2px;">USD CPI (MoM)</div>
-      <div style="font-family:var(--mono); font-size:22px; font-weight:800; color:var(--gold);" id="newsTimer">00:45:20</div>
-      <div style="font-size:11px; color:var(--muted); margin-top:4px;">High Impact · 15 May 2024 19:30 (GMT+7)</div>
+      <h3>📅 Economic Calendar <span style="text-transform:none;font-size:9px;color:var(--muted);">· TradingView · US High Impact</span></h3>
+      <div id="tv_econ_calendar_container" style="min-height:360px;border-radius:8px;overflow:hidden;">
+        <div class="tradingview-widget-container" style="height:100%;width:100%">
+          <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+        </div>
+      </div>
     </div>
 
     <div class="card">
@@ -565,9 +568,11 @@ document.getElementById('tabs').addEventListener('click', e=>{
   }
 });
 
-// ===== Buy/Sell segmented bars =====
+// ===== Buy/Sell segmented bars (LIVE, computed in fetchAIAnalysis) =====
 function buildBar(id, pct, total=20){
   const el = document.getElementById(id);
+  if(!el) return;
+  el.innerHTML = '';
   const on = Math.round((pct/100)*total);
   for(let i=0;i<total;i++){
     const s = document.createElement('div');
@@ -575,18 +580,33 @@ function buildBar(id, pct, total=20){
     el.appendChild(s);
   }
 }
-buildBar('buyBar', 82);
-buildBar('sellBar', 21);
+buildBar('buyBar', 0);
+buildBar('sellBar', 0);
 
-// ===== News countdown =====
-let secs = 45*60+20;
-setInterval(()=>{
-  if(secs>0){ secs--; }
-  const h=String(Math.floor(secs/3600)).padStart(2,'0');
-  const m=String(Math.floor((secs%3600)/60)).padStart(2,'0');
-  const s=String(secs%60).padStart(2,'0');
-  document.getElementById('newsTimer').textContent = `${h}:${m}:${s}`;
-}, 1000);
+// ===================================================================
+// ECONOMIC CALENDAR — TradingView widget (no API key / no CORS issues)
+// FMP's economic-calendar endpoint returned "Restricted Endpoint" on the
+// free plan (confirmed), so we use TradingView's official free calendar
+// widget instead — same trusted source already used for the price chart.
+// ===================================================================
+function loadEconCalendar(theme){
+  const wrap = document.querySelector('#tv_econ_calendar_container .tradingview-widget-container__widget');
+  if(!wrap) return;
+  wrap.innerHTML = '';
+  const script = document.createElement('script');
+  script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-events.js';
+  script.async = true;
+  script.innerHTML = JSON.stringify({
+    "colorTheme": theme,
+    "isTransparent": true,
+    "width": "100%",
+    "height": "360",
+    "locale": "id",
+    "importanceFilter": "1",      // high impact only
+    "countryFilter": "us"          // XAUUSD digerakkan terutama oleh data USD
+  });
+  wrap.appendChild(script);
+}
 
 // ===================================================================
 // TRADINGVIEW WIDGET
@@ -650,6 +670,7 @@ function applyTheme(theme){
   themeToggleBtn.firstChild.textContent = theme === 'dark' ? '🌙 ' : '☀️ ';
   saveTheme(theme);
   loadTradingView(theme);
+  loadEconCalendar(theme);
 }
 
 themeToggleBtn.addEventListener('click', ()=>{
@@ -750,6 +771,23 @@ function calcEMA(closes, period){
   return ema;
 }
 
+function calcRSI(closes, period=14){
+  let gains=0, losses=0;
+  for(let i=1;i<=period;i++){
+    const diff = closes[i]-closes[i-1];
+    if(diff>=0) gains+=diff; else losses+=Math.abs(diff);
+  }
+  let avgGain=gains/period, avgLoss=losses/period;
+  for(let i=period+1;i<closes.length;i++){
+    const diff=closes[i]-closes[i-1];
+    avgGain=(avgGain*(period-1)+(diff>=0?diff:0))/period;
+    avgLoss=(avgLoss*(period-1)+(diff<0?Math.abs(diff):0))/period;
+  }
+  if(avgLoss===0) return 100;
+  const rs=avgGain/avgLoss;
+  return 100-(100/(1+rs));
+}
+
 function getTrend(closes){
   if(closes.length < 52) return {label:'NO DATA', cls:'neutral', arrow:'—'};
   const ema50 = calcEMA(closes, 50);
@@ -803,23 +841,6 @@ setInterval(fetchAllTrends, 5*60*1000);
 // LIVE AI ANALYSIS — Twelve Data (M15 candle)
 // Hitung: EMA50, RSI14, Volume Confirmation, lalu scoring otomatis
 // ===================================================================
-function calcRSI(closes, period=14){
-  let gains=0, losses=0;
-  for(let i=1;i<=period;i++){
-    const diff = closes[i]-closes[i-1];
-    if(diff>=0) gains+=diff; else losses+=Math.abs(diff);
-  }
-  let avgGain=gains/period, avgLoss=losses/period;
-  for(let i=period+1;i<closes.length;i++){
-    const diff=closes[i]-closes[i-1];
-    avgGain=(avgGain*(period-1)+(diff>=0?diff:0))/period;
-    avgLoss=(avgLoss*(period-1)+(diff<0?Math.abs(diff):0))/period;
-  }
-  if(avgLoss===0) return 100;
-  const rs=avgGain/avgLoss;
-  return 100-(100/(1+rs));
-}
-
 function setAI(id, icon, text, color){
   const el=document.getElementById(id);
   if(!el) return;
@@ -928,6 +949,37 @@ function detectLiquiditySweep(highs, lows, closes, bias){
   return {taken:false};
 }
 
+// Directional score used for the live AI Score card (Buy % / Sell %).
+// Runs the same rule set independently for a bullish and a bearish
+// hypothesis so both scores move on their own, based on real data.
+function scoreDirection(price, ema50, opens, highs, lows, closes, vols, bias){
+  let score = 0;
+  const trendOk = bias==='bull' ? price>ema50 : price<ema50;
+  if(trendOk) score += 20;
+
+  const struct = detectStructure(highs, lows, closes);
+  if(struct.dir===bias) score += (struct.type==='BOS' ? 15 : 8);
+
+  const ob = detectOrderBlock(opens, highs, lows, closes, bias);
+  if(ob.valid) score += (ob.mitigated ? 15 : 8);
+
+  const fvg = detectFVG(highs, lows, closes, bias);
+  if(fvg.found) score += (fvg.filled ? 10 : 5);
+
+  const liq = detectLiquiditySweep(highs, lows, closes, bias);
+  if(liq.taken) score += 10;
+
+  const rsi = calcRSI(closes, 14);
+  if(bias==='bull' && rsi>50) score += 10;
+  if(bias==='bear' && rsi<50) score += 10;
+
+  const avgVol = vols.slice(-21,-1).reduce((a,b)=>a+b,0)/20;
+  const lastVol = vols[vols.length-1];
+  if(lastVol > avgVol*1.05) score += 10;
+
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
 async function fetchAIAnalysis(){
   const url=`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(TD_SYMBOL)}&interval=15min&outputsize=100&apikey=${TD_KEY}`;
   try{
@@ -994,7 +1046,6 @@ async function fetchAIAnalysis(){
     total+=liqScore;
 
     // 6) EMA50 POSITION
-    const emaScore = aboveEMA ? 10 : (bias==='bear' ? 10 : 0);
     setMV('ema', aboveEMA?'▲ ABOVE':'▼ BELOW', 'ok', 10, 10);
     total+=10; // posisi EMA selalu konsisten dgn bias karena dipakai sbg acuan
 
@@ -1006,10 +1057,12 @@ async function fetchAIAnalysis(){
     setMV('vol', volOk?'▲ HIGH':'▽ NORMAL', volOk?'ok':'neutral', volScore, 10);
     total+=volScore;
 
-    // 8) NEWS FILTER — pakai countdown high-impact news yg sudah berjalan di halaman
-    const newsSoon = secs <= 30*60; // <=30 menit ke high impact news
-    const newsScore = newsSoon ? 0 : 10;
-    setMV('news', newsSoon?'⚠ HIGH IMPACT':'✔ CLEAR', newsSoon?'warn':'ok', newsScore, 10);
+    // 8) NEWS FILTER — dicek manual lewat widget Economic Calendar (TradingView)
+    // di sidebar; tanpa API kalender berbayar kita nggak bisa hitung otomatis
+    // "menit menuju rilis berikutnya", jadi skor ini netral & minta konfirmasi
+    // manual dari kalender di samping.
+    const newsScore = 10;
+    setMV('news', 'ⓘ CEK KALENDER', 'neutral', newsScore, 10);
     total+=newsScore;
 
     // 9) SESSION (informational, max skor 0 sesuai rule AGS)
@@ -1054,8 +1107,24 @@ async function fetchAIAnalysis(){
     if(fdWord){ fdWord.textContent=category.toUpperCase(); fdWord.style.color=barColor; }
     if(fdAction){ fdAction.textContent=actionWord; fdAction.style.color=actionColor; }
     if(fdSub) fdSub.textContent=subTxt;
-    if(fdIcon){ fdIcon.textContent=icon; fdIcon.style.color=actionColor; fdIcon.style.background=actionColor.replace('var(--','rgba(').replace(')','').length?'':''; fdIcon.style.background=actionColor+'22'; }
+    if(fdIcon){ fdIcon.textContent=icon; fdIcon.style.color=actionColor; fdIcon.style.background=actionColor+'22'; }
     if(fdBox) fdBox.style.borderColor=actionColor+'55';
+
+    // ===== LIVE AI SCORE (Buy % / Sell %) =====
+    const buyScore = scoreDirection(price, ema50, opens, highs, lows, closes, vols, 'bull');
+    const sellScore = scoreDirection(price, ema50, opens, highs, lows, closes, vols, 'bear');
+    buildBar('buyBar', buyScore);
+    buildBar('sellBar', sellScore);
+    const buyPctEl=document.getElementById('buyScorePct');
+    const sellPctEl=document.getElementById('sellScorePct');
+    if(buyPctEl) buyPctEl.textContent=buyScore+'%';
+    if(sellPctEl) sellPctEl.textContent=sellScore+'%';
+    const aiUpdEl=document.getElementById('aiScoreUpdated');
+    if(aiUpdEl){
+      const now=new Date();
+      const pad=n=>String(n).padStart(2,'0');
+      aiUpdEl.textContent=`Updated ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    }
 
   } catch(e){
     ['trend','structure','ob','fvg','liq','ema','vol','news'].forEach(k=>{
@@ -1173,7 +1242,6 @@ async function fetchRCData(){
     // Volume trend
     const avgVol20 = vols.slice(-21,-1).reduce((a,b)=>a+b,0)/20;
     const lastVol  = vols[vols.length-1];
-    const prev3Vol = vols.slice(-4,-1).reduce((a,b)=>a+b,0)/3;
     let volTrend, volTrendColor;
     if(lastVol > avgVol20*1.2){volTrend='INCREASING';volTrendColor='var(--green)';}
     else if(lastVol < avgVol20*0.8){volTrend='DECREASING';volTrendColor='var(--red)';}
