@@ -908,11 +908,50 @@ function renderUpcoming(plans) {
 // MARKET DATA (Twelve Data) — XAU/USD, USD/IDR, DXY
 // ================================================================
 async function fetchMarketData() {
-  await fetchMarket('XAU/USD', 'gold');
-  await sleep(2000);
-  await fetchMarket('USD/IDR', 'usd');
-  await sleep(2000);
-  await fetchMarket('DXY', 'dxy');
+  try {
+    const symbols = 'XAU/USD,USD/IDR,DXY';
+    const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbols)}&interval=1h&outputsize=24&apikey=${TD_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    processMarket(data['XAU/USD'], 'gold');
+    processMarket(data['USD/IDR'], 'usd');
+    processMarket(data['DXY'], 'dxy');
+  } catch(e) {
+    console.error('fetchMarketData', e);
+  }
+}
+
+function processMarket(d, key) {
+  const priceEl = document.getElementById(`mkt-${key}-price`);
+  const chgEl   = document.getElementById(`mkt-${key}-chg`);
+  const highEl  = document.getElementById(`mkt-${key}-high`);
+  const lowEl   = document.getElementById(`mkt-${key}-low`);
+  if (!d || !d.values || !d.values.length) {
+    if (priceEl) priceEl.textContent = 'N/A';
+    if (chgEl) { chgEl.textContent = (d && d.message) || 'Data tidak tersedia'; chgEl.style.color = 'var(--muted)'; }
+    return;
+  }
+  const vals = [...d.values].reverse();
+  const price = parseFloat(vals[vals.length-1].close);
+  const open  = parseFloat(vals[0].open);
+  const chg   = price - open;
+  const chgPct = (chg/open*100).toFixed(2);
+  const closes = vals.map(v=>parseFloat(v.close));
+  const highs  = vals.map(v=>parseFloat(v.high));
+  const lows   = vals.map(v=>parseFloat(v.low));
+  const dayHigh = Math.max(...highs), dayLow = Math.min(...lows);
+  const fmt = n => n >= 1000 ? n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : n.toFixed(2);
+
+  if(priceEl) priceEl.textContent = fmt(price);
+  if(chgEl) {
+    chgEl.textContent = `${chg>=0?'+':''}${chg.toFixed(2)} (${chg>=0?'+':''}${chgPct}%)`;
+    chgEl.style.color = chg>=0?'var(--green)':'var(--red)';
+  }
+  if(highEl) highEl.textContent = `High ${fmt(dayHigh)}`;
+  if(lowEl) lowEl.textContent = `Low ${fmt(dayLow)}`;
+  drawSparkline(`spark-${key}`, closes, chg>=0?'#22c55e':'#ef4444');
+  marketSnapshot[key] = { price, chg, chgPct: parseFloat(chgPct) };
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
@@ -976,24 +1015,24 @@ const IMPACT_INSTRUMENTS = [
 ];
 
 async function fetchMarketImpact() {
-  const el = document.getElementById('marketImpact');
-  const toFetch = IMPACT_INSTRUMENTS.filter(i => !marketSnapshot[i.key]);
-  for (const i of toFetch) {
-    try {
-      const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(i.symbol)}&interval=1h&outputsize=24&apikey=${TD_KEY}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      if (data.values && data.values.length) {
-        const vals = [...data.values].reverse();
+  try {
+    const symbols = 'XAU/USD,USD/IDR,DXY,WTI/USD,IHSG';
+    const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbols)}&interval=1h&outputsize=24&apikey=${TD_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const map = { gold:'XAU/USD', usd:'USD/IDR', dxy:'DXY', oil:'WTI/USD', ihsg:'IHSG' };
+    Object.keys(map).forEach(key => {
+      const d = data[map[key]];
+      if (d && d.values && d.values.length) {
+        const vals = [...d.values].reverse();
         const price = parseFloat(vals[vals.length-1].close);
         const open  = parseFloat(vals[0].open);
         const chg   = price - open;
         const chgPct = parseFloat((chg/open*100).toFixed(2));
-        marketSnapshot[i.key] = { price, chg, chgPct };
+        marketSnapshot[key] = { price, chg, chgPct };
       }
-    } catch(e) { console.error('impact', i.key, e); }
-    await sleep(2000);
-  }
+    });
+  } catch(e) { console.error('fetchMarketImpact', e); }
   renderMarketImpact();
 }
 
