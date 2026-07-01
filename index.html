@@ -908,10 +908,14 @@ function renderUpcoming(plans) {
 // MARKET DATA (Twelve Data) — XAU/USD, USD/IDR, DXY
 // ================================================================
 async function fetchMarketData() {
-  fetchMarket('XAU/USD', 'gold');
-  fetchMarket('USD/IDR', 'usd');
-  fetchMarket('DXY', 'dxy');
+  await fetchMarket('XAU/USD', 'gold');
+  await sleep(2000);
+  await fetchMarket('USD/IDR', 'usd');
+  await sleep(2000);
+  await fetchMarket('DXY', 'dxy');
 }
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 async function fetchMarket(symbol, key) {
   const priceEl = document.getElementById(`mkt-${key}-price`);
@@ -973,21 +977,23 @@ const IMPACT_INSTRUMENTS = [
 
 async function fetchMarketImpact() {
   const el = document.getElementById('marketImpact');
-  // ambil instrumen yang belum ada datanya (oil & ihsg belum diambil oleh fetchMarketData)
-  await Promise.all(IMPACT_INSTRUMENTS.filter(i => !marketSnapshot[i.key]).map(async i => {
+  const toFetch = IMPACT_INSTRUMENTS.filter(i => !marketSnapshot[i.key]);
+  for (const i of toFetch) {
     try {
       const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(i.symbol)}&interval=1h&outputsize=24&apikey=${TD_KEY}`;
       const res = await fetch(url);
       const data = await res.json();
-      if (!data.values || !data.values.length) return;
-      const vals = [...data.values].reverse();
-      const price = parseFloat(vals[vals.length-1].close);
-      const open  = parseFloat(vals[0].open);
-      const chg   = price - open;
-      const chgPct = parseFloat((chg/open*100).toFixed(2));
-      marketSnapshot[i.key] = { price, chg, chgPct };
+      if (data.values && data.values.length) {
+        const vals = [...data.values].reverse();
+        const price = parseFloat(vals[vals.length-1].close);
+        const open  = parseFloat(vals[0].open);
+        const chg   = price - open;
+        const chgPct = parseFloat((chg/open*100).toFixed(2));
+        marketSnapshot[i.key] = { price, chg, chgPct };
+      }
     } catch(e) { console.error('impact', i.key, e); }
-  }));
+    await sleep(2000);
+  }
   renderMarketImpact();
 }
 
