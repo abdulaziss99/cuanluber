@@ -374,15 +374,15 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
                 <canvas class="mkt-mini-spark" id="spark-usd"></canvas>
               </div>
               <div class="mkt-mini">
-                <div class="mkt-mini-icon">🌐</div>
+                <div class="mkt-mini-icon">💰</div>
                 <div class="mkt-mini-body">
-                  <div class="mkt-mini-label">DXY</div>
-                  <div class="mkt-mini-sub">US Dollar Index</div>
-                  <div class="mkt-mini-price" id="mkt-dxy-price">—</div>
-                  <div class="mkt-mini-chg" id="mkt-dxy-chg">—</div>
-                  <div class="mkt-mini-range"><span id="mkt-dxy-high">High —</span><span id="mkt-dxy-low">Low —</span></div>
+                  <div class="mkt-mini-label">EMAS (IDR)</div>
+                  <div class="mkt-mini-sub">Harga emas per gram, estimasi</div>
+                  <div class="mkt-mini-price" id="mkt-goldidr-price">—</div>
+                  <div class="mkt-mini-chg" id="mkt-goldidr-chg">—</div>
+                  <div class="mkt-mini-range"><span id="mkt-goldidr-high">High —</span><span id="mkt-goldidr-low">Low —</span></div>
                 </div>
-                <canvas class="mkt-mini-spark" id="spark-dxy"></canvas>
+                <canvas class="mkt-mini-spark" id="spark-goldidr"></canvas>
               </div>
             </div>
           </div>
@@ -398,13 +398,13 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
           <div id="globalNews" class="news-card-list"><div class="loading-state"><span class="spinner"></span> Loading...</div></div>
         </div>
 
-        <!-- BERITA INDONESIA (Bisnis.com) -->
+        <!-- BERITA INDONESIA (Bloomberg Technoz) -->
         <div class="card">
           <div class="card-title-row">
-            <div class="card-title" style="margin-bottom:0;">🇮🇩 Berita Indonesia (Bisnis.com)</div>
+            <div class="card-title" style="margin-bottom:0;">🇮🇩 Berita Indonesia (Bloomberg Technoz)</div>
             <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;" onclick="fetchIndonesiaNews()">Refresh</button>
           </div>
-          <div class="card-source-sub">Sumber: Bisnis.com</div>
+          <div class="card-source-sub">Sumber: Bloomberg Technoz (live, ambil langsung dari web)</div>
           <div id="indoNews" class="news-card-list"><div class="loading-state"><span class="spinner"></span> Loading...</div></div>
         </div>
       </div>
@@ -418,6 +418,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
             <div class="card-title" style="margin-bottom:0;">📰 Market News (Combined)</div>
             <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;" onclick="fetchCombinedNews()">Refresh</button>
           </div>
+          <div class="card-source-sub">Sumber: CNBC Indonesia (live, ambil langsung dari web)</div>
           <div class="news-tabs" id="newsTabs">
             <span class="news-tab active" data-cat="" onclick="filterCombinedNews('',this)">Semua</span>
             <span class="news-tab" data-cat="gold" onclick="filterCombinedNews('gold',this)">Gold</span>
@@ -660,8 +661,8 @@ const GAS_URL = 'PASTE_YOUR_APPS_SCRIPT_URL_HERE';
 const TD_KEY  = '5f52a74cd9f24b49a4729b5b8e599505';
 const NEWSDATA_KEY = 'pub_47e6cda858f64a87b264b4a8aa6a031b';
 
-// cache untuk kombinasi berita (global + indonesia)
-let newsCache = { global: [], indo: [] };
+// cache untuk berita
+let newsCache = { global: [], indo: [], combined: [] };
 
 // ================================================================
 // STATE
@@ -802,12 +803,13 @@ async function loadDashboard() {
   // Recent Journal
   renderRecentJournal(dashData.recentJournal || []);
 
-  // Market data from Twelve Data (Gold, USD/IDR, DXY)
+  // Market data from Twelve Data (Gold, USD/IDR, + Emas dalam Rupiah turunan)
   fetchMarketData();
 
   // News & impact
   fetchGlobalNews();
   fetchIndonesiaNews();
+  fetchCombinedNews();
   fetchMarketImpact();
 }
 
@@ -893,12 +895,51 @@ function renderUpcoming(plans) {
 }
 
 // ================================================================
-// MARKET DATA (Twelve Data) — XAU/USD, USD/IDR, DXY
+// MARKET DATA (Twelve Data) — XAU/USD, USD/IDR, + Emas dalam Rupiah (turunan)
 // ================================================================
 async function fetchMarketData() {
-  fetchMarket('XAU/USD', 'gold');
-  fetchMarket('USD/IDR', 'usd');
-  fetchMarket('DXY', 'dxy');
+  await Promise.all([
+    fetchMarket('XAU/USD', 'gold'),
+    fetchMarket('USD/IDR', 'usd')
+  ]);
+  computeGoldIDR();
+}
+
+// Emas (IDR)/gram — turunan dari XAU/USD * USD/IDR, dikonversi troy ounce -> gram (1 troy oz = 31.1034768 g)
+function computeGoldIDR() {
+  const priceEl = document.getElementById('mkt-goldidr-price');
+  const chgEl   = document.getElementById('mkt-goldidr-chg');
+  const highEl  = document.getElementById('mkt-goldidr-high');
+  const lowEl   = document.getElementById('mkt-goldidr-low');
+  const gold = marketSnapshot.gold, usd = marketSnapshot.usd;
+  if (!gold || !usd || !gold.closes || !usd.closes) {
+    if (priceEl) priceEl.textContent = 'N/A';
+    if (chgEl) { chgEl.textContent = 'Menunggu data Gold & USD/IDR'; chgEl.style.color = 'var(--muted)'; }
+    return;
+  }
+  const GRAM_PER_OZ = 31.1034768;
+  const fmtIDR = n => 'Rp' + Math.round(n).toLocaleString('id-ID');
+
+  // seri harga emas per gram (IDR) dari perkalian dua seri closes (dipotong ke panjang terpendek)
+  const len = Math.min(gold.closes.length, usd.closes.length);
+  const series = [];
+  for (let i = 0; i < len; i++) {
+    series.push((gold.closes[i] / GRAM_PER_OZ) * usd.closes[i]);
+  }
+  const priceNow = series[series.length - 1];
+  const priceOpen = series[0];
+  const chg = priceNow - priceOpen;
+  const chgPct = (chg / priceOpen * 100).toFixed(2);
+  const dayHigh = Math.max(...series), dayLow = Math.min(...series);
+
+  if (priceEl) priceEl.textContent = fmtIDR(priceNow);
+  if (chgEl) {
+    chgEl.textContent = `${chg>=0?'+':''}${fmtIDR(chg)} (${chg>=0?'+':''}${chgPct}%)`;
+    chgEl.style.color = chg>=0?'var(--green)':'var(--red)';
+  }
+  if (highEl) highEl.textContent = `High ${fmtIDR(dayHigh)}`;
+  if (lowEl) lowEl.textContent = `Low ${fmtIDR(dayLow)}`;
+  drawSparkline('spark-goldidr', series, chg>=0?'#22c55e':'#ef4444');
 }
 
 async function fetchMarket(symbol, key) {
@@ -938,8 +979,8 @@ async function fetchMarket(symbol, key) {
     // Sparkline
     drawSparkline(`spark-${key}`, closes, chg>=0?'#22c55e':'#ef4444');
 
-    // simpan untuk Market Impact
-    marketSnapshot[key] = { price, chg, chgPct: parseFloat(chgPct) };
+    // simpan untuk Market Impact & turunan (Gold IDR)
+    marketSnapshot[key] = { price, chg, chgPct: parseFloat(chgPct), closes, dayHigh, dayLow };
   } catch(e) {
     console.error(key, e);
     if (priceEl) priceEl.textContent = 'Error';
@@ -951,19 +992,42 @@ async function fetchMarket(symbol, key) {
 // MARKET IMPACT — bias dihitung dari data harga real-time (Twelve Data)
 // ================================================================
 let marketSnapshot = {};
+// Catatan: Coal, Oil (WTI), dan IHSG TIDAK tersedia di paket gratis Twelve Data
+// (butuh plan berbayar / simbol tidak dikenali -> selalu N/A). Jadi 3 instrumen ini
+// diambil dari Yahoo Finance (gratis, via CORS proxy) alih-alih Twelve Data.
 const IMPACT_INSTRUMENTS = [
-  { key: 'gold',  symbol: 'XAU/USD', label: 'Gold (XAUUSD)', icon: '🥇', iconBg: 'rgba(240,180,41,.18)' },
-  { key: 'usd',   symbol: 'USD/IDR', label: 'USD/IDR',       icon: '💵', iconBg: 'rgba(59,130,246,.18)' },
-  { key: 'dxy',   symbol: 'DXY',     label: 'USD (DXY)',     icon: '🌐', iconBg: 'rgba(239,68,68,.18)' },
-  { key: 'oil',   symbol: 'WTI/USD', label: 'Oil (WTI)',     icon: '🛢️', iconBg: 'rgba(239,68,68,.18)' },
-  { key: 'ihsg',  symbol: 'IHSG',    label: 'IHSG',          icon: '🏢', iconBg: 'rgba(240,180,41,.18)' },
+  { key: 'gold',  symbol: 'XAU/USD', label: 'Gold (XAUUSD)',       icon: '🥇', iconBg: 'rgba(240,180,41,.18)', source: 'td' },
+  { key: 'usd',   symbol: 'USD/IDR', label: 'USD/IDR',             icon: '💵', iconBg: 'rgba(59,130,246,.18)', source: 'td' },
+  { key: 'coal',  symbol: 'MTF=F',   label: 'Coal (Newcastle)',    icon: '⚫', iconBg: 'rgba(107,127,107,.2)', source: 'yahoo' },
+  { key: 'oil',   symbol: 'CL=F',    label: 'Oil (WTI)',           icon: '🛢️', iconBg: 'rgba(239,68,68,.18)', source: 'yahoo' },
+  { key: 'ihsg',  symbol: '^JKSE',   label: 'IDX Composite (ICI)', icon: '🏢', iconBg: 'rgba(240,180,41,.18)', source: 'yahoo' },
 ];
 
+// Ambil quote dari Yahoo Finance (gratis, tanpa API key) lewat CORS proxy yang sama
+// dipakai untuk scraping berita (allorigins). Dipakai untuk Coal, Oil (WTI), IHSG.
+async function fetchYahooQuote(symbol) {
+  const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5d`;
+  const res = await fetch(CORS_PROXY + encodeURIComponent(yahooUrl));
+  if (!res.ok) throw new Error(`Yahoo Finance HTTP ${res.status}`);
+  const data = await res.json();
+  const result = data?.chart?.result?.[0];
+  const meta = result?.meta;
+  if (!meta || meta.regularMarketPrice == null) throw new Error('Yahoo Finance: data tidak tersedia untuk ' + symbol);
+  const price = meta.regularMarketPrice;
+  const prevClose = meta.chartPreviousClose ?? meta.previousClose ?? price;
+  const chg = price - prevClose;
+  const chgPct = prevClose ? parseFloat((chg/prevClose*100).toFixed(2)) : 0;
+  return { price, chg, chgPct };
+}
+
 async function fetchMarketImpact() {
-  const el = document.getElementById('marketImpact');
-  // ambil instrumen yang belum ada datanya (oil & ihsg belum diambil oleh fetchMarketData)
+  // ambil instrumen yang belum ada datanya (oil, coal & ihsg belum diambil oleh fetchMarketData)
   await Promise.all(IMPACT_INSTRUMENTS.filter(i => !marketSnapshot[i.key]).map(async i => {
     try {
+      if (i.source === 'yahoo') {
+        marketSnapshot[i.key] = await fetchYahooQuote(i.symbol);
+        return;
+      }
       const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(i.symbol)}&interval=1h&outputsize=24&apikey=${TD_KEY}`;
       const res = await fetch(url);
       const data = await res.json();
@@ -1006,7 +1070,10 @@ function renderMarketImpact() {
 }
 
 // ================================================================
-// NEWS — NewsData.io (Global Market News) & Bisnis.com (Berita Indonesia)
+// NEWS — NewsData.io
+// Global Market News: query umum (en)
+// Berita Indonesia: domain Bloomberg Technoz (bloombergtechnoz.com)
+// Market News (Combined): domain CNBC Indonesia (cnbcindonesia.com)
 // ================================================================
 const NEWS_TAG_COLOR = {
   business: { bg:'rgba(34,197,94,.15)', c:'var(--green)' },
@@ -1039,9 +1106,9 @@ function renderNewsList(elId, items, emptyMsg) {
     <div class="news-row">
       ${n.image_url ? `<img class="news-thumb" src="${n.image_url}" onerror="this.style.display='none'" />` : ''}
       <div class="news-row-body">
-        <div class="news-row-title">${n.title || ''}</div>
+        <div class="news-row-title">${n.link ? `<a href="${n.link}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none;">${n.title || ''}</a>` : (n.title || '')}</div>
         <div class="news-row-meta">
-          <span>${n.source_id || n.source || ''}</span><span>•</span><span>${timeAgo(n.pubDate)}</span>
+          <span>${n.source_id || n.source || ''}</span>${n.pubDate ? `<span>•</span><span>${timeAgo(n.pubDate)}</span>` : ''}
         </div>
       </div>
       ${n.category && n.category[0] ? `<span class="news-row-tag" style="${tagStyle(n.category[0])}">${n.category[0]}</span>` : ''}
@@ -1058,35 +1125,126 @@ async function fetchGlobalNews() {
     if (data.status !== 'success') throw new Error(data.message || 'NewsData error');
     newsCache.global = (data.results || []).slice(0, 8);
     renderNewsList('globalNews', newsCache.global, 'Tidak ada berita global.');
-    fetchCombinedNews();
   } catch(e) {
     console.error('globalNews', e);
     document.getElementById('globalNews').innerHTML = '<div class="loading-state">Gagal memuat berita global.</div>';
   }
 }
 
-async function fetchIndonesiaNews() {
-  document.getElementById('indoNews').innerHTML = '<div class="loading-state"><span class="spinner"></span> Loading...</div>';
+// ================================================================
+// LIVE SCRAPING — Bloomberg Technoz & CNBC Indonesia
+// (NewsData.io tidak meng-index domain ini, jadi kita ambil langsung
+// dari halaman beritanya. Dicoba lewat 2 metode berurutan supaya lebih tahan
+// banting: 1) r.jina.ai reader (convert halaman ke markdown bersih — lebih
+// stabil untuk situs berat/JS-heavy), 2) fallback ke
+// CORS proxy + parsing DOM mentah kalau metode pertama gagal.
+// ================================================================
+const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+const JINA_READER = 'https://r.jina.ai/';
+
+// Metode 1: r.jina.ai — return markdown bersih berisi baris [Judul](URL)
+async function scrapeViaJinaReader(pageUrl, sourceLabel, linkPattern, limit) {
+  const res = await fetch(JINA_READER + pageUrl);
+  if (!res.ok) throw new Error(`Jina reader HTTP ${res.status}`);
+  const text = await res.text();
+  if (!text || text.length < 200) throw new Error('Jina reader mengembalikan konten kosong.');
+  const re = /\[([^\[\]]{10,160})\]\((https?:\/\/[^\s)]+)\)/g;
+  const seen = new Set();
+  const items = [];
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    const title = m[1].trim().replace(/\s+/g, ' ');
+    const link = m[2].trim();
+    if (!linkPattern.test(link)) continue;
+    if (seen.has(link)) continue;
+    if (/^(image|foto|photo)\s*[:\-]/i.test(title)) continue;
+    seen.add(link);
+    items.push({ title, link, image_url: '', source_id: sourceLabel, pubDate: '' });
+    if (items.length >= limit) break;
+  }
+  if (!items.length) throw new Error('Jina reader: tidak ada judul+link yang cocok pola.');
+  return items;
+}
+
+// Metode 2 (fallback): CORS proxy + parsing anchor DOM mentah
+async function scrapeViaDomProxy(pageUrl, sourceLabel, linkPattern, limit) {
+  const proxied = CORS_PROXY + encodeURIComponent(pageUrl);
+  const res = await fetch(proxied);
+  if (!res.ok) throw new Error(`HTTP ${res.status} saat mengambil ${pageUrl} (lewat proxy)`);
+  const html = await res.text();
+  if (!html || html.length < 200) throw new Error('Proxy mengembalikan halaman kosong, coba refresh lagi.');
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const anchors = Array.from(doc.querySelectorAll('a[href]'));
+  const seen = new Set();
+  const items = [];
+  for (const a of anchors) {
+    let href = a.getAttribute('href') || '';
+    if (!href) continue;
+    try { href = new URL(href, pageUrl).href; } catch(e) { continue; }
+    if (!linkPattern.test(href)) continue;
+    if (seen.has(href)) continue;
+    const img = a.querySelector('img');
+    let title = (a.textContent || '').trim().replace(/\s+/g, ' ');
+    if (img) {
+      const alt = (img.getAttribute('alt') || '').trim();
+      if (alt && title.startsWith(alt)) title = title.slice(alt.length).trim();
+    }
+    if (!title || title.length < 8) continue;
+    seen.add(href);
+    items.push({
+      title,
+      link: href,
+      image_url: img ? (img.getAttribute('src') || img.getAttribute('data-src') || '') : '',
+      source_id: sourceLabel,
+      pubDate: ''
+    });
+    if (items.length >= limit) break;
+  }
+  if (!items.length) throw new Error('Tidak ada artikel yang berhasil di-parse (kemungkinan struktur halaman berubah atau diblokir proxy).');
+  return items;
+}
+
+async function scrapeSiteHeadlines(pageUrl, sourceLabel, linkPattern, limit = 10) {
   try {
-    const url = `https://newsdata.io/api/1/latest?apikey=${NEWSDATA_KEY}&domain=bisnis&language=id`;
-    const res = await fetch(url);
-    const data = await res.json();
-    if (data.status !== 'success') throw new Error(data.message || 'NewsData error');
-    newsCache.indo = (data.results || []).slice(0, 8);
-    renderNewsList('indoNews', newsCache.indo, 'Tidak ada berita dari Bisnis.com.');
-    fetchCombinedNews();
-  } catch(e) {
-    console.error('indoNews', e);
-    document.getElementById('indoNews').innerHTML = '<div class="loading-state">Gagal memuat berita Indonesia.</div>';
+    return await scrapeViaJinaReader(pageUrl, sourceLabel, linkPattern, limit);
+  } catch(e1) {
+    console.warn(`[scrape] Jina reader gagal untuk ${sourceLabel}:`, e1.message);
+    try {
+      return await scrapeViaDomProxy(pageUrl, sourceLabel, linkPattern, limit);
+    } catch(e2) {
+      console.warn(`[scrape] DOM proxy juga gagal untuk ${sourceLabel}:`, e2.message);
+      throw new Error(`${e1.message} | ${e2.message}`);
+    }
   }
 }
 
-function fetchCombinedNews() {
-  const all = [...newsCache.global, ...newsCache.indo]
-    .sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate));
-  window._combinedNewsAll = all;
-  filterCombinedNews(window._combinedNewsActiveCat || '', document.querySelector('.news-tab.active'));
+// Berita Indonesia — sumber: Bloomberg Technoz (live scrape, bukan via NewsData.io)
+async function fetchIndonesiaNews() {
+  document.getElementById('indoNews').innerHTML = '<div class="loading-state"><span class="spinner"></span> Loading...</div>';
+  try {
+    const items = await scrapeSiteHeadlines('https://www.bloombergtechnoz.com/', 'Bloomberg Technoz', /\/detail-news\/\d+\//, 8);
+    newsCache.indo = items;
+    renderNewsList('indoNews', items, 'Tidak ada berita dari Bloomberg Technoz.');
+  } catch(e) {
+    console.error('indoNews', e);
+    document.getElementById('indoNews').innerHTML = `<div class="loading-state" style="color:var(--red);">Gagal memuat berita Bloomberg Technoz.<br><span style="font-size:10px;color:var(--muted);word-break:break-all;">${e.message || ''}</span></div>`;
+  }
 }
+
+// Market News (Combined) — sumber: CNBC Indonesia (live scrape, bukan via NewsData.io)
+async function fetchCombinedNews() {
+  document.getElementById('combinedNews').innerHTML = '<div class="loading-state"><span class="spinner"></span> Loading...</div>';
+  try {
+    const items = await scrapeSiteHeadlines('https://www.cnbcindonesia.com/market', 'CNBC Indonesia', /cnbcindonesia\.com\/market\/\d{14}-\d+-\d+\//, 15);
+    newsCache.combined = items;
+    window._combinedNewsAll = items;
+    filterCombinedNews(window._combinedNewsActiveCat || '', document.querySelector('.news-tab.active'));
+  } catch(e) {
+    console.error('combinedNews', e);
+    document.getElementById('combinedNews').innerHTML = `<div class="loading-state" style="color:var(--red);">Gagal memuat berita CNBC Indonesia.<br><span style="font-size:10px;color:var(--muted);word-break:break-all;">${e.message || ''}</span></div>`;
+  }
+}
+
 
 function filterCombinedNews(cat, tabEl) {
   window._combinedNewsActiveCat = cat;
