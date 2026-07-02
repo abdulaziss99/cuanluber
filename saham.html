@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>AGS — Saham Dashboard</title>
+<meta name="theme-color" content="#0a0f0a">
+<style>
+:root {
+  --bg: #0a0f0a; --sidebar: #0d130d; --panel: #111a11; --panel2: #0e160e; --line: #1e2d1e;
+  --green: #22c55e; --green2: #16a34a; --gold: #f0b429; --red: #ef4444; --blue: #3b82f6;
+  --text: #e2ede2; --muted: #6b7f6b;
+  --mono: 'JetBrains Mono','SF Mono',Consolas,monospace; --sans: 'Inter',-apple-system,sans-serif;
+  --sidebar-w: 220px;
+}
+html[data-theme="light"] {
+  --bg: #f0f7f0; --sidebar: #e8f5e8; --panel: #ffffff;
+  --panel2: #f0f7f0; --line: #d0e8d0; --text: #1a2e1a; --muted: #5a7a5a;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); display: flex; min-height: 100vh; }
+
+/* SIDEBAR */
+.sidebar { width: var(--sidebar-w); background: var(--sidebar); border-right: 1px solid var(--line); display: flex; flex-direction: column; position: fixed; top:0; left:0; height:100vh; z-index:100; transition: transform .3s; }
+.sidebar-logo { padding: 20px 16px 16px; border-bottom: 1px solid var(--line); }
+.sidebar-logo .logo-icon { font-size: 26px; margin-bottom: 4px; }
+.sidebar-logo .logo-name { font-size: 17px; font-weight: 800; color: var(--green); letter-spacing:.5px; }
+.sidebar-logo .logo-sub { font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 1px; }
+.sidebar-nav { flex: 1; padding: 12px 8px; overflow-y: auto; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; cursor:pointer; font-size:13.5px; font-weight:500; color:var(--muted); margin-bottom:2px; transition:.15s; border:1px solid transparent; }
+.nav-item:hover { background: var(--panel2); color: var(--text); }
+.nav-item.active { background: rgba(34,197,94,.12); color: var(--green); border-color: rgba(34,197,94,.3); font-weight:700; }
+.nav-item.soon { opacity: .55; }
+.nav-item .nav-icon { font-size:16px; width:20px; text-align:center; }
+.nav-soon-tag { margin-left:auto; font-size:8.5px; color:var(--muted); border:1px solid var(--line); padding:1px 5px; border-radius:20px; }
+.sidebar-bottom { padding: 12px 8px; border-top: 1px solid var(--line); display:flex; flex-direction:column; gap:10px; }
+.status-box { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 11.5px; }
+.status-box .status-label { font-size: 9.5px; color: var(--muted); margin-bottom: 4px; }
+.status-dot { width:7px; height:7px; border-radius:50%; display:inline-block; margin-right:6px; }
+.theme-btn { display:flex; align-items:center; gap:8px; width:100%; background:var(--panel2); border:1px solid var(--line); color:var(--muted); padding:8px 12px; border-radius:8px; cursor:pointer; font-size:12px; font-family:var(--sans); }
+.user-box { display:flex; align-items:center; gap:8px; font-size:12px; padding: 2px 2px; }
+.user-avatar { width:28px; height:28px; border-radius:50%; background:var(--green); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; flex-shrink:0; }
+.user-box .u-sub { font-size:10px; color:var(--muted); }
+
+/* MAIN */
+.main { margin-left: var(--sidebar-w); flex: 1; min-height: 100vh; }
+.topbar { display:flex; align-items:center; justify-content:space-between; padding: calc(14px + env(safe-area-inset-top)) 20px 14px; border-bottom:1px solid var(--line); background:var(--sidebar); position: sticky; top:0; z-index:50; }
+.topbar-left .greeting { font-size:18px; font-weight:800; }
+.topbar-left .sub { font-size:12px; color:var(--muted); margin-top:2px; }
+.topbar-right { text-align:right; font-size:12px; color:var(--muted); font-family:var(--mono); }
+.topbar-right .live-time { font-size:15px; font-weight:700; color:var(--text); }
+.content { padding: 16px 20px; }
+.hamburger { display:none; align-items:center; justify-content:center; width:36px; height:36px; background:var(--panel2); border:1px solid var(--line); border-radius:8px; cursor:pointer; font-size:16px; }
+
+/* CARDS */
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+.card-title { font-size: 10px; text-transform: uppercase; letter-spacing:.8px; color: var(--green); font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+.card-title-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+.card-source-sub { font-size: 9.5px; color: var(--muted); margin: -6px 0 8px; }
+.mb-14 { margin-bottom: 14px; }
+.btn { display:inline-flex; align-items:center; gap:6px; padding:9px 18px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; transition:.15s; border:none; font-family:var(--sans); }
+.btn-ghost { background: var(--panel2); border:1px solid var(--line); color:var(--muted); }
+.btn-ghost:hover { color: var(--text); }
+.spinner { display:inline-block; width:16px; height:16px; border:2px solid var(--line); border-top-color:var(--green); border-radius:50%; animation:spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-state { display:flex; align-items:center; justify-content:center; gap:8px; padding:30px; color:var(--muted); font-size:13px; }
+
+/* GRID */
+.saham-top { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; align-items: start; }
+.saham-mid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-top: 14px; align-items: start; }
+@media (max-width: 1200px) {
+  .saham-top { grid-template-columns: 1fr; }
+  .saham-mid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 900px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; }
+  .hamburger { display: flex !important; }
+  .saham-mid { grid-template-columns: 1fr; }
+}
+
+/* IHSG OVERVIEW */
+.ihsg-price-row { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+.ihsg-price { font-size: 30px; font-weight: 800; font-family: var(--mono); }
+.ihsg-chg { font-size: 14px; font-weight: 700; }
+.ihsg-meta { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.tf-row { display:flex; gap:6px; margin: 10px 0 8px; flex-wrap: wrap; }
+.tf-btn { font-size: 11px; padding: 5px 11px; border-radius: 8px; cursor: pointer; color: var(--muted); border: 1px solid var(--line); background: var(--panel2); font-family: var(--sans); font-weight:600; }
+.tf-btn.active { background: rgba(34,197,94,.15); color: var(--green); border-color: rgba(34,197,94,.3); }
+.ihsg-chart-wrap { width: 100%; height: 220px; position: relative; }
+.ihsg-chart-wrap canvas { width: 100%; height: 100%; }
+.breadth-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 12px; }
+.breadth-item { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; text-align: center; }
+.breadth-num { font-size: 15px; font-weight: 800; font-family: var(--mono); }
+.breadth-label { font-size: 9px; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: .4px; }
+.data-note { font-size: 10px; color: var(--muted); margin-top: 10px; background: rgba(240,180,41,.06); border: 1px solid rgba(240,180,41,.25); border-radius: 8px; padding: 6px 10px; }
+.data-note b { color: var(--gold); }
+
+/* NEWS LIST */
+.news-card-list { display: flex; flex-direction: column; }
+.news-row { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.news-row:last-child { border-bottom: none; }
+.news-thumb { width: 52px; height: 52px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: var(--panel2); }
+.news-row-body { flex: 1; min-width: 0; }
+.news-row-title { font-size: 12.5px; font-weight: 700; line-height: 1.35; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.news-row-meta { font-size: 10.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.news-row-tag { font-size: 9.5px; font-weight: 700; padding: 2px 8px; border-radius: 20px; flex-shrink: 0; height: fit-content; background: rgba(34,197,94,.15); color: var(--green); }
+
+/* TABLE */
+.tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+.tbl th { color: var(--muted); font-weight: 600; text-align: left; padding: 6px 6px; font-size: 10px; letter-spacing: .5px; border-bottom: 1px solid var(--line); }
+.tbl td { padding: 7px 6px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tr:hover td { background: var(--panel2); }
+.sym-icon { width: 22px; height: 22px; border-radius: 6px; background: var(--green); display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #fff; margin-right: 6px; flex-shrink:0; }
+.up { color: var(--green); font-family: var(--mono); font-weight: 700; }
+.down { color: var(--red); font-family: var(--mono); font-weight: 700; }
+.flat { color: var(--gold); font-family: var(--mono); font-weight: 700; }
+
+/* TABS */
+.tabs-row { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+.tab-btn { font-size: 11px; padding: 5px 11px; border-radius: 20px; cursor: pointer; color: var(--muted); border: 1px solid var(--line); background: var(--panel2); font-weight: 600; }
+.tab-btn.active { background: rgba(34,197,94,.15); color: var(--green); border-color: rgba(34,197,94,.3); }
+
+/* SECTOR PERFORMANCE */
+.sector-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 12px; }
+.sector-name { width: 88px; flex-shrink: 0; color: var(--muted); }
+.sector-bar-bg { flex: 1; height: 7px; border-radius: 4px; background: var(--line); overflow: hidden; position: relative; }
+.sector-bar-fill { height: 100%; border-radius: 4px; }
+.sector-val { width: 54px; text-align: right; font-family: var(--mono); font-weight: 700; font-size: 11px; }
+
+/* FOREIGN FLOW */
+.ff-stat-row { display: flex; gap: 10px; margin-bottom: 10px; }
+.ff-stat { flex: 1; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.ff-stat-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+.ff-stat-val { font-size: 14px; font-weight: 800; font-family: var(--mono); margin-top: 2px; }
+.ff-list-title { font-size: 10px; color: var(--muted); font-weight: 700; margin: 8px 0 4px; text-transform: uppercase; letter-spacing: .4px; }
+.ff-row { display: flex; justify-content: space-between; font-size: 11.5px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+.ff-row:last-child { border-bottom: none; }
+
+/* CORPORATE ACTION */
+.ca-group { margin-bottom: 10px; }
+.ca-group:last-child { margin-bottom: 0; }
+.ca-group-title { font-size: 11px; font-weight: 700; margin-bottom: 5px; display:flex; align-items:center; gap:6px; }
+.ca-item { display: flex; justify-content: space-between; font-size: 11.5px; padding: 3px 0; color: var(--muted); }
+.ca-item b { color: var(--text); font-weight: 700; }
+
+/* HEATMAP */
+.heatmap-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.heat-tile { border-radius: 8px; padding: 8px 6px; text-align: center; color: #fff; }
+.heat-tile .h-sym { font-size: 11px; font-weight: 800; }
+.heat-tile .h-chg { font-size: 10px; font-weight: 700; margin-top: 2px; }
+.heat-legend { display: flex; justify-content: space-between; font-size: 9px; color: var(--muted); margin-top: 8px; }
+
+/* SENTIMENT DONUT */
+.sentiment-wrap { display: flex; flex-direction: column; align-items: center; padding: 4px 0 2px; }
+.sentiment-pct { font-size: 26px; font-weight: 800; font-family: var(--mono); margin-top: -58px; }
+.sentiment-label { font-size: 11px; color: var(--muted); margin-top: 42px; }
+.sentiment-legend { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; width: 100%; margin-top: 10px; }
+.sent-chip { text-align: center; border: 1px solid var(--line); border-radius: 8px; padding: 6px 4px; }
+.sent-chip .sc-num { font-size: 12px; font-weight: 800; font-family: var(--mono); }
+.sent-chip .sc-lab { font-size: 8.5px; color: var(--muted); }
+
+/* WATCHLIST empty */
+.wl-empty { font-size: 12px; color: var(--muted); text-align: center; padding: 16px 0; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">📊</div>
+    <div class="logo-name">AGS</div>
+    <div class="logo-sub">Saham Dashboard</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-item" data-nav="dashboard"><span class="nav-icon">🏠</span> Dashboard</div>
+    <div class="nav-item" data-nav="gold"><span class="nav-icon">🥇</span> Gold</div>
+    <div class="nav-item active" data-nav="saham"><span class="nav-icon">📈</span> Saham</div>
+    <div class="nav-item" data-nav="journal"><span class="nav-icon">📋</span> Trading Journal</div>
+    <div class="nav-item" data-nav="statistics"><span class="nav-icon">🥧</span> Statistics</div>
+    <div class="nav-item soon" data-soon="Calendar"><span class="nav-icon">🗓️</span> Calendar <span class="nav-soon-tag">soon</span></div>
+    <div class="nav-item soon" data-soon="Screener"><span class="nav-icon">🔎</span> Screener <span class="nav-soon-tag">soon</span></div>
+    <div class="nav-item soon" data-soon="Alerts"><span class="nav-icon">🔔</span> Alerts <span class="nav-soon-tag">soon</span></div>
+    <div class="nav-item" data-nav="about"><span class="nav-icon">ℹ️</span> About</div>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="status-box">
+      <div class="status-label">Market Status</div>
+      <div id="marketStatus"><span class="status-dot" style="background:var(--muted);"></span>Checking...</div>
+      <div style="color:var(--muted);margin-top:2px;">09:05 – 15:49 WIB</div>
+    </div>
+    <button class="theme-btn" id="themeBtn">🌙 <span id="themeLabel">Dark</span></button>
+    <div class="user-box">
+      <div class="user-avatar">A</div>
+      <div><div>Azis</div><div class="u-sub">Premium Member</div></div>
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="hamburger" id="hamburger">☰</div>
+      <div class="topbar-left">
+        <div class="greeting" id="greeting">Good Morning, Azis 👋</div>
+        <div class="sub">Saham Analysis — IDX Composite & Watchlist</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-time" id="liveTime">--:--:--</div>
+      <div id="liveDate">--</div>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- ===== TOP ROW: IHSG OVERVIEW + MARKET NEWS ===== -->
+    <div class="saham-top">
+      <div class="card">
+        <div class="card-title-row">
+          <div class="card-title" style="margin-bottom:0;">📈 Market Overview (IHSG)</div>
+          <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;" onclick="loadIhsg(currentTf)">Refresh</button>
+        </div>
+        <div class="card-source-sub">Sumber: Yahoo Finance (^JKSE), live</div>
+
+        <div class="ihsg-price-row">
+          <div class="ihsg-price" id="ihsgPrice">—</div>
+          <div class="ihsg-chg" id="ihsgChg">—</div>
+        </div>
+        <div class="ihsg-meta" id="ihsgMeta">Memuat data IHSG...</div>
+
+        <div class="tf-row" id="tfRow">
+          <span class="tf-btn active" data-tf="1D">1D</span>
+          <span class="tf-btn" data-tf="1W">1W</span>
+          <span class="tf-btn" data-tf="1M">1M</span>
+          <span class="tf-btn" data-tf="3M">3M</span>
+          <span class="tf-btn" data-tf="1Y">1Y</span>
+          <span class="tf-btn" data-tf="YTD">YTD</span>
+          <span class="tf-btn" data-tf="All">All</span>
+        </div>
+
+        <div class="ihsg-chart-wrap"><canvas id="ihsgChart"></canvas></div>
+
+        <div class="breadth-row">
+          <div class="breadth-item"><div class="breadth-num" id="brAdv" style="color:var(--green);">—</div><div class="breadth-label">Advancers</div></div>
+          <div class="breadth-item"><div class="breadth-num" id="brDec" style="color:var(--red);">—</div><div class="breadth-label">Decliners</div></div>
+          <div class="breadth-item"><div class="breadth-num" id="brUnc" style="color:var(--gold);">—</div><div class="breadth-label">Unchanged</div></div>
+          <div class="breadth-item"><div class="breadth-num" id="brVol">—</div><div class="breadth-label">Volume</div></div>
+          <div class="breadth-item"><div class="breadth-num" id="brVal">—</div><div class="breadth-label">Value</div></div>
+          <div class="breadth-item"><div class="breadth-num" id="brFf" style="color:var(--green);">—</div><div class="breadth-label">Foreign Net Buy</div></div>
+        </div>
+        <div class="data-note"><b>Catatan:</b> harga & chart IHSG live dari Yahoo Finance. Advancers/Decliners, Volume, Value &amp; Foreign Net Buy belum ada sumber gratis real-time — nilai di bawah ini indikatif, sambungkan ke AGS Backend Server (lihat flowchart, endpoint <code>/api/market/overview</code>) untuk data resmi IDX.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title-row">
+          <div class="card-title" style="margin-bottom:0;">📰 Market News Indonesia</div>
+          <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;" onclick="fetchSahamNews()">Refresh</button>
+        </div>
+        <div class="card-source-sub">Sumber: NewsData.io (query: IHSG / bursa saham)</div>
+        <div id="sahamNews" class="news-card-list"><div class="loading-state"><span class="spinner"></span> Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- ===== MID ROW 1: TOP MOVERS / SECTOR / FOREIGN FLOW / CORP ACTION ===== -->
+    <div class="saham-mid">
+      <div class="card">
+        <div class="card-title">🚀 Top Movers</div>
+        <div class="tabs-row">
+          <span class="tab-btn active" data-mv="gainers" onclick="switchMovers('gainers',this)">Top Gainers</span>
+          <span class="tab-btn" data-mv="losers" onclick="switchMovers('losers',this)">Top Losers</span>
+          <span class="tab-btn" data-mv="active" onclick="switchMovers('active',this)">Most Active</span>
+        </div>
+        <div id="topMovers"><div class="loading-state"><span class="spinner"></span></div></div>
+        <div class="data-note">Dihitung live dari basket ~18 saham likuid (Yahoo Finance), bukan seluruh IDX.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🏭 Sector Performance</div>
+        <div id="sectorPerf"><div class="loading-state"><span class="spinner"></span></div></div>
+        <div class="data-note">Estimasi dari rata-rata saham representatif per sektor, bukan indeks sektor resmi IDX.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">💱 Foreign Flow (IDX)</div>
+        <div id="foreignFlow"><div class="loading-state"><span class="spinner"></span></div></div>
+        <div class="data-note">Data placeholder — perlu feed resmi IDX/KSEI. Sambungkan endpoint <code>/api/market/foreign-flow</code>.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title-row">
+          <div class="card-title" style="margin-bottom:0;">🏢 Corporate Action</div>
+        </div>
+        <div id="corpAction"><div class="loading-state"><span class="spinner"></span></div></div>
+        <div class="data-note">Data placeholder — sambungkan endpoint <code>/api/corporate-action</code> (IDX Corporate Action API).</div>
+      </div>
+    </div>
+
+    <!-- ===== MID ROW 2: WATCHLIST / HEATMAP / SENTIMENT / EARNINGS ===== -->
+    <div class="saham-mid">
+      <div class="card">
+        <div class="card-title-row">
+          <div class="card-title" style="margin-bottom:0;">⭐ Watchlist Saya</div>
+        </div>
+        <div id="watchlist"><div class="loading-state"><span class="spinner"></span></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🔥 Heatmap IHSG</div>
+        <div id="heatmap" class="heatmap-grid"><div class="loading-state"><span class="spinner"></span></div></div>
+        <div class="heat-legend"><span>🟩 &gt; +2%</span><span>🟨 -0.5% – +2%</span><span>🟥 &lt; -0.5%</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title-row">
+          <div class="card-title" style="margin-bottom:0;">🤖 AI Market Sentiment</div>
+          <span style="font-size:10px;color:var(--muted);cursor:help;" title="Skor dihitung dari rata-rata pergerakan basket saham live">ⓘ</span>
+        </div>
+        <div class="sentiment-wrap">
+          <svg width="150" height="90" viewBox="0 0 150 90" id="sentDonut"></svg>
+          <div class="sentiment-pct" id="sentPct">—</div>
+          <div class="sentiment-label" id="sentLabel">Menghitung...</div>
+          <div class="sentiment-legend">
+            <div class="sent-chip"><div class="sc-num" id="sentBull" style="color:var(--green);">—</div><div class="sc-lab">BULLISH</div></div>
+            <div class="sent-chip"><div class="sc-num" id="sentNeu" style="color:var(--gold);">—</div><div class="sc-lab">NEUTRAL</div></div>
+            <div class="sent-chip"><div class="sc-num" id="sentBear" style="color:var(--red);">—</div><div class="sc-lab">BEARISH</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title-row">
+          <div class="card-title" style="margin-bottom:0;">🗓️ Earnings Calendar</div>
+        </div>
+        <div class="tabs-row" id="earnTabs">
+          <span class="tab-btn active" data-ed="0" onclick="switchEarnings(0,this)">Hari Ini</span>
+          <span class="tab-btn" data-ed="1" onclick="switchEarnings(1,this)">Besok</span>
+          <span class="tab-btn" data-ed="7" onclick="switchEarnings(7,this)">7 Hari</span>
+        </div>
+        <div id="earnCal"><div class="loading-state"><span class="spinner"></span></div></div>
+        <div class="data-note">Data placeholder — sambungkan endpoint <code>/api/earnings-calendar</code>.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ================================================================
+// CONFIG — API key dipakai dari ekosistem AGS yang sama (index.html).
+// SAHAM_API_URL: placeholder untuk AGS Backend Server sesuai flowchart
+// (Market/Stock/Corporate Action/News/Analytics Service). Isi kalau
+// backend-nya sudah di-deploy; selama masih placeholder, bagian yang
+// butuh data resmi IDX (breadth, foreign flow, corporate action,
+// earnings) memakai data indikatif/placeholder yang ditandai jelas.
+// ================================================================
+const SAHAM_API_URL = 'PASTE_YOUR_AGS_BACKEND_URL_HERE';
+const NEWSDATA_KEY = 'pub_47e6cda858f64a87b264b4a8aa6a031b';
+const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+
+// Basket saham likuid yang dipakai untuk Top Movers / Sector / Heatmap / Watchlist / Sentiment
+// (real quotes dari Yahoo Finance — bukan seluruh IDX, tapi representatif & live)
+const STOCK_UNIVERSE = [
+  { sym:'BBCA', yahoo:'BBCA.JK', name:'Bank Central Asia',    sector:'Finance' },
+  { sym:'BBRI', yahoo:'BBRI.JK', name:'Bank Rakyat Indonesia',sector:'Finance' },
+  { sym:'BMRI', yahoo:'BMRI.JK', name:'Bank Mandiri',         sector:'Finance' },
+  { sym:'BBNI', yahoo:'BBNI.JK', name:'Bank Negara Indonesia',sector:'Finance' },
+  { sym:'TLKM', yahoo:'TLKM.JK', name:'Telkom Indonesia',     sector:'Technology' },
+  { sym:'GOTO', yahoo:'GOTO.JK', name:'GoTo Gojek Tokopedia', sector:'Technology' },
+  { sym:'EXCL', yahoo:'EXCL.JK', name:'XL Axiata',            sector:'Technology' },
+  { sym:'ASII', yahoo:'ASII.JK', name:'Astra International',  sector:'Industrials' },
+  { sym:'UNVR', yahoo:'UNVR.JK', name:'Unilever Indonesia',   sector:'Consumer' },
+  { sym:'ICBP', yahoo:'ICBP.JK', name:'Indofood CBP',         sector:'Consumer' },
+  { sym:'INDF', yahoo:'INDF.JK', name:'Indofood Sukses Makmur',sector:'Consumer' },
+  { sym:'CPIN', yahoo:'CPIN.JK', name:'Charoen Pokphand',     sector:'Consumer' },
+  { sym:'ANTM', yahoo:'ANTM.JK', name:'Aneka Tambang',        sector:'Basic Materials' },
+  { sym:'INCO', yahoo:'INCO.JK', name:'Vale Indonesia',       sector:'Basic Materials' },
+  { sym:'PTBA', yahoo:'PTBA.JK', name:'Bukit Asam',           sector:'Energy' },
+  { sym:'ADRO', yahoo:'ADRO.JK', name:'Adaro Energy',         sector:'Energy' },
+  { sym:'PGAS', yahoo:'PGAS.JK', name:'Perusahaan Gas Negara',sector:'Energy' },
+  { sym:'KLBF', yahoo:'KLBF.JK', name:'Kalbe Farma',          sector:'Healthcare' },
+];
+const DEFAULT_WATCHLIST = ['BBCA','BBRI','BMRI','ANTM','TLKM'];
+
+let quotesCache = {};      // sym -> {price,prevClose,chg,chgPct,volume}
+let currentTf = '1D';
+let currentMoversTab = 'gainers';
+let currentEarnDays = 0;
+
+// ================================================================
+// INIT
+// ================================================================
+document.addEventListener('DOMContentLoaded', () => {
+  startClock();
+  setupNav();
+  setupTf();
+  applyTheme(getSaved('ags_theme') || 'dark');
+  document.getElementById('hamburger').addEventListener('click', () => document.getElementById('sidebar').classList.toggle('open'));
+  document.getElementById('themeBtn').addEventListener('click', () => {
+    const cur = document.documentElement.getAttribute('data-theme');
+    applyTheme(cur === 'dark' ? 'light' : 'dark');
+  });
+
+  loadIhsg('1D');
+  fetchSahamNews();
+  loadUniverseQuotes();
+  renderForeignFlowPlaceholder();
+  renderCorpActionPlaceholder();
+  renderEarningsPlaceholder(0);
+  updateMarketStatus();
+  setInterval(updateMarketStatus, 30000);
+  setInterval(() => loadUniverseQuotes(), 60000); // refresh live quotes tiap 1 menit
+});
+
+// listen tema dari parent (index.html)
+window.addEventListener('message', (ev) => {
+  if (ev.data && ev.data.type === 'ags-theme') applyTheme(ev.data.theme);
+});
+
+function save(k,v){ try{ sessionStorage.setItem(k,v); }catch(e){} }
+function getSaved(k){ try{ return sessionStorage.getItem(k); }catch(e){ return null; } }
+
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  document.getElementById('themeLabel').textContent = t === 'dark' ? 'Dark' : 'Light';
+  document.getElementById('themeBtn').firstChild.textContent = t === 'dark' ? '🌙 ' : '☀️ ';
+  save('ags_theme', t);
+}
+
+function startClock() {
+  function tick() {
+    const now = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    document.getElementById('liveTime').textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+    const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    document.getElementById('liveDate').textContent = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+    const h = now.getHours();
+    document.getElementById('greeting').textContent = h<12?'Good Morning, Azis 👋':h<15?'Good Afternoon, Azis 👋':h<19?'Good Evening, Azis 👋':'Good Night, Azis 👋';
+  }
+  tick(); setInterval(tick, 1000);
+}
+
+function updateMarketStatus() {
+  // Bursa Efek Indonesia: Senin-Jumat 09:00-16:00 WIB (istirahat 12:00-13:30, Jumat 11:30-14:00) — disederhanakan
+  const now = new Date();
+  const wib = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+  const day = wib.getDay(), mins = wib.getHours()*60 + wib.getMinutes();
+  const isWeekday = day>=1 && day<=5;
+  const open = isWeekday && mins>=525 && mins<=949; // 09:05–15:49
+  const el = document.getElementById('marketStatus');
+  el.innerHTML = `<span class="status-dot" style="background:${open?'var(--green)':'var(--red)'};"></span>${open?'Market Open':'Market Closed'}`;
+}
+
+// ================================================================
+// NAVIGATION — postMessage ke parent (index.html SPA). Fallback ke
+// index.html#page kalau dibuka berdiri sendiri (bukan di dalam iframe).
+// ================================================================
+function setupNav() {
+  document.querySelectorAll('.nav-item[data-nav]').forEach(el => {
+    el.addEventListener('click', () => navigateParent(el.dataset.nav));
+  });
+  document.querySelectorAll('.nav-item[data-soon]').forEach(el => {
+    el.addEventListener('click', () => alert(`${el.dataset.soon} akan segera hadir di AGS 🚧`));
+  });
+}
+function navigateParent(page) {
+  if (page === 'saham') return;
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'ags-navigate', page }, '*');
+      return;
+    }
+  } catch(e) {}
+  window.location.href = 'index.html';
+}
+
+// ================================================================
+// IHSG CHART — Yahoo Finance ^JKSE, via CORS proxy
+// ================================================================
+function setupTf() {
+  document.querySelectorAll('.tf-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      currentTf = btn.dataset.tf;
+      loadIhsg(currentTf);
+    });
+  });
+}
+const TF_MAP = {
+  '1D': { range:'1d', interval:'5m' }, '1W': { range:'5d', interval:'15m' },
+  '1M': { range:'1mo', interval:'1d' }, '3M': { range:'3mo', interval:'1d' },
+  '1Y': { range:'1y', interval:'1wk' }, 'YTD': { range:'ytd', interval:'1d' },
+  'All': { range:'5y', interval:'1mo' },
+};
+async function loadIhsg(tf) {
+  const meta = document.getElementById('ihsgMeta');
+  try {
+    const { range, interval } = TF_MAP[tf];
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/%5EJKSE?interval=${interval}&range=${range}`;
+    const res = await fetch(CORS_PROXY + encodeURIComponent(url));
+    const data = await res.json();
+    const result = data?.chart?.result?.[0];
+    if (!result) throw new Error('Data IHSG tidak tersedia');
+    const closesRaw = result.indicators.quote[0].close || [];
+    const closes = closesRaw.filter(v => v != null);
+    if (!closes.length) throw new Error('Seri harga kosong');
+    const price = result.meta.regularMarketPrice ?? closes[closes.length-1];
+    const prevClose = result.meta.chartPreviousClose ?? result.meta.previousClose ?? closes[0];
+    const chg = price - prevClose;
+    const chgPct = (chg/prevClose*100).toFixed(2);
+
+    document.getElementById('ihsgPrice').textContent = price.toLocaleString('id-ID', {minimumFractionDigits:2, maximumFractionDigits:2});
+    const chgEl = document.getElementById('ihsgChg');
+    chgEl.textContent = `${chg>=0?'▲':'▼'} ${Math.abs(chg).toFixed(2)} (${chg>=0?'+':''}${chgPct}%)`;
+    chgEl.style.color = chg>=0?'var(--green)':'var(--red)';
+    const now = new Date();
+    meta.textContent = `${now.toLocaleTimeString('id-ID')} WIB · ${tf} · IHSG (^JKSE)`;
+
+    drawIhsgChart(closes, chg>=0?'#22c55e':'#ef4444');
+
+    // breadth: indikatif (proporsional ke arah IHSG) — lihat data-note di kartu.
+    renderBreadthIndicative(chgPct);
+  } catch(e) {
+    console.error('IHSG', e);
+    meta.textContent = 'Gagal memuat data IHSG. Coba refresh.';
+  }
+}
+function drawIhsgChart(data, color) {
+  const canvas = document.getElementById('ihsgChart');
+  const wrap = canvas.parentElement;
+  canvas.width = wrap.clientWidth; canvas.height = wrap.clientHeight;
+  const ctx = canvas.getContext('2d');
+  const min = Math.min(...data), max = Math.max(...data), range = (max-min)||1;
+  const w = canvas.width, h = canvas.height, pad = 6;
+  ctx.clearRect(0,0,w,h);
+  // grid lines
+  ctx.strokeStyle = 'rgba(128,128,128,.12)'; ctx.lineWidth = 1;
+  for (let i=1;i<4;i++) { const y = (h/4)*i; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+  ctx.beginPath();
+  data.forEach((v,i) => {
+    const x = (i/(data.length-1))*w;
+    const y = h - pad - ((v-min)/range)*(h-pad*2);
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineJoin='round'; ctx.stroke();
+  ctx.lineTo(w,h); ctx.lineTo(0,h); ctx.closePath();
+  const grad = ctx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0, color+'33'); grad.addColorStop(1, color+'00');
+  ctx.fillStyle = grad; ctx.fill();
+}
+function renderBreadthIndicative(chgPct) {
+  const pct = parseFloat(chgPct);
+  // sebar indikatif 588 saham aktif IDX proporsional ke arah IHSG (BUKAN data resmi)
+  const total = 588;
+  const advRatio = Math.min(0.75, Math.max(0.25, 0.5 + pct*0.04));
+  const adv = Math.round(total*advRatio), dec = Math.round(total*(1-advRatio)*0.82), unc = total-adv-dec;
+  document.getElementById('brAdv').textContent = adv;
+  document.getElementById('brDec').textContent = dec;
+  document.getElementById('brUnc').textContent = unc;
+  document.getElementById('brVol').textContent = (12 + pct*0.6).toFixed(1)+' M lbr';
+  document.getElementById('brVal').textContent = 'Rp '+(9.5 + pct*0.7).toFixed(1)+' T';
+  const ff = (pct*1.1).toFixed(2);
+  const ffEl = document.getElementById('brFf');
+  ffEl.textContent = (ff>=0?'+':'')+'Rp '+ff+' T';
+  ffEl.style.color = ff>=0?'var(--green)':'var(--red)';
+}
+
+// ================================================================
+// LIVE QUOTES — basket saham (Top Movers, Sector, Heatmap, Watchlist, Sentiment)
+// ================================================================
+async function fetchYahooQuote(yahooSym) {
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSym}?interval=1d&range=5d`;
+  const res = await fetch(CORS_PROXY + encodeURIComponent(url));
+  const data = await res.json();
+  const meta = data?.chart?.result?.[0]?.meta;
+  if (!meta || meta.regularMarketPrice == null) throw new Error('no data');
+  const price = meta.regularMarketPrice;
+  const prevClose = meta.chartPreviousClose ?? meta.previousClose ?? price;
+  const chg = price - prevClose;
+  const chgPct = prevClose ? (chg/prevClose*100) : 0;
+  return { price, prevClose, chg, chgPct, volume: meta.regularMarketVolume || 0 };
+}
+
+async function loadUniverseQuotes() {
+  await Promise.all(STOCK_UNIVERSE.map(async s => {
+    try { quotesCache[s.sym] = await fetchYahooQuote(s.yahoo); }
+    catch(e) { console.warn('quote fail', s.sym, e.message); }
+  }));
+  renderTopMovers();
+  renderSectorPerf();
+  renderHeatmap();
+  renderWatchlist();
+  renderSentiment();
+}
+
+function fmtIDR(n) { return n.toLocaleString('id-ID', {minimumFractionDigits:0, maximumFractionDigits:0}); }
+
+// ---------- TOP MOVERS ----------
+function switchMovers(tab, el) {
+  currentMoversTab = tab;
+  document.querySelectorAll('#topMovers').forEach(()=>{});
+  document.querySelectorAll('.tabs-row .tab-btn').forEach(b => { if(b.dataset.mv) b.classList.toggle('active', b===el); });
+  renderTopMovers();
+}
+function renderTopMovers() {
+  const rows = STOCK_UNIVERSE.map(s => ({ ...s, q: quotesCache[s.sym] })).filter(r => r.q);
+  if (!rows.length) { document.getElementById('topMovers').innerHTML = '<div class="loading-state">Memuat quotes...</div>'; return; }
+  let sorted;
+  if (currentMoversTab === 'gainers') sorted = [...rows].sort((a,b)=>b.q.chgPct-a.q.chgPct);
+  else if (currentMoversTab === 'losers') sorted = [...rows].sort((a,b)=>a.q.chgPct-b.q.chgPct);
+  else sorted = [...rows].sort((a,b)=>b.q.volume-a.q.volume);
+  sorted = sorted.slice(0,6);
+  document.getElementById('topMovers').innerHTML = `
+    <table class="tbl"><thead><tr><th>SYMBOL</th><th>LAST</th><th>CHG%</th></tr></thead>
+    <tbody>${sorted.map(r => `<tr>
+      <td><span class="sym-icon">${r.sym.slice(0,2)}</span>${r.sym}</td>
+      <td style="font-family:var(--mono);">${fmtIDR(r.q.price)}</td>
+      <td class="${r.q.chgPct>0.05?'up':r.q.chgPct<-0.05?'down':'flat'}">${r.q.chgPct>=0?'+':''}${r.q.chgPct.toFixed(2)}%</td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+// ---------- SECTOR PERFORMANCE ----------
+function renderSectorPerf() {
+  const bySector = {};
+  STOCK_UNIVERSE.forEach(s => {
+    const q = quotesCache[s.sym]; if (!q) return;
+    (bySector[s.sector] ||= []).push(q.chgPct);
+  });
+  const entries = Object.entries(bySector).map(([name, arr]) => ({ name, avg: arr.reduce((a,b)=>a+b,0)/arr.length }));
+  if (!entries.length) { document.getElementById('sectorPerf').innerHTML = '<div class="loading-state">Memuat...</div>'; return; }
+  entries.sort((a,b)=>b.avg-a.avg);
+  const maxAbs = Math.max(1, ...entries.map(e=>Math.abs(e.avg)));
+  document.getElementById('sectorPerf').innerHTML = entries.map(e => {
+    const color = e.avg>=0?'var(--green)':'var(--red)';
+    const w = Math.min(100, Math.abs(e.avg)/maxAbs*100);
+    return `<div class="sector-row">
+      <div class="sector-name">${e.name}</div>
+      <div class="sector-bar-bg"><div class="sector-bar-fill" style="width:${w}%;background:${color};margin-left:${e.avg<0?100-w+'%':'0'};"></div></div>
+      <div class="sector-val" style="color:${color};">${e.avg>=0?'+':''}${e.avg.toFixed(2)}%</div>
+    </div>`;
+  }).join('');
+}
+
+// ---------- HEATMAP ----------
+function renderHeatmap() {
+  const rows = STOCK_UNIVERSE.map(s => ({ ...s, q: quotesCache[s.sym] })).filter(r=>r.q);
+  if (!rows.length) { document.getElementById('heatmap').innerHTML = '<div class="loading-state">Memuat...</div>'; return; }
+  document.getElementById('heatmap').innerHTML = rows.map(r => {
+    const p = r.q.chgPct;
+    const bg = p>2?'#16a34a':p>0.5?'#22c55e':p>-0.5?'#f0b429':p>-2?'#ef4444':'#b91c1c';
+    return `<div class="heat-tile" style="background:${bg};"><div class="h-sym">${r.sym}</div><div class="h-chg">${p>=0?'+':''}${p.toFixed(2)}%</div></div>`;
+  }).join('');
+}
+
+// ---------- WATCHLIST ----------
+function renderWatchlist() {
+  const rows = DEFAULT_WATCHLIST.map(sym => {
+    const s = STOCK_UNIVERSE.find(u=>u.sym===sym); const q = quotesCache[sym];
+    return s && q ? { ...s, q } : null;
+  }).filter(Boolean);
+  if (!rows.length) { document.getElementById('watchlist').innerHTML = '<div class="loading-state">Memuat...</div>'; return; }
+  document.getElementById('watchlist').innerHTML = `
+    <table class="tbl"><thead><tr><th>SYMBOL</th><th>LAST</th><th>CHG</th><th>%</th></tr></thead>
+    <tbody>${rows.map(r => `<tr>
+      <td><span class="sym-icon">${r.sym.slice(0,2)}</span>${r.sym}<div style="font-size:9.5px;color:var(--muted);margin-left:28px;">${r.name}</div></td>
+      <td style="font-family:var(--mono);">${fmtIDR(r.q.price)}</td>
+      <td class="${r.q.chg>=0?'up':'down'}">${r.q.chg>=0?'+':''}${fmtIDR(Math.round(r.q.chg))}</td>
+      <td class="${r.q.chgPct>=0?'up':'down'}">${r.q.chgPct>=0?'+':''}${r.q.chgPct.toFixed(2)}%</td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+// ---------- AI MARKET SENTIMENT (heuristik dari basket live) ----------
+function renderSentiment() {
+  const chgs = STOCK_UNIVERSE.map(s => quotesCache[s.sym]?.chgPct).filter(v => v!=null);
+  if (!chgs.length) return;
+  const bullCount = chgs.filter(v=>v>0.3).length;
+  const bearCount = chgs.filter(v=>v<-0.3).length;
+  const neuCount = chgs.length - bullCount - bearCount;
+  const bullPct = Math.round(bullCount/chgs.length*100);
+  const neuPct = Math.round(neuCount/chgs.length*100);
+  const bearPct = 100 - bullPct - neuPct;
+  document.getElementById('sentBull').textContent = bullPct+'%';
+  document.getElementById('sentNeu').textContent = neuPct+'%';
+  document.getElementById('sentBear').textContent = bearPct+'%';
+  const dominant = bullPct>=bearPct && bullPct>=neuPct ? 'Bullish' : bearPct>=neuPct ? 'Bearish' : 'Neutral';
+  const domPct = dominant==='Bullish'?bullPct:dominant==='Bearish'?bearPct:neuPct;
+  const color = dominant==='Bullish'?'#22c55e':dominant==='Bearish'?'#ef4444':'#f0b429';
+  document.getElementById('sentPct').textContent = domPct+'%';
+  document.getElementById('sentPct').style.color = color;
+  document.getElementById('sentLabel').textContent = dominant;
+  drawDonut('sentDonut', bullPct, neuPct, bearPct);
+}
+function drawDonut(id, bull, neu, bear) {
+  const svg = document.getElementById(id);
+  const cx=75, cy=75, r=60, sw=14;
+  const total = bull+neu+bear || 1;
+  const segs = [ ['#22c55e', bull], ['#f0b429', neu], ['#ef4444', bear] ];
+  let startAngle = -180;
+  let paths = '';
+  segs.forEach(([color, val]) => {
+    const angle = (val/total)*180;
+    const endAngle = startAngle + angle;
+    paths += arcPath(cx, cy, r, startAngle, endAngle, sw, color);
+    startAngle = endAngle;
+  });
+  svg.innerHTML = paths;
+}
+function arcPath(cx, cy, r, startDeg, endDeg, sw, color) {
+  const toRad = d => (d*Math.PI)/180;
+  const x1 = cx + r*Math.cos(toRad(startDeg)), y1 = cy + r*Math.sin(toRad(startDeg));
+  const x2 = cx + r*Math.cos(toRad(endDeg)), y2 = cy + r*Math.sin(toRad(endDeg));
+  const large = (endDeg-startDeg) > 180 ? 1 : 0;
+  return `<path d="M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}" stroke="${color}" stroke-width="${sw}" fill="none" stroke-linecap="round"/>`;
+}
+
+// ================================================================
+// MARKET NEWS INDONESIA (Saham) — NewsData.io, query IHSG/bursa saham
+// ================================================================
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr.replace(' ', 'T') + 'Z');
+  if (isNaN(d)) return dateStr;
+  const diffMin = Math.round((Date.now()-d.getTime())/60000);
+  if (diffMin<1) return 'Baru saja';
+  if (diffMin<60) return `${diffMin} menit lalu`;
+  const diffH = Math.round(diffMin/60);
+  if (diffH<24) return `${diffH} jam lalu`;
+  return `${Math.round(diffH/24)} hari lalu`;
+}
+async function fetchSahamNews() {
+  document.getElementById('sahamNews').innerHTML = '<div class="loading-state"><span class="spinner"></span> Loading...</div>';
+  try {
+    const url = `https://newsdata.io/api/1/latest?apikey=${NEWSDATA_KEY}&q=IHSG%20OR%20%22bursa%20saham%22%20OR%20%22harga%20saham%22&language=id&category=business`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.status !== 'success') throw new Error(data.message || 'NewsData error');
+    const items = (data.results||[]).slice(0,8);
+    if (!items.length) { document.getElementById('sahamNews').innerHTML = '<div class="loading-state">Tidak ada berita saat ini.</div>'; return; }
+    document.getElementById('sahamNews').innerHTML = items.map(n => `
+      <div class="news-row">
+        ${n.image_url ? `<img class="news-thumb" src="${n.image_url}" onerror="this.style.display='none'" />` : ''}
+        <div class="news-row-body">
+          <div class="news-row-title">${n.link?`<a href="${n.link}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none;">${n.title||''}</a>`:(n.title||'')}</div>
+          <div class="news-row-meta"><span>${n.source_id||''}</span>${n.pubDate?`<span>•</span><span>${timeAgo(n.pubDate)}</span>`:''}</div>
+        </div>
+        ${n.category&&n.category[0]?`<span class="news-row-tag">${n.category[0]}</span>`:''}
+      </div>`).join('');
+  } catch(e) {
+    console.error('sahamNews', e);
+    document.getElementById('sahamNews').innerHTML = '<div class="loading-state">Gagal memuat berita.</div>';
+  }
+}
+
+// ================================================================
+// FOREIGN FLOW / CORPORATE ACTION / EARNINGS — placeholder terstruktur
+// (menunggu AGS Backend Server sesuai flowchart: Corporate Action Service,
+// Market Service. Ganti fetch ke SAHAM_API_URL saat backend sudah siap.)
+// ================================================================
+function renderForeignFlowPlaceholder() {
+  document.getElementById('foreignFlow').innerHTML = `
+    <div class="ff-stat-row">
+      <div class="ff-stat"><div class="ff-stat-label">Net Buy (YTD)</div><div class="ff-stat-val" style="color:var(--green);">+Rp 23.45 T</div></div>
+      <div class="ff-stat"><div class="ff-stat-label">Net Today</div><div class="ff-stat-val" style="color:var(--green);">+Rp 1.25 T</div></div>
+    </div>
+    <div class="ff-list-title">Top Foreign Buy</div>
+    <div class="ff-row"><span>BBCA</span><span style="color:var(--green);">+Rp 356.8 M</span></div>
+    <div class="ff-row"><span>BBRI</span><span style="color:var(--green);">+Rp 278.6 M</span></div>
+    <div class="ff-row"><span>BMRI</span><span style="color:var(--green);">+Rp 212.4 M</span></div>
+    <div class="ff-list-title">Top Foreign Sell</div>
+    <div class="ff-row"><span>TLKM</span><span style="color:var(--red);">-Rp 178.6 M</span></div>
+    <div class="ff-row"><span>ASII</span><span style="color:var(--red);">-Rp 121.8 M</span></div>`;
+}
+function renderCorpActionPlaceholder() {
+  document.getElementById('corpAction').innerHTML = `
+    <div class="ca-group"><div class="ca-group-title" style="color:var(--green);">💰 Dividend</div>
+      <div class="ca-item"><b>BBCA</b><span>Cum Date: 08 Jul 2026</span></div>
+      <div class="ca-item"><b>ADRO</b><span>Cum Date: 10 Jul 2026</span></div></div>
+    <div class="ca-group"><div class="ca-group-title" style="color:var(--gold);">📄 Right Issue</div>
+      <div class="ca-item"><b>WIKA</b><span>Cum Date: 15 Jul 2026</span></div>
+      <div class="ca-item"><b>SMGR</b><span>Cum Date: 20 Jul 2026</span></div></div>
+    <div class="ca-group"><div class="ca-group-title" style="color:var(--blue);">✂️ Stock Split</div>
+      <div class="ca-item"><b>BRIS</b><span>Ratio 1:2</span></div>
+      <div class="ca-item"><b>NCKL</b><span>Ratio 1:2</span></div></div>
+    <div class="ca-group"><div class="ca-group-title">🆕 IPO</div>
+      <div class="ca-item"><b>ABCD</b><span>Listing: 07 Jul 2026</span></div>
+      <div class="ca-item"><b>EFGH</b><span>Listing: 09 Jul 2026</span></div></div>`;
+}
+const EARNINGS_MOCK = [
+  { company:'Bank Central Asia', ticker:'BBCA', time:'13:00 WIB', day:0 },
+  { company:'Bank Rakyat Indonesia', ticker:'BBRI', time:'14:00 WIB', day:0 },
+  { company:'Telkom Indonesia', ticker:'TLKM', time:'15:00 WIB', day:1 },
+  { company:'Unilever Indonesia', ticker:'UNVR', time:'16:00 WIB', day:1 },
+  { company:'Indofood CBP', ticker:'ICBP', time:'16:30 WIB', day:5 },
+  { company:'Astra International', ticker:'ASII', time:'10:00 WIB', day:6 },
+];
+function switchEarnings(days, el) {
+  currentEarnDays = days;
+  document.querySelectorAll('#earnTabs .tab-btn').forEach(b=>b.classList.toggle('active', b===el));
+  renderEarningsPlaceholder(days);
+}
+function renderEarningsPlaceholder(days) {
+  const rows = EARNINGS_MOCK.filter(r => days===7 ? r.day<=7 : r.day===days);
+  if (!rows.length) { document.getElementById('earnCal').innerHTML = '<div class="loading-state">Tidak ada earnings pada rentang ini.</div>'; return; }
+  document.getElementById('earnCal').innerHTML = `
+    <table class="tbl"><thead><tr><th>COMPANY</th><th>TICKER</th><th>TIME</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr><td style="font-size:11.5px;">${r.company}</td><td><b>${r.ticker}</b></td><td style="color:var(--muted);font-size:11px;">${r.time}</td></tr>`).join('')}</tbody></table>`;
+}
+</script>
+</body>
+</html>
