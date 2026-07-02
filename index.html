@@ -401,7 +401,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
             <div class="card-title" style="margin-bottom:0;">🌐 Global Market News</div>
             <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;" onclick="fetchGlobalNews()">Refresh</button>
           </div>
-          <div class="card-source-sub">Sumber: NewsData.io</div>
+          <div class="card-source-sub">Sumber: Reuters, Bloomberg, CNBC, WSJ, MarketWatch, Nikkei Asia, SCMP, CNA (live via NewsData.io)</div>
           <div id="globalNews" class="news-card-list"><div class="loading-state"><span class="spinner"></span> Loading...</div></div>
         </div>
 
@@ -425,7 +425,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
             <div class="card-title" style="margin-bottom:0;">📰 Market News (Combined)</div>
             <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;" onclick="fetchCombinedNews()">Refresh</button>
           </div>
-          <div class="card-source-sub">Sumber: CNBC Indonesia (live, ambil langsung dari web)</div>
+          <div class="card-source-sub">Sumber: CNBC Indonesia, Detik Finance, CNN Indonesia (live, ambil langsung dari web)</div>
           <div class="news-tabs" id="newsTabs">
             <span class="news-tab active" data-cat="" onclick="filterCombinedNews('',this)">Semua</span>
             <span class="news-tab" data-cat="gold" onclick="filterCombinedNews('gold',this)">Gold</span>
@@ -494,22 +494,10 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
         style="border:none; width:100%; min-height:calc(100vh - 90px); display:block; background:#0b0f17;"></iframe>
     </div>
 
-    <!-- ===== SAHAM PAGE ===== -->
-    <div class="page" id="page-saham">
-      <div style="font-size:16px;font-weight:800;margin-bottom:14px;">📈 Saham Analysis</div>
-      <div class="card mb-14" style="padding:10px 14px;">
-        <div style="display:flex;gap:10px;align-items:center;">
-          <input type="text" class="form-input" style="width:200px;" id="sahamSymbol" placeholder="e.g. IDX:BBCA" value="IDX:BBCA">
-          <button class="btn btn-primary" onclick="loadSahamChart()">Load Chart</button>
-        </div>
-      </div>
-      <div class="card" style="min-height:600px;">
-        <div id="sahamChartContainer" style="height:600px;">
-          <div class="tradingview-widget-container" style="height:100%;">
-            <div class="tradingview-widget-container__widget" id="sahamWidget" style="height:100%;"></div>
-          </div>
-        </div>
-      </div>
+    <!-- ===== SAHAM PAGE — load AGS SAHAM DASHBOARD (saham.html) ===== -->
+    <div class="page" id="page-saham" style="padding:0;">
+      <iframe src="saham.html" title="AGS SAHAM DASHBOARD" id="sahamFrame"
+        style="border:none; width:100%; min-height:calc(100vh - 90px); display:block; background:#0a0f0a;"></iframe>
     </div>
 
     <!-- ===== STATISTICS PAGE ===== -->
@@ -720,6 +708,8 @@ function applyTheme(t) {
   document.getElementById('themeLabel').textContent = t === 'dark' ? 'Dark' : 'Light';
   document.getElementById('themeBtn').firstChild.textContent = t === 'dark' ? '🌙 ' : '☀️ ';
   save('ags_theme', t);
+  // teruskan tema ke iframe Gold & Saham biar seragam
+  try { document.getElementById('sahamFrame').contentWindow.postMessage({ type:'ags-theme', theme:t }, '*'); } catch(e){}
 }
 
 // ================================================================
@@ -1088,8 +1078,28 @@ const NEWS_TAG_COLOR = {
   world: { bg:'rgba(59,130,246,.18)', c:'var(--blue)' },
   politics: { bg:'rgba(59,130,246,.18)', c:'var(--blue)' },
   top: { bg:'rgba(240,180,41,.18)', c:'var(--gold)' },
+  gold: { bg:'rgba(240,180,41,.18)', c:'var(--gold)' },
+  forex: { bg:'rgba(59,130,246,.18)', c:'var(--blue)' },
+  commodities: { bg:'rgba(239,68,68,.15)', c:'var(--red)' },
+  stock: { bg:'rgba(34,197,94,.15)', c:'var(--green)' },
   default: { bg:'rgba(107,127,107,.2)', c:'var(--muted)' },
 };
+
+// Klasifikasi kategori berita berdasarkan keyword di judul (Bahasa Indonesia + Inggris)
+// Dipakai khusus untuk Market News (Combined) karena sumbernya di-scrape live
+// dan tidak punya kategori bawaan seperti NewsData.io.
+const NEWS_CATEGORY_RULES = [
+  { cat: 'gold',        re: /\b(emas|gold|xau|antam|logam mulia|bullion)\b/i },
+  { cat: 'forex',       re: /\b(dolar|rupiah|kurs|forex|valas|usd\/idr|nilai tukar|yen|euro|valuta asing)\b/i },
+  { cat: 'commodities', re: /\b(komoditas|batu ?bara|coal|minyak|oil|cpo|sawit|nikel|timah|karet|gas|lng|migas)\b/i },
+  { cat: 'stock',       re: /\b(saham|ihsg|bei|emiten|ipo|dividen|bursa|delisting|stock split|buyback saham)\b/i },
+  { cat: 'economy',     re: /\b(ekonomi|inflasi|suku bunga|bi rate|bi-rate|pertumbuhan|resesi|apbn|pajak|ekspor|impor|pdb|gdp|neraca|fiskal|moneter|the fed)\b/i },
+];
+function classifyNewsCategory(title) {
+  const t = title || '';
+  const cats = NEWS_CATEGORY_RULES.filter(r => r.re.test(t)).map(r => r.cat);
+  return cats.length ? cats : ['economy'];
+}
 function tagStyle(cat) {
   const t = NEWS_TAG_COLOR[(cat||'').toLowerCase()] || NEWS_TAG_COLOR.default;
   return `background:${t.bg};color:${t.c};`;
@@ -1123,18 +1133,57 @@ function renderNewsList(elId, items, emptyMsg) {
   `).join('');
 }
 
+// Global Market News — gabungan kanal finansial terkemuka Amerika + Asia via NewsData.io.
+// Free/Basic plan NewsData.io cuma boleh maks 5 domain per query, jadi dipecah
+// jadi 2 request (Amerika & Asia) lalu digabung di client.
+const GLOBAL_NEWS_QUERY = 'market OR stocks OR economy OR inflation OR "interest rate" OR trade';
+const GLOBAL_NEWS_DOMAIN_GROUPS = [
+  { region: 'US', domains: 'reuters.com,bloomberg.com,cnbc.com,wsj.com,marketwatch.com' },
+  { region: 'Asia', domains: 'asia.nikkei.com,scmp.com,channelnewsasia.com,japantimes.co.jp,straitstimes.com' },
+];
+
 async function fetchGlobalNews() {
-  document.getElementById('globalNews').innerHTML = '<div class="loading-state"><span class="spinner"></span> Loading...</div>';
+  document.getElementById('globalNews').innerHTML = '<div class="loading-state"><span class="spinner"></span> Loading dari kanal Amerika & Asia...</div>';
   try {
-    const url = `https://newsdata.io/api/1/latest?apikey=${NEWSDATA_KEY}&q=gold%20OR%20forex%20OR%20%22interest%20rate%22%20OR%20inflation&language=en&category=business`;
-    const res = await fetch(url);
-    const data = await res.json();
-    if (data.status !== 'success') throw new Error(data.message || 'NewsData error');
-    newsCache.global = (data.results || []).slice(0, 8);
+    const settled = await Promise.allSettled(
+      GLOBAL_NEWS_DOMAIN_GROUPS.map(g => {
+        const url = `https://newsdata.io/api/1/latest?apikey=${NEWSDATA_KEY}&q=${encodeURIComponent(GLOBAL_NEWS_QUERY)}&language=en&domainurl=${g.domains}`;
+        return fetch(url).then(async r => {
+          const data = await r.json();
+          if (data.status !== 'success') throw new Error(data.message || `NewsData error (${g.region})`);
+          return data.results || [];
+        });
+      })
+    );
+
+    let all = [];
+    const failedRegions = [];
+    settled.forEach((res, i) => {
+      const g = GLOBAL_NEWS_DOMAIN_GROUPS[i];
+      if (res.status === 'fulfilled') all = all.concat(res.value);
+      else { failedRegions.push(g.region); console.warn(`[globalNews] gagal ambil kanal ${g.region}:`, res.reason && res.reason.message); }
+    });
+
+    if (!all.length) throw new Error('Semua region gagal dimuat: ' + (failedRegions.join(', ') || 'unknown error'));
+
+    // Dedupe by link/title
+    const seen = new Set();
+    all = all.filter(n => {
+      const key = n.link || (n.title||'').toLowerCase().trim();
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    // Selang-seling per source_id biar tidak numpuk 1 outlet doang di atas
+    all = interleaveBySource(all.map(n => ({ ...n, source_id: n.source_id || n.source_name || 'global' })));
+
+    newsCache.global = all.slice(0, 16);
     renderNewsList('globalNews', newsCache.global, 'Tidak ada berita global.');
+    if (failedRegions.length) console.warn('[globalNews] sebagian region gagal:', failedRegions.join(', '));
   } catch(e) {
     console.error('globalNews', e);
-    document.getElementById('globalNews').innerHTML = '<div class="loading-state">Gagal memuat berita global.</div>';
+    document.getElementById('globalNews').innerHTML = `<div class="loading-state" style="color:var(--red);">Gagal memuat berita global.<br><span style="font-size:10px;color:var(--muted);word-break:break-all;">${e.message || ''}</span></div>`;
   }
 }
 
@@ -1238,20 +1287,77 @@ async function fetchIndonesiaNews() {
   }
 }
 
-// Market News (Combined) — sumber: CNBC Indonesia (live scrape, bukan via NewsData.io)
-async function fetchCombinedNews() {
-  document.getElementById('combinedNews').innerHTML = '<div class="loading-state"><span class="spinner"></span> Loading...</div>';
-  try {
-    const items = await scrapeSiteHeadlines('https://www.cnbcindonesia.com/market', 'CNBC Indonesia', /cnbcindonesia\.com\/market\/\d{14}-\d+-\d+\//, 15);
-    newsCache.combined = items;
-    window._combinedNewsAll = items;
-    filterCombinedNews(window._combinedNewsActiveCat || '', document.querySelector('.news-tab.active'));
-  } catch(e) {
-    console.error('combinedNews', e);
-    document.getElementById('combinedNews').innerHTML = `<div class="loading-state" style="color:var(--red);">Gagal memuat berita CNBC Indonesia.<br><span style="font-size:10px;color:var(--muted);word-break:break-all;">${e.message || ''}</span></div>`;
+// Market News (Combined) — gabungan beberapa kanal berita market/ekonomi Indonesia
+// (live scrape, bukan via NewsData.io). Tiap kanal punya pola URL artikel sendiri
+// supaya hasil scrape-nya presisi ke halaman berita, bukan menu/navigasi.
+const COMBINED_NEWS_SOURCES = [
+  { url: 'https://www.cnbcindonesia.com/market', label: 'CNBC Indonesia', pattern: /cnbcindonesia\.com\/market\/\d{14}-\d+-\d+\//, limit: 12 },
+  { url: 'https://finance.detik.com/', label: 'Detik Finance', pattern: /finance\.detik\.com\/[a-z0-9\-]+\/d-\d+\//, limit: 10 },
+  { url: 'https://www.cnnindonesia.com/ekonomi', label: 'CNN Indonesia', pattern: /cnnindonesia\.com\/ekonomi\/\d{14}-\d+-\d+\//, limit: 10 },
+];
+
+// Selang-seling item per sumber (round robin) supaya list gabungan tidak
+// numpuk semua dari 1 kanal duluan baru kanal berikutnya.
+function interleaveBySource(items) {
+  const groups = {}; const order = [];
+  items.forEach(it => {
+    const k = it.source_id || 'unknown';
+    if (!groups[k]) { groups[k] = []; order.push(k); }
+    groups[k].push(it);
+  });
+  const result = []; let i = 0; let more = true;
+  while (more) {
+    more = false;
+    for (const k of order) { if (groups[k][i]) { result.push(groups[k][i]); more = true; } }
+    i++;
   }
+  return result;
 }
 
+async function fetchCombinedNews() {
+  document.getElementById('combinedNews').innerHTML = '<div class="loading-state"><span class="spinner"></span> Loading dari semua kanal...</div>';
+  const settled = await Promise.allSettled(
+    COMBINED_NEWS_SOURCES.map(s => scrapeSiteHeadlines(s.url, s.label, s.pattern, s.limit))
+  );
+
+  let all = [];
+  const failed = [];
+  settled.forEach((res, i) => {
+    const src = COMBINED_NEWS_SOURCES[i];
+    if (res.status === 'fulfilled') {
+      all = all.concat(res.value);
+    } else {
+      failed.push(src.label);
+      console.warn(`[combinedNews] gagal ambil dari ${src.label}:`, res.reason && res.reason.message);
+    }
+  });
+
+  // Dedupe judul (kadang beberapa kanal memberitakan hal yang sama persis / duplikat internal)
+  const seen = new Set();
+  all = all.filter(n => {
+    const key = (n.title || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  // Klasifikasi kategori per judul berita
+  all.forEach(n => { n.category = classifyNewsCategory(n.title); });
+
+  all = interleaveBySource(all);
+
+  if (!all.length) {
+    document.getElementById('combinedNews').innerHTML = `<div class="loading-state" style="color:var(--red);">Gagal memuat berita dari semua kanal (${COMBINED_NEWS_SOURCES.map(s=>s.label).join(', ')}).</div>`;
+    return;
+  }
+
+  newsCache.combined = all;
+  window._combinedNewsAll = all;
+  if (failed.length) {
+    console.warn('[combinedNews] sebagian kanal gagal dimuat:', failed.join(', '));
+  }
+  filterCombinedNews(window._combinedNewsActiveCat || '', document.querySelector('.news-tab.active'));
+}
 
 function filterCombinedNews(cat, tabEl) {
   window._combinedNewsActiveCat = cat;
@@ -1261,7 +1367,7 @@ function filterCombinedNews(cat, tabEl) {
   }
   const all = window._combinedNewsAll || [];
   const filtered = cat ? all.filter(n => (n.category||[]).some(c => c.toLowerCase().includes(cat)) || (n.title||'').toLowerCase().includes(cat)) : all;
-  renderNewsList('combinedNews', filtered.slice(0, 10), 'Tidak ada berita untuk kategori ini.');
+  renderNewsList('combinedNews', filtered.slice(0, 20), 'Tidak ada berita untuk kategori ini.');
 }
 
 function drawSparkline(id, data, color) {
@@ -1487,29 +1593,16 @@ function switchPage(page) {
 
   if(page==='journal') loadJournalPage();
   if(page==='statistics') loadStats();
-  if(page==='saham') loadSahamChart();
 }
 
-// ================================================================
-// SAHAM CHART
-// ================================================================
-function loadSahamChart() {
-  const sym = document.getElementById('sahamSymbol')?.value || 'IDX:BBCA';
-  const container = document.getElementById('sahamWidget');
-  if(!container) return;
-  container.innerHTML = '';
-  const script = document.createElement('script');
-  script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-  script.async = true;
-  script.innerHTML = JSON.stringify({
-    autosize:true, symbol:sym, interval:'D', timezone:'Asia/Makassar',
-    theme: document.documentElement.getAttribute('data-theme')||'dark',
-    style:'1', locale:'id', allow_symbol_change:true,
-    studies:['MASimple@tv-basicstudies','RSI@tv-basicstudies'],
-    support_host:'https://www.tradingview.com'
-  });
-  container.appendChild(script);
-}
+// expose ke iframe anak (gold.html / saham.html) supaya tombol "Kembali ke Dashboard"
+// di dalam iframe bisa memanggil navigasi SPA induk (postMessage, same-origin safe)
+window.addEventListener('message', (ev) => {
+  if (!ev.data || typeof ev.data !== 'object') return;
+  if (ev.data.type === 'ags-navigate' && ev.data.page) {
+    switchPage(ev.data.page);
+  }
+});
 
 // ================================================================
 // TOAST
