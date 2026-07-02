@@ -162,7 +162,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
 /* ====== TOP ROW (mission + market overview / global news / berita id) ====== */
 .dash-top { display: grid; grid-template-columns: 1fr 1.35fr 1.35fr; gap: 14px; align-items: start; }
 .dash-left-col { display: flex; flex-direction: column; gap: 14px; }
-.dash-bottom { display: grid; grid-template-columns: 1.4fr 0.9fr 1.4fr; gap: 14px; margin-top: 14px; align-items: start; }
+.dash-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; align-items: start; }
 @media (max-width: 1100px) {
   .dash-top, .dash-bottom { grid-template-columns: 1fr; }
 }
@@ -181,6 +181,12 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
 
 /* NEWS LIST WITH THUMBNAIL */
 .news-card-list { display: flex; flex-direction: column; }
+.news-scroll { max-height: 464px; overflow-y: auto; padding-right: 4px; }
+.news-scroll::-webkit-scrollbar { width: 6px; }
+.news-scroll::-webkit-scrollbar-track { background: transparent; }
+.news-scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: 6px; }
+.news-scroll::-webkit-scrollbar-thumb:hover { background: var(--green2); }
+.news-scroll { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
 .news-row { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .news-row:last-child { border-bottom: none; }
 .news-thumb { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: var(--panel2); }
@@ -402,30 +408,16 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
             <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;" onclick="fetchGlobalNews()">Refresh</button>
           </div>
           <div class="card-source-sub">Sumber: Reuters, Bloomberg, CNBC, WSJ, MarketWatch, Nikkei Asia, SCMP, CNA (live via NewsData.io)</div>
-          <div id="globalNews" class="news-card-list"><div class="loading-state"><span class="spinner"></span> Loading...</div></div>
+          <div id="globalNews" class="news-card-list news-scroll"><div class="loading-state"><span class="spinner"></span> Loading...</div></div>
         </div>
 
-        <!-- BERITA INDONESIA (Bloomberg Technoz) -->
-        <div class="card">
-          <div class="card-title-row">
-            <div class="card-title" style="margin-bottom:0;">🇮🇩 Berita Indonesia (Bloomberg Technoz)</div>
-            <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;" onclick="fetchIndonesiaNews()">Refresh</button>
-          </div>
-          <div class="card-source-sub">Sumber: Bloomberg Technoz (live, ambil langsung dari web)</div>
-          <div id="indoNews" class="news-card-list"><div class="loading-state"><span class="spinner"></span> Loading...</div></div>
-        </div>
-      </div>
-
-      <!-- ===== BOTTOM ROW ===== -->
-      <div class="dash-bottom">
-
-        <!-- MARKET NEWS COMBINED -->
+        <!-- MARKET NEWS COMBINED (gabungan kanal lokal + Bloomberg Technoz) -->
         <div class="card">
           <div class="card-title-row">
             <div class="card-title" style="margin-bottom:0;">📰 Market News (Combined)</div>
             <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;" onclick="fetchCombinedNews()">Refresh</button>
           </div>
-          <div class="card-source-sub">Sumber: CNBC Indonesia, Detik Finance, CNN Indonesia (live, ambil langsung dari web)</div>
+          <div class="card-source-sub">Sumber: CNBC Indonesia, Bloomberg Technoz, Detik Finance, CNN Indonesia (live, ambil langsung dari web)</div>
           <div class="news-tabs" id="newsTabs">
             <span class="news-tab active" data-cat="" onclick="filterCombinedNews('',this)">Semua</span>
             <span class="news-tab" data-cat="gold" onclick="filterCombinedNews('gold',this)">Gold</span>
@@ -434,8 +426,12 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
             <span class="news-tab" data-cat="commodities" onclick="filterCombinedNews('commodities',this)">Commodities</span>
             <span class="news-tab" data-cat="stock" onclick="filterCombinedNews('stock',this)">Stock</span>
           </div>
-          <div id="combinedNews" class="news-card-list"><div class="loading-state"><span class="spinner"></span> Loading...</div></div>
+          <div id="combinedNews" class="news-card-list news-scroll"><div class="loading-state"><span class="spinner"></span> Loading...</div></div>
         </div>
+      </div>
+
+      <!-- ===== BOTTOM ROW ===== -->
+      <div class="dash-bottom">
 
         <!-- MARKET IMPACT -->
         <div class="card">
@@ -805,7 +801,6 @@ async function loadDashboard() {
 
   // News & impact
   fetchGlobalNews();
-  fetchIndonesiaNews();
   fetchCombinedNews();
   fetchMarketImpact();
 }
@@ -1274,24 +1269,12 @@ async function scrapeSiteHeadlines(pageUrl, sourceLabel, linkPattern, limit = 10
   }
 }
 
-// Berita Indonesia — sumber: Bloomberg Technoz (live scrape, bukan via NewsData.io)
-async function fetchIndonesiaNews() {
-  document.getElementById('indoNews').innerHTML = '<div class="loading-state"><span class="spinner"></span> Loading...</div>';
-  try {
-    const items = await scrapeSiteHeadlines('https://www.bloombergtechnoz.com/', 'Bloomberg Technoz', /\/detail-news\/\d+\//, 8);
-    newsCache.indo = items;
-    renderNewsList('indoNews', items, 'Tidak ada berita dari Bloomberg Technoz.');
-  } catch(e) {
-    console.error('indoNews', e);
-    document.getElementById('indoNews').innerHTML = `<div class="loading-state" style="color:var(--red);">Gagal memuat berita Bloomberg Technoz.<br><span style="font-size:10px;color:var(--muted);word-break:break-all;">${e.message || ''}</span></div>`;
-  }
-}
-
 // Market News (Combined) — gabungan beberapa kanal berita market/ekonomi Indonesia
 // (live scrape, bukan via NewsData.io). Tiap kanal punya pola URL artikel sendiri
 // supaya hasil scrape-nya presisi ke halaman berita, bukan menu/navigasi.
 const COMBINED_NEWS_SOURCES = [
   { url: 'https://www.cnbcindonesia.com/market', label: 'CNBC Indonesia', pattern: /cnbcindonesia\.com\/market\/\d{14}-\d+-\d+\//, limit: 12 },
+  { url: 'https://www.bloombergtechnoz.com/', label: 'Bloomberg Technoz', pattern: /\/detail-news\/\d+\//, limit: 10 },
   { url: 'https://finance.detik.com/', label: 'Detik Finance', pattern: /finance\.detik\.com\/[a-z0-9\-]+\/d-\d+\//, limit: 10 },
   { url: 'https://www.cnnindonesia.com/ekonomi', label: 'CNN Indonesia', pattern: /cnnindonesia\.com\/ekonomi\/\d{14}-\d+-\d+\//, limit: 10 },
 ];
