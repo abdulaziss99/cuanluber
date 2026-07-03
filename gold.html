@@ -8,7 +8,6 @@
 <!-- ===== ADD TO HOME SCREEN SETUP ===== -->
 <!-- Android (Chrome): pakai manifest.json -->
 <link rel="manifest" href="manifest.json">
-<link rel="config" href="config.js">
 <meta name="theme-color" content="#0b0f17">
 
 <!-- iPhone (Safari): pakai meta tags khusus Apple -->
@@ -340,6 +339,24 @@
       <div class="row"><span class="label">Volume</span><span class="val" id="mc-volume">—</span></div>
       <div class="row"><span class="label">Spread</span><span class="val" id="mc-spread">—</span></div>
       <div class="row"><span class="label">ATR (14)</span><span class="val" id="mc-atr">—</span></div>
+    </div>
+
+    <div class="card">
+      <h3>🗺️ Key Levels <span style="text-transform:none;font-size:9px;color:var(--muted);">· HTF Confluence</span></h3>
+      <div class="row"><span class="label">Prev Day High</span><span class="val" id="kl-pdh">—</span></div>
+      <div class="row"><span class="label">Prev Day Low</span><span class="val" id="kl-pdl">—</span></div>
+      <div class="row"><span class="label">Daily Pivot</span><span class="val" id="kl-pivot">—</span></div>
+      <div class="row"><span class="label">Weekly Open</span><span class="val" id="kl-wopen">—</span></div>
+      <div class="row"><span class="label">Nearest Level</span><span class="val" id="kl-nearest">—</span></div>
+      <div style="font-size:9px;color:var(--muted);margin-top:6px;font-family:var(--mono);" id="kl-updated"></div>
+    </div>
+
+    <div class="card">
+      <h3>💵 DXY Correlation</h3>
+      <div class="row"><span class="label">DXY Trend</span><span class="val" id="dxy-trend">—</span></div>
+      <div class="row"><span class="label">Gold Bias</span><span class="val" id="dxy-goldbias">—</span></div>
+      <div class="row"><span class="label">Correlation</span><span class="val" id="dxy-status">—</span></div>
+      <div style="font-size:9px;color:var(--muted);margin-top:6px;font-family:var(--mono);" id="dxy-updated"></div>
     </div>
 
     <div class="card">
@@ -1135,6 +1152,7 @@ async function fetchAIAnalysis(){
     const ema50=calcEMA(closes,50);
     const aboveEMA=price>ema50;
     const bias = aboveEMA ? 'bull' : 'bear';
+    currentGoldBias = bias; // dipakai DXY Correlation card
     const trendScore = aboveEMA ? 20 : 0;
     setMV('trend', aboveEMA?'▲ BULLISH':'▼ BEARISH', aboveEMA?'ok':'bad', trendScore, 20);
     total+=trendScore;
@@ -1253,6 +1271,9 @@ async function fetchAIAnalysis(){
       if(fvgScore>0) confluence.push(fvg.filled?'FVG Filled':'FVG Open');
       if(liqScore>0) confluence.push('Liquidity Swept');
       if(volScore>0) confluence.push('Volume Spike');
+      if(latestDXYAligned===true) confluence.push('DXY Aligned');
+      else if(latestDXYAligned===false) confluence.push('⚠ DXY Conflict');
+      if(latestKeyLevels && latestKeyLevels.nearestDist < (rcATR || 3)) confluence.push('⚠ Near '+latestKeyLevels.nearestName);
       const atrNow = calcATRFromArrays(highs, lows, closes, 14);
       const isBuySignal = actionWord==='BUY';
       const slAlert  = isBuySignal ? price - atrNow : price + atrNow;
@@ -1298,6 +1319,127 @@ async function fetchAIAnalysis(){
 
 fetchAIAnalysis();
 setInterval(fetchAIAnalysis, 5*60*1000);
+
+// ===================================================================
+// HTF KEY LEVELS — Previous Day High/Low, Daily Pivot, Weekly Open
+// Confluence tambahan: entry yang searah bias TAPI mepet level HTF
+// (misal mau BUY tapi ketemu PDH tepat di atas) itu red flag yang
+// gak keliatan kalau cuma modal M15 doang.
+// ===================================================================
+let latestKeyLevels = null;
+
+async function fetchKeyLevels(){
+  try{
+    const dUrl = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(TD_SYMBOL)}&interval=1day&outputsize=3&apikey=${TD_KEY}`;
+    const wUrl = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(TD_SYMBOL)}&interval=1week&outputsize=2&apikey=${TD_KEY}`;
+    const [dRes, wRes] = await Promise.all([fetch(dUrl), fetch(wUrl)]);
+    const dData = await dRes.json();
+    const wData = await wRes.json();
+    if(!dData.values || dData.values.length<2) throw new Error('no daily data');
+
+    // values[0] = candle hari ini (masih jalan), values[1] = hari kemarin (closed)
+    const prevDay = dData.values[1];
+    const pdh = parseFloat(prevDay.high);
+    const pdl = parseFloat(prevDay.low);
+    const pdc = parseFloat(prevDay.close);
+    const pivot = (pdh + pdl + pdc) / 3;
+    const wOpen = (wData.values && wData.values.length) ? parseFloat(wData.values[0].open) : null;
+
+    const fmt = n => n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const set = (id, val) => { const el=document.getElementById(id); if(el) el.textContent = val; };
+    set('kl-pdh', fmt(pdh));
+    set('kl-pdl', fmt(pdl));
+    set('kl-pivot', fmt(pivot));
+    set('kl-wopen', wOpen!==null ? fmt(wOpen) : 'N/A');
+
+    // level HTF terdekat dari harga sekarang, biar keliatan kalau posisi
+    // rawan "mentok" dinding invisible
+    const price = rcPrice || pdc;
+    const levels = [{name:'PDH', val:pdh}, {name:'PDL', val:pdl}, {name:'Pivot', val:pivot}];
+    if(wOpen!==null) levels.push({name:'Weekly Open', val:wOpen});
+    let nearest = levels[0], minDist = Math.abs(price - levels[0].val);
+    levels.forEach(l=>{
+      const dist = Math.abs(price - l.val);
+      if(dist < minDist){ minDist = dist; nearest = l; }
+    });
+    const nearestEl = document.getElementById('kl-nearest');
+    if(nearestEl){
+      const distPts = (minDist*10).toFixed(0);
+      const isClose = minDist < (rcATR || 3); // mepet kalau jaraknya < 1x ATR
+      nearestEl.textContent = `${nearest.name} · ${distPts} pts`;
+      nearestEl.style.color = isClose ? 'var(--gold)' : 'var(--text)';
+    }
+
+    latestKeyLevels = { pdh, pdl, pivot, wOpen, nearestName:nearest.name, nearestDist:minDist };
+
+    const now=new Date();
+    const pad=n=>String(n).padStart(2,'0');
+    const upd=document.getElementById('kl-updated');
+    if(upd) upd.textContent = `Updated ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  }catch(e){
+    ['kl-pdh','kl-pdl','kl-pivot','kl-wopen','kl-nearest'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.textContent='— ERROR';
+    });
+  }
+}
+
+fetchKeyLevels();
+setInterval(fetchKeyLevels, 15*60*1000); // data HTF jarang berubah, 15 menit cukup
+
+// ===================================================================
+// DXY CORRELATION — Gold vs Dollar Index biasanya inverse. Kalau bias
+// gold BUY tapi DXY lagi kuat naik, itu conflict yang perlu diwaspadai
+// meski semua rule SMC di M15 udah centang hijau.
+// ===================================================================
+let currentGoldBias = null; // di-set di fetchAIAnalysis()
+let latestDXYAligned = null;
+
+async function fetchDXY(){
+  const url = `https://api.twelvedata.com/time_series?symbol=DXY&interval=15min&outputsize=60&apikey=${TD_KEY}`;
+  try{
+    const res = await fetch(url);
+    const data = await res.json();
+    if(!data.values || !data.values.length) throw new Error('no dxy data');
+    const closes = data.values.map(v=>parseFloat(v.close)).reverse();
+    const ema50 = calcEMA(closes, Math.min(50, closes.length-1));
+    const price = closes[closes.length-1];
+    const dxyBull = price > ema50;
+
+    const trendEl = document.getElementById('dxy-trend');
+    if(trendEl){
+      trendEl.textContent = dxyBull ? '▲ STRENGTHENING' : '▼ WEAKENING';
+      trendEl.style.color = dxyBull ? 'var(--green)' : 'var(--red)';
+    }
+    const biasEl = document.getElementById('dxy-goldbias');
+    if(biasEl){
+      biasEl.textContent = currentGoldBias ? currentGoldBias.toUpperCase() : '— WAIT';
+      biasEl.style.color = currentGoldBias==='bull' ? 'var(--green)' : currentGoldBias==='bear' ? 'var(--red)' : 'var(--muted)';
+    }
+    const statusEl = document.getElementById('dxy-status');
+    if(statusEl && currentGoldBias){
+      // korelasi inverse: gold bullish sehat kalau DXY melemah, & sebaliknya
+      const aligned = (currentGoldBias==='bull' && !dxyBull) || (currentGoldBias==='bear' && dxyBull);
+      statusEl.textContent = aligned ? '✔ ALIGNED' : '✕ CONFLICT';
+      statusEl.style.color = aligned ? 'var(--green)' : 'var(--red)';
+      latestDXYAligned = aligned;
+    } else if(statusEl){
+      statusEl.textContent = '— WAIT BIAS';
+      statusEl.style.color = 'var(--muted)';
+    }
+
+    const now=new Date();
+    const pad=n=>String(n).padStart(2,'0');
+    const upd=document.getElementById('dxy-updated');
+    if(upd) upd.textContent = `Updated ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  }catch(e){
+    ['dxy-trend','dxy-goldbias','dxy-status'].forEach(id=>{
+      const el=document.getElementById(id); if(el){ el.textContent='— N/A'; el.style.color='var(--muted)'; }
+    });
+  }
+}
+
+fetchDXY();
+setInterval(fetchDXY, 5*60*1000);
 
 // ===================================================================
 // LIVE RISK CALCULATOR — harga & ATR dari Twelve Data
