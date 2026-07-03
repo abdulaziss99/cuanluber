@@ -643,7 +643,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
   </div>
 </div>
 
-<!-- TOAST t -->
+<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1416,7 +1416,7 @@ function renderJournalTable(rows) {
           <td style="font-family:var(--mono);">${r.Entry||'-'}</td>
           <td style="font-family:var(--mono);color:var(--red);">${r.Stop_Loss||'-'}</td>
           <td style="font-family:var(--mono);color:var(--green);">${r.Take_Profit||'-'}</td>
-          <td>${r['Risk (%)']||'-'}%</td>
+          <td>${r['Risk_(%)']||'-'}%</td>
           <td style="font-family:var(--mono);">${r.RR||'-'}</td>
           <td class="${(r.Result||'open').toLowerCase()}">${r.Result||'Open'}</td>
           <td class="${pl>=0?'pl-pos':'pl-neg'}">${pl>=0?'+':''}${r['P/L_($)']||0}</td>
@@ -1509,11 +1509,11 @@ function editJournal(id) {
   set('f-market', row.Market); set('f-symbol', row.Symbol);
   set('f-direction', row.Direction); set('f-timeframe', row.Timeframe);
   set('f-entry', row.Entry); set('f-sl', row.Stop_Loss);
-  set('f-tp', row.Take_Profit); set('f-risk', row['Risk (%)']);
+  set('f-tp', row.Take_Profit); set('f-risk', row['Risk_(%)']);
   set('f-rr', row.RR); set('f-result', row.Result);
   set('f-pl', row['P/L_(Point)']); set('f-pl-usd', row['P/L_($)']);
   set('f-emotion', row.Emotion);
-  set('f-strategy', row.Strategy); set('f-conf', row['Confidence (%)']);
+  set('f-strategy', row.Strategy); set('f-conf', row['Confidence_(%)']);
   set('f-lesson', row.Lesson_Learned); set('f-notes', row.Notes);
   document.getElementById('modalOverlay').classList.add('show');
 }
@@ -1534,14 +1534,14 @@ async function submitJournal() {
     Entry: document.getElementById('f-entry').value,
     Stop_Loss: document.getElementById('f-sl').value,
     Take_Profit: document.getElementById('f-tp').value,
-    'Risk (%)': document.getElementById('f-risk').value,
+    'Risk_(%)': document.getElementById('f-risk').value,
     RR: document.getElementById('f-rr').value,
     Result: document.getElementById('f-result').value,
     'P/L_(Point)': document.getElementById('f-pl').value,
     'P/L_($)': document.getElementById('f-pl-usd').value,
     Emotion: document.getElementById('f-emotion').value,
     Strategy: document.getElementById('f-strategy').value,
-    'Confidence (%)': document.getElementById('f-conf').value,
+    'Confidence_(%)': document.getElementById('f-conf').value,
     Lesson_Learned: document.getElementById('f-lesson').value,
     Notes: document.getElementById('f-notes').value,
   };
