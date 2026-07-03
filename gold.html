@@ -243,6 +243,36 @@
   .pulse{animation:pulse 2s infinite;}
   @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
 
+  #alertToggle.on{color:var(--gold); border-color:rgba(240,180,41,.4); background:rgba(240,180,41,.1);}
+
+  #alertToastWrap{
+    position:fixed; top:calc(14px + env(safe-area-inset-top)); right:14px; z-index:999;
+    display:flex; flex-direction:column; gap:10px; max-width:340px; width:calc(100% - 28px);
+    pointer-events:none;
+  }
+  .alert-toast{
+    pointer-events:auto;
+    background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--gold);
+    border-radius:10px; padding:12px 14px; box-shadow:0 8px 24px rgba(0,0,0,.35);
+    animation: toastIn .25s ease, toastOut .3s ease 6.7s forwards;
+    font-family:var(--sans);
+  }
+  .alert-toast.buy{border-left-color:var(--green);}
+  .alert-toast.sell{border-left-color:var(--red);}
+  .alert-toast .at-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;}
+  .alert-toast .at-title{font-size:13px; font-weight:800; display:flex; align-items:center; gap:6px;}
+  .alert-toast .at-close{cursor:pointer; color:var(--muted); font-size:14px; background:none; border:none; padding:0;}
+  .alert-toast .at-close:hover{color:var(--text);}
+  .alert-toast .at-row{display:flex; justify-content:space-between; font-size:11.5px; padding:2px 0;}
+  .alert-toast .at-row .l{color:var(--muted);}
+  .alert-toast .at-row .v{font-family:var(--mono); font-weight:700;}
+  .alert-toast .at-tag{
+    font-size:10px; color:var(--muted); background:var(--panel2); border:1px solid var(--line);
+    border-radius:6px; padding:5px 7px; margin-top:6px; line-height:1.4;
+  }
+  @keyframes toastIn{from{opacity:0; transform:translateX(30px);} to{opacity:1; transform:translateX(0);}}
+  @keyframes toastOut{from{opacity:1;} to{opacity:0; transform:translateX(30px);}}
+
   @media (max-width:1100px){
     .layout{grid-template-columns:1fr; }
     .bottom-grid{grid-template-columns:1fr 1fr;}
@@ -271,6 +301,7 @@
     <button data-tab="about"></button>
   </nav>
   <button class="theme-toggle" id="themeToggle">🌙 <span id="themeLabel">Dark</span></button>
+  <button class="theme-toggle" id="alertToggle">🔔 <span id="alertLabel">Enable Alert</span></button>
   <div class="conn">● CONNECTED</div>
 </div>
 
@@ -528,6 +559,8 @@
   </div>
 </div>
 
+<div id="alertToastWrap"></div>
+
 <footer>
   <b>AZIS GOLD SYSTEM</b> v1.0 &nbsp;|&nbsp; Build for Discipline. Trade with Confidence.
 </footer>
@@ -659,6 +692,118 @@ themeToggleBtn.addEventListener('click', ()=>{
 applyTheme(getSavedTheme() || 'dark');
 
 // ===================================================================
+// ALERT SYSTEM — sound + on-screen toast + browser push notification
+// Trigger: Setup Score >= 61 (Good/A+) DAN actionable (BUY/SELL).
+// Anti-spam: cuma alert sekali per "sinyal baru" (state di-reset kalau
+// action balik ke WAIT/NO TRADE, jadi next signal beneran baru).
+// ===================================================================
+let alertEnabled = false;
+let lastAlertedAction = null; // null | 'BUY' | 'SELL'
+
+const alertToggleBtn = document.getElementById('alertToggle');
+const alertLabel = document.getElementById('alertLabel');
+
+function setAlertUI(enabled){
+  alertEnabled = enabled;
+  alertToggleBtn.classList.toggle('on', enabled);
+  alertLabel.textContent = enabled ? 'Alert ON' : 'Enable Alert';
+  alertToggleBtn.firstChild.textContent = enabled ? '🔔 ' : '🔕 ';
+}
+
+alertToggleBtn.addEventListener('click', async ()=>{
+  if(alertEnabled){
+    setAlertUI(false);
+    return;
+  }
+  // minta izin browser notification (harus dari user gesture, makanya di sini)
+  if('Notification' in window && Notification.permission === 'default'){
+    try{ await Notification.requestPermission(); }catch(e){}
+  }
+  setAlertUI(true);
+  // langsung tes bunyi + toast biar user tau alert-nya aktif
+  playAlertSound();
+  renderToast({
+    action:'TEST', score:'--', price:0, sl:0, tp:0,
+    confluence:'Alert berhasil diaktifkan', session:'-', isTest:true
+  });
+});
+
+// beep via Web Audio API — gak butuh file audio eksternal, jadi tetap
+// jalan walau offline / gak ada CORS ke CDN suara.
+function playAlertSound(){
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const notes = [880, 1108, 1318]; // naik 3 nada biar kerasa kayak "ping" software
+    notes.forEach((freq, idx)=>{
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.001, ctx.currentTime + idx*0.14);
+      gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + idx*0.14 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx*0.14 + 0.22);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + idx*0.14);
+      osc.stop(ctx.currentTime + idx*0.14 + 0.24);
+    });
+  }catch(e){ /* audio blocked, silent fail */ }
+}
+
+function fmtPrice(n){ return n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+function renderToast(d){
+  const wrap = document.getElementById('alertToastWrap');
+  if(!wrap) return;
+  const isBuy = d.action==='BUY';
+  const cls = d.isTest ? '' : (isBuy ? 'buy' : 'sell');
+  const dotColor = d.isTest ? 'var(--gold)' : (isBuy ? 'var(--green)' : 'var(--red)');
+  const icon = d.isTest ? '🔔' : (isBuy ? '▲' : '▼');
+  const now = new Date();
+  const pad = n=>String(n).padStart(2,'0');
+  const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+  const toast = document.createElement('div');
+  toast.className = 'alert-toast ' + cls;
+  toast.innerHTML = `
+    <div class="at-head">
+      <div class="at-title" style="color:${dotColor}">${icon} ${d.isTest ? 'ALERT AKTIF' : 'AGS · ' + d.action + ' XAUUSD'}</div>
+      <button class="at-close" aria-label="close">✕</button>
+    </div>
+    ${d.isTest ? `<div class="at-tag">${d.confluence}</div>` : `
+    <div class="at-row"><span class="l">Setup Score</span><span class="v" style="color:${dotColor}">${d.score}/100</span></div>
+    <div class="at-row"><span class="l">Entry</span><span class="v">${fmtPrice(d.price)}</span></div>
+    <div class="at-row"><span class="l">SL</span><span class="v" style="color:var(--red)">${fmtPrice(d.sl)}</span></div>
+    <div class="at-row"><span class="l">TP (1:2)</span><span class="v" style="color:var(--green)">${fmtPrice(d.tp)}</span></div>
+    <div class="at-row"><span class="l">Session</span><span class="v">${d.session}</span></div>
+    <div class="at-tag">📌 ${d.confluence}</div>
+    <div style="font-size:9px;color:var(--muted);margin-top:6px;font-family:var(--mono);">⏰ ${time}</div>
+    `}
+  `;
+  toast.querySelector('.at-close').addEventListener('click', ()=> toast.remove());
+  wrap.prepend(toast);
+  setTimeout(()=> toast.remove(), 7200);
+}
+
+function sendBrowserNotification(d){
+  if(!('Notification' in window) || Notification.permission!=='granted') return;
+  try{
+    new Notification(`AGS · ${d.action} XAUUSD — Score ${d.score}/100`, {
+      body: `Entry ${fmtPrice(d.price)} · SL ${fmtPrice(d.sl)} · TP ${fmtPrice(d.tp)}\n${d.confluence}`,
+      tag: 'ags-signal', // biar notif baru replace yang lama, gak numpuk
+    });
+  }catch(e){}
+}
+
+function checkAndAlert(d){
+  if(!alertEnabled) return;
+  if(d.action === lastAlertedAction) return; // sinyal sama, jangan spam
+  lastAlertedAction = d.action;
+  playAlertSound();
+  renderToast(d);
+  sendBrowserNotification(d);
+}
+
+// ===================================================================
 // LIVE SESSION INDICATOR
 // ===================================================================
 const SESSIONS = [
@@ -763,6 +908,18 @@ function calcRSI(closes, period=14){
   if(avgLoss===0) return 100;
   const rs=avgGain/avgLoss;
   return 100-(100/(1+rs));
+}
+
+function calcATRFromArrays(highs, lows, closes, period=14){
+  const trs=[];
+  for(let i=1;i<closes.length;i++){
+    const h=highs[i], l=lows[i], pc=closes[i-1];
+    trs.push(Math.max(h-l, Math.abs(h-pc), Math.abs(l-pc)));
+  }
+  if(trs.length<period) return 0;
+  let atr=trs.slice(0,period).reduce((a,b)=>a+b,0)/period;
+  for(let i=period;i<trs.length;i++) atr=(atr*(period-1)+trs[i])/period;
+  return atr;
 }
 
 function getTrend(closes){
@@ -1086,6 +1243,33 @@ async function fetchAIAnalysis(){
     if(fdSub) fdSub.textContent=subTxt;
     if(fdIcon){ fdIcon.textContent=icon; fdIcon.style.color=actionColor; fdIcon.style.background=actionColor+'22'; }
     if(fdBox) fdBox.style.borderColor=actionColor+'55';
+
+    // ===== ALERT ENGINE TRIGGER =====
+    if(actionWord==='BUY' || actionWord==='SELL'){
+      const confluence=[];
+      if(structScore>0) confluence.push('Structure '+struct.type);
+      if(obScore>0) confluence.push(ob.mitigated?'OB Mitigated':'OB Formed');
+      if(fvgScore>0) confluence.push(fvg.filled?'FVG Filled':'FVG Open');
+      if(liqScore>0) confluence.push('Liquidity Swept');
+      if(volScore>0) confluence.push('Volume Spike');
+      const atrNow = calcATRFromArrays(highs, lows, closes, 14);
+      const isBuySignal = actionWord==='BUY';
+      const slAlert  = isBuySignal ? price - atrNow : price + atrNow;
+      const tpAlert  = isBuySignal ? price + atrNow*2 : price - atrNow*2;
+      const hUTCnow = new Date().getUTCHours();
+      const activeSess = SESSIONS.filter(s=>sessIsActive(s,hUTCnow)).map(s=>s.name).join(' + ') || 'CLOSED';
+      checkAndAlert({
+        action: actionWord,
+        score: pct,
+        price: price,
+        sl: slAlert,
+        tp: tpAlert,
+        confluence: confluence.join(' · ') || '—',
+        session: activeSess
+      });
+    } else {
+      lastAlertedAction = null; // reset so next valid signal can alert again
+    }
 
     // ===== LIVE AI SCORE (Buy % / Sell %) =====
     const buyScore = scoreDirection(price, ema50, opens, highs, lows, closes, vols, 'bull');
