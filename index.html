@@ -610,6 +610,10 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
         <input class="form-input" id="f-pl" type="number">
       </div>
       <div class="form-group">
+        <label class="form-label">P/L ($)</label>
+        <input class="form-input" id="f-pl-usd" type="number">
+      </div>
+      <div class="form-group">
         <label class="form-label">Emotion</label>
         <select class="form-select" id="f-emotion">
           <option>Calm</option><option>Greedy</option><option>Fear</option><option>Confident</option><option>FOMO</option>
@@ -757,11 +761,11 @@ function getMockData(action) {
         { label: 'Tunggu Candle Close', done: true },
       ],
       recentJournal: [
-        { ID:'TRD-001', Date:'28/06', Symbol:'XAUUSD', Direction:'Buy', Result:'Win', 'Profit/Loss':'+320', Time:'14:12' },
-        { ID:'TRD-002', Date:'28/06', Symbol:'BBCA', Direction:'Buy', Result:'Loss', 'Profit/Loss':'-150', Time:'11:05' },
-        { ID:'TRD-003', Date:'27/06', Symbol:'XAUUSD', Direction:'Sell', Result:'Win', 'Profit/Loss':'+280', Time:'16:45' },
-        { ID:'TRD-004', Date:'27/06', Symbol:'ANTM', Direction:'Buy', Result:'Win', 'Profit/Loss':'+90', Time:'13:22' },
-        { ID:'TRD-005', Date:'27/06', Symbol:'XAUUSD', Direction:'Buy', Result:'Loss', 'Profit/Loss':'-200', Time:'10:11' },
+        { No:1, Date:'28/06', Symbol:'XAUUSD', Direction:'Buy', Result:'Win', 'P/L_($)':'+320' },
+        { No:2, Date:'28/06', Symbol:'BBCA', Direction:'Buy', Result:'Loss', 'P/L_($)':'-150' },
+        { No:3, Date:'27/06', Symbol:'XAUUSD', Direction:'Sell', Result:'Win', 'P/L_($)':'+280' },
+        { No:4, Date:'27/06', Symbol:'ANTM', Direction:'Buy', Result:'Win', 'P/L_($)':'+90' },
+        { No:5, Date:'27/06', Symbol:'XAUUSD', Direction:'Buy', Result:'Loss', 'P/L_($)':'-200' },
       ],
       upcomingPlans: [
         { Time:'15:30', Flag:'🇺🇸', Name:'Core PCE Price Index (MoM)', Impact:'High' },
@@ -858,17 +862,17 @@ function renderRecentJournal(rows) {
   document.getElementById('recentJournal').innerHTML = `
     <table class="tbl">
       <thead><tr>
-        <th>MARKET</th><th>DIRECTION</th><th>RESULT</th><th>P/L (POINT)</th><th>TIME</th>
+        <th>MARKET</th><th>DIRECTION</th><th>RESULT</th><th>P/L ($)</th><th>DATE</th>
       </tr></thead>
       <tbody>${rows.map(r => {
-        const pl = parseFloat(r['Profit/Loss']||0);
+        const pl = parseFloat(r['P/L_($)']||0);
         return `<tr>
           <td><span class="sym-icon" style="background:${symColor(r.Symbol||'')}">
             ${(r.Symbol||'?').slice(0,2)}</span>${r.Symbol||'-'}</td>
           <td class="${(r.Direction||'').toLowerCase()}">${r.Direction||'-'}</td>
           <td class="${(r.Result||'open').toLowerCase()}">${r.Result||'Open'}</td>
-          <td class="${pl>=0?'pl-pos':'pl-neg'}">${pl>=0?'+':''}${r['Profit/Loss']||0}</td>
-          <td style="color:var(--muted);font-size:11px;">${r.Date||''} ${r.Time||''}</td>
+          <td class="${pl>=0?'pl-pos':'pl-neg'}">${pl>=0?'+':''}${r['P/L_($)']||0}</td>
+          <td style="color:var(--muted);font-size:11px;">${r.Date||''}</td>
         </tr>`;
       }).join('')}</tbody>
     </table>`;
@@ -1398,28 +1402,28 @@ function renderJournalTable(rows) {
   document.getElementById('journalTable').innerHTML = `
     <table class="tbl">
       <thead><tr>
-        <th>ID</th><th>DATE</th><th>SYMBOL</th><th>DIR</th><th>ENTRY</th>
+        <th>NO</th><th>DATE</th><th>SYMBOL</th><th>DIR</th><th>ENTRY</th>
         <th>SL</th><th>TP</th><th>RISK%</th><th>RR</th>
-        <th>RESULT</th><th>P/L</th><th>STRATEGY</th><th>ACTION</th>
+        <th>RESULT</th><th>P/L ($)</th><th>STRATEGY</th><th>ACTION</th>
       </tr></thead>
       <tbody>${rows.map(r => {
-        const pl = parseFloat(r['Profit/Loss']||0);
+        const pl = parseFloat(r['P/L_($)']||0);
         return `<tr>
-          <td style="font-family:var(--mono);font-size:10px;color:var(--muted);">${r.ID||'-'}</td>
-          <td style="font-size:11px;white-space:nowrap;">${r.Date||''} ${r.Time||''}</td>
+          <td style="font-family:var(--mono);font-size:10px;color:var(--muted);">${r.No||'-'}</td>
+          <td style="font-size:11px;white-space:nowrap;">${r.Date||''}</td>
           <td><b>${r.Symbol||'-'}</b></td>
           <td class="${(r.Direction||'').toLowerCase()}">${r.Direction||'-'}</td>
           <td style="font-family:var(--mono);">${r.Entry||'-'}</td>
           <td style="font-family:var(--mono);color:var(--red);">${r.Stop_Loss||'-'}</td>
-          <td style="font-family:var(--mono);color:var(--green);">${r.Take_profit||'-'}</td>
-          <td>${r['Risk(%)']||'-'}%</td>
+          <td style="font-family:var(--mono);color:var(--green);">${r.Take_Profit||'-'}</td>
+          <td>${r['Risk (%)']||'-'}%</td>
           <td style="font-family:var(--mono);">${r.RR||'-'}</td>
           <td class="${(r.Result||'open').toLowerCase()}">${r.Result||'Open'}</td>
-          <td class="${pl>=0?'pl-pos':'pl-neg'}">${pl>=0?'+':''}${r['Profit/Loss']||0}</td>
+          <td class="${pl>=0?'pl-pos':'pl-neg'}">${pl>=0?'+':''}${r['P/L_($)']||0}</td>
           <td style="font-size:11px;color:var(--muted);">${r.Strategy||'-'}</td>
           <td>
-            <button class="btn btn-ghost" style="font-size:10px;padding:3px 8px;" onclick="editJournal('${r.ID}')">✏️</button>
-            <button class="btn btn-red" style="font-size:10px;padding:3px 8px;" onclick="deleteJournal('${r.ID}')">🗑</button>
+            <button class="btn btn-ghost" style="font-size:10px;padding:3px 8px;" onclick="editJournal('${r.No}')">✏️</button>
+            <button class="btn btn-red" style="font-size:10px;padding:3px 8px;" onclick="deleteJournal('${r.No}')">🗑</button>
           </td>
         </tr>`;
       }).join('')}</tbody>
@@ -1488,7 +1492,7 @@ function openModal(type) {
   document.getElementById('modalTitle').textContent = 'New Journal Entry';
   document.getElementById('submitBtn').textContent = '💾 Save Entry';
   // Reset form
-  ['f-market','f-symbol','f-direction','f-timeframe','f-entry','f-sl','f-tp','f-risk','f-rr','f-result','f-pl','f-emotion','f-strategy','f-conf','f-lesson','f-notes'].forEach(id => {
+  ['f-market','f-symbol','f-direction','f-timeframe','f-entry','f-sl','f-tp','f-risk','f-rr','f-result','f-pl','f-pl-usd','f-emotion','f-strategy','f-conf','f-lesson','f-notes'].forEach(id => {
     const el = document.getElementById(id);
     if(el) el.value = el.tagName==='SELECT'?el.options[0]?.value:id==='f-risk'?'1':id==='f-conf'?'75':'';
   });
@@ -1496,20 +1500,21 @@ function openModal(type) {
 }
 
 function editJournal(id) {
-  const row = journals.find(r=>r.ID===id);
+  const row = journals.find(r=>String(r.No)===String(id));
   if(!row) return;
   editingId = id;
-  document.getElementById('modalTitle').textContent = 'Edit Journal — ' + id;
+  document.getElementById('modalTitle').textContent = 'Edit Journal — No ' + id;
   document.getElementById('submitBtn').textContent = '💾 Update Entry';
   const set = (fid, val) => { const el=document.getElementById(fid); if(el) el.value=val||''; };
   set('f-market', row.Market); set('f-symbol', row.Symbol);
   set('f-direction', row.Direction); set('f-timeframe', row.Timeframe);
   set('f-entry', row.Entry); set('f-sl', row.Stop_Loss);
-  set('f-tp', row.Take_profit); set('f-risk', row['Risk(%)']);
+  set('f-tp', row.Take_Profit); set('f-risk', row['Risk (%)']);
   set('f-rr', row.RR); set('f-result', row.Result);
-  set('f-pl', row['Profit/Loss']); set('f-emotion', row.Emotion);
-  set('f-strategy', row.Strategy); set('f-conf', row.Confidence);
-  set('f-lesson', row.Lession_Learned); set('f-notes', row.Noted);
+  set('f-pl', row['P/L_(Point)']); set('f-pl-usd', row['P/L_($)']);
+  set('f-emotion', row.Emotion);
+  set('f-strategy', row.Strategy); set('f-conf', row['Confidence (%)']);
+  set('f-lesson', row.Lesson_Learned); set('f-notes', row.Notes);
   document.getElementById('modalOverlay').classList.add('show');
 }
 
@@ -1528,16 +1533,17 @@ async function submitJournal() {
     Timeframe: document.getElementById('f-timeframe').value,
     Entry: document.getElementById('f-entry').value,
     Stop_Loss: document.getElementById('f-sl').value,
-    Take_profit: document.getElementById('f-tp').value,
-    'Risk(%)': document.getElementById('f-risk').value,
+    Take_Profit: document.getElementById('f-tp').value,
+    'Risk (%)': document.getElementById('f-risk').value,
     RR: document.getElementById('f-rr').value,
     Result: document.getElementById('f-result').value,
-    'Profit/Loss': document.getElementById('f-pl').value,
+    'P/L_(Point)': document.getElementById('f-pl').value,
+    'P/L_($)': document.getElementById('f-pl-usd').value,
     Emotion: document.getElementById('f-emotion').value,
     Strategy: document.getElementById('f-strategy').value,
-    Confidence: document.getElementById('f-conf').value,
-    Lession_Learned: document.getElementById('f-lesson').value,
-    Noted: document.getElementById('f-notes').value,
+    'Confidence (%)': document.getElementById('f-conf').value,
+    Lesson_Learned: document.getElementById('f-lesson').value,
+    Notes: document.getElementById('f-notes').value,
   };
   try {
     let res;
@@ -1557,7 +1563,7 @@ async function submitJournal() {
 }
 
 async function deleteJournal(id) {
-  if(!confirm('Hapus journal '+id+'?')) return;
+  if(!confirm('Hapus journal No '+id+'?')) return;
   const res = await gasPost({ action:'deleteJournal', id });
   if(res.success||res.mock) { showToast('Journal dihapus!'); loadJournalPage(); }
   else showToast('Gagal menghapus', true);
