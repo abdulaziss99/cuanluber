@@ -52,6 +52,17 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
 .content { padding: 16px 20px; }
 .hamburger { display:none; align-items:center; justify-content:center; width:36px; height:36px; background:var(--panel2); border:1px solid var(--line); border-radius:8px; cursor:pointer; font-size:16px; }
 
+/* ================================================================
+   EMBEDDED MODE — kalau saham.html dijalankan di dalam iframe (mis.
+   dari index.html), sidebar bawaannya sendiri disembunyikan supaya
+   tidak numpuk sama sidebar induk. Class 'ags-embedded' ditambahkan
+   otomatis lewat script kecil di awal <body> (lihat di bawah), jadi
+   kalau file ini dibuka langsung/standalone sidebar tetap normal.
+   ================================================================ */
+html.ags-embedded .sidebar { display: none; }
+html.ags-embedded .main { margin-left: 0; }
+html.ags-embedded .hamburger { display: none !important; }
+
 /* CARDS */
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
 .card-title { font-size: 10px; text-transform: uppercase; letter-spacing:.8px; color: var(--green); font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
@@ -167,6 +178,24 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
 </style>
 </head>
 <body>
+
+<script>
+  // Deteksi apakah saham.html sedang di-embed di dalam iframe (mis. dari
+  // index.html). Kalau ya, tambahkan class 'ags-embedded' ke <html> SEBELUM
+  // sidebar/aside dirender, supaya CSS langsung nyembunyiin sidebar bawaan
+  // file ini tanpa ada efek "kedip" sidebar muncul sebentar lalu hilang.
+  // Kalau file ini dibuka langsung/standalone (bukan lewat iframe), class
+  // ini tidak ditambahkan dan sidebar tetap tampil normal.
+  try {
+    if (window.self !== window.top) {
+      document.documentElement.classList.add('ags-embedded');
+    }
+  } catch (e) {
+    // Cross-origin access ke window.top bisa throw di beberapa browser —
+    // kalau kejadian, anggap saja sedang di-embed (lebih aman daripada dobel sidebar).
+    document.documentElement.classList.add('ags-embedded');
+  }
+</script>
 
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-logo">
