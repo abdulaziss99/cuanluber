@@ -897,6 +897,39 @@ buildSessBar();updateSess();setInterval(updateSess,1000);
 // ===================================================================
 const TD_KEY = '5f52a74cd9f24b49a4729b5b8e599505';
 const TD_SYMBOL = 'XAU/USD';
+
+// ===================================================================
+// API REQUEST QUEUE — Twelve Data plan gratis cuma 8 request/menit.
+// Dashboard ini manggil ±9 endpoint (trend x4, AI analysis, risk calc,
+// key levels x2, DXY) yang kalau ditembak bareng bakal kena 429.
+// Semua fetch ke Twelve Data sekarang lewat queue ini, dieksekusi
+// berjejer dengan jeda, jadi gak numpuk lagi — baik pas load awal
+// maupun pas semua setInterval kebetulan nyala bareng.
+// ===================================================================
+const REQUEST_GAP_MS = 9000; // ~7 request/menit, aman di bawah limit 8
+let apiQueue = [];
+let apiQueueRunning = false;
+
+function queueApiCall(fn){
+  return new Promise((resolve, reject)=>{
+    apiQueue.push(async ()=>{
+      try{ resolve(await fn()); }
+      catch(e){ reject(e); }
+    });
+    if(!apiQueueRunning) runApiQueue();
+  });
+}
+
+async function runApiQueue(){
+  apiQueueRunning = true;
+  while(apiQueue.length){
+    const job = apiQueue.shift();
+    await job();
+    if(apiQueue.length) await new Promise(r=>setTimeout(r, REQUEST_GAP_MS));
+  }
+  apiQueueRunning = false;
+}
+
 const TF_MAP = [
   { id:'trend-h4',  interval:'4h',  label:'H4'  },
   { id:'trend-h1',  interval:'1h',  label:'H1'  },
@@ -960,7 +993,7 @@ function getTrend(closes){
 async function fetchTrend(tf){
   const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(TD_SYMBOL)}&interval=${tf.interval}&outputsize=60&apikey=${TD_KEY}`;
   try {
-    const res = await fetch(url);
+    const res = await queueApiCall(()=>fetch(url));
     const data = await res.json();
     if(!data.values || !data.values.length) throw new Error('no data');
     const closes = data.values.map(v=>parseFloat(v.close)).reverse();
@@ -1135,7 +1168,7 @@ function scoreDirection(price, ema50, opens, highs, lows, closes, vols, bias){
 async function fetchAIAnalysis(){
   const url=`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(TD_SYMBOL)}&interval=15min&outputsize=100&apikey=${TD_KEY}`;
   try{
-    const res=await fetch(url);
+    const res=await queueApiCall(()=>fetch(url));
     const data=await res.json();
     if(!data.values||!data.values.length) throw new Error('no data');
     const vals=[...data.values].reverse();
@@ -1332,7 +1365,7 @@ async function fetchKeyLevels(){
   try{
     const dUrl = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(TD_SYMBOL)}&interval=1day&outputsize=3&apikey=${TD_KEY}`;
     const wUrl = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(TD_SYMBOL)}&interval=1week&outputsize=2&apikey=${TD_KEY}`;
-    const [dRes, wRes] = await Promise.all([fetch(dUrl), fetch(wUrl)]);
+    const [dRes, wRes] = await Promise.all([queueApiCall(()=>fetch(dUrl)), queueApiCall(()=>fetch(wUrl))]);
     const dData = await dRes.json();
     const wData = await wRes.json();
     if(!dData.values || dData.values.length<2) throw new Error('no daily data');
@@ -1397,7 +1430,7 @@ let latestDXYAligned = null;
 async function fetchDXY(){
   const url = `https://api.twelvedata.com/time_series?symbol=DXY&interval=15min&outputsize=60&apikey=${TD_KEY}`;
   try{
-    const res = await fetch(url);
+    const res = await queueApiCall(()=>fetch(url));
     const data = await res.json();
     if(!data.values || !data.values.length) throw new Error('no dxy data');
     const closes = data.values.map(v=>parseFloat(v.close)).reverse();
@@ -1513,7 +1546,7 @@ function updateRC(){
 async function fetchRCData(){
   const url=`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(TD_SYMBOL)}&interval=15min&outputsize=60&apikey=${TD_KEY}`;
   try{
-    const res=await fetch(url);
+    const res=await queueApiCall(()=>fetch(url));
     const data=await res.json();
     if(!data.values||!data.values.length) throw new Error('no data');
     const vals=[...data.values];
