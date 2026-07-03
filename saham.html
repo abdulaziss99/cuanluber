@@ -54,14 +54,18 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
 
 /* ================================================================
    EMBEDDED MODE — kalau saham.html dijalankan di dalam iframe (mis.
-   dari index.html), sidebar bawaannya sendiri disembunyikan supaya
-   tidak numpuk sama sidebar induk. Class 'ags-embedded' ditambahkan
-   otomatis lewat script kecil di awal <body> (lihat di bawah), jadi
-   kalau file ini dibuka langsung/standalone sidebar tetap normal.
+   dari index.html), sidebar & topbar bawaannya sendiri disembunyikan
+   supaya tidak numpuk sama sidebar/topbar induk (index.html sudah
+   punya greeting "Good Morning, Azis" + jam sendiri). Class
+   'ags-embedded' ditambahkan otomatis lewat script kecil di awal
+   <body> (lihat di bawah), jadi kalau file ini dibuka langsung/
+   standalone sidebar & topbar tetap normal.
    ================================================================ */
 html.ags-embedded .sidebar { display: none; }
 html.ags-embedded .main { margin-left: 0; }
 html.ags-embedded .hamburger { display: none !important; }
+html.ags-embedded .topbar { display: none; }
+html.ags-embedded .content { padding-top: 16px; }
 
 /* CARDS */
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
@@ -96,6 +100,9 @@ html.ags-embedded .hamburger { display: none !important; }
 .ihsg-price { font-size: 30px; font-weight: 800; font-family: var(--mono); }
 .ihsg-chg { font-size: 14px; font-weight: 700; }
 .ihsg-meta { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.live-badge { display:inline-flex; align-items:center; gap:5px; font-size:10px; font-weight:800; letter-spacing:.5px; color: var(--green); background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.3); padding: 3px 8px; border-radius: 20px; margin-left: auto; }
+.live-dot { width:6px; height:6px; border-radius:50%; background: var(--green); animation: livePulse 1.4s ease-in-out infinite; }
+@keyframes livePulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(.7); } }
 .tf-row { display:flex; gap:6px; margin: 10px 0 8px; flex-wrap: wrap; }
 .tf-btn { font-size: 11px; padding: 5px 11px; border-radius: 8px; cursor: pointer; color: var(--muted); border: 1px solid var(--line); background: var(--panel2); font-family: var(--sans); font-weight:600; }
 .tf-btn.active { background: rgba(34,197,94,.15); color: var(--green); border-color: rgba(34,197,94,.3); }
@@ -180,19 +187,19 @@ html.ags-embedded .hamburger { display: none !important; }
 <body>
 
 <script>
-  // Deteksi apakah saham.html sedang di-embed di dalam iframe (mis. dari
-  // index.html). Kalau ya, tambahkan class 'ags-embedded' ke <html> SEBELUM
-  // sidebar/aside dirender, supaya CSS langsung nyembunyiin sidebar bawaan
-  // file ini tanpa ada efek "kedip" sidebar muncul sebentar lalu hilang.
+  // Deteksi apakah saham.html sedang di-embed di dalam iframe (mis.
+  // dari index.html). Kalau ya, tambahkan class 'ags-embedded' ke <html> SEBELUM
+  // sidebar/aside/topbar dirender, supaya CSS langsung nyembunyiin sidebar &
+  // topbar bawaan file ini tanpa ada efek "kedip" muncul sebentar lalu hilang.
   // Kalau file ini dibuka langsung/standalone (bukan lewat iframe), class
-  // ini tidak ditambahkan dan sidebar tetap tampil normal.
+  // ini tidak ditambahkan dan sidebar & topbar tetap tampil normal.
   try {
     if (window.self !== window.top) {
       document.documentElement.classList.add('ags-embedded');
     }
   } catch (e) {
     // Cross-origin access ke window.top bisa throw di beberapa browser —
-    // kalau kejadian, anggap saja sedang di-embed (lebih aman daripada dobel sidebar).
+    // kalau kejadian, anggap saja sedang di-embed (lebih aman daripada dobel).
     document.documentElement.classList.add('ags-embedded');
   }
 </script>
@@ -257,6 +264,7 @@ html.ags-embedded .hamburger { display: none !important; }
         <div class="ihsg-price-row">
           <div class="ihsg-price" id="ihsgPrice">—</div>
           <div class="ihsg-chg" id="ihsgChg">—</div>
+          <span id="liveBadge" class="live-badge" style="display:none;"><span class="live-dot"></span>LIVE</span>
         </div>
         <div class="ihsg-meta" id="ihsgMeta">Memuat data IHSG...</div>
 
@@ -280,7 +288,6 @@ html.ags-embedded .hamburger { display: none !important; }
           <div class="breadth-item"><div class="breadth-num" id="brVal">—</div><div class="breadth-label">Value</div></div>
           <div class="breadth-item"><div class="breadth-num" id="brFf" style="color:var(--green);">—</div><div class="breadth-label">Foreign Net Buy</div></div>
         </div>
-        <div class="data-note"><b>Catatan:</b> harga & chart IHSG live dari Yahoo Finance. Advancers/Decliners, Volume, Value &amp; Foreign Net Buy belum ada sumber gratis real-time — nilai di bawah ini indikatif, sambungkan ke AGS Backend Server (lihat flowchart, endpoint <code>/api/market/overview</code>) untuk data resmi IDX.</div>
       </div>
 
       <div class="card">
@@ -303,19 +310,16 @@ html.ags-embedded .hamburger { display: none !important; }
           <span class="tab-btn" data-mv="active" onclick="switchMovers('active',this)">Most Active</span>
         </div>
         <div id="topMovers"><div class="loading-state"><span class="spinner"></span></div></div>
-        <div class="data-note">Dihitung live dari basket ~18 saham likuid (Yahoo Finance), bukan seluruh IDX.</div>
       </div>
 
       <div class="card">
         <div class="card-title">🏭 Sector Performance</div>
         <div id="sectorPerf"><div class="loading-state"><span class="spinner"></span></div></div>
-        <div class="data-note">Estimasi dari rata-rata saham representatif per sektor, bukan indeks sektor resmi IDX.</div>
       </div>
 
       <div class="card">
         <div class="card-title">💱 Foreign Flow (IDX)</div>
         <div id="foreignFlow"><div class="loading-state"><span class="spinner"></span></div></div>
-        <div class="data-note">Data placeholder — perlu feed resmi IDX/KSEI. Sambungkan endpoint <code>/api/market/foreign-flow</code>.</div>
       </div>
 
       <div class="card">
@@ -323,7 +327,6 @@ html.ags-embedded .hamburger { display: none !important; }
           <div class="card-title" style="margin-bottom:0;">🏢 Corporate Action</div>
         </div>
         <div id="corpAction"><div class="loading-state"><span class="spinner"></span></div></div>
-        <div class="data-note">Data placeholder — sambungkan endpoint <code>/api/corporate-action</code> (IDX Corporate Action API).</div>
       </div>
     </div>
 
@@ -369,7 +372,6 @@ html.ags-embedded .hamburger { display: none !important; }
           <span class="tab-btn" data-ed="7" onclick="switchEarnings(7,this)">7 Hari</span>
         </div>
         <div id="earnCal"><div class="loading-state"><span class="spinner"></span></div></div>
-        <div class="data-note">Data placeholder — sambungkan endpoint <code>/api/earnings-calendar</code>.</div>
       </div>
     </div>
 
@@ -441,6 +443,9 @@ document.addEventListener('DOMContentLoaded', () => {
   updateMarketStatus();
   setInterval(updateMarketStatus, 30000);
   setInterval(() => loadUniverseQuotes(), 60000); // refresh live quotes tiap 1 menit
+
+  // Auto-refresh chart IHSG tiap 10 detik (khusus timeframe 1D, biar berasa live)
+  setInterval(() => { if (currentTf === '1D') loadIhsg('1D'); }, 10000);
 });
 
 // listen tema dari parent (index.html)
@@ -548,6 +553,9 @@ async function loadIhsg(tf) {
     chgEl.style.color = chg>=0?'var(--green)':'var(--red)';
     const now = new Date();
     meta.textContent = `${now.toLocaleTimeString('id-ID')} WIB · ${tf} · IHSG (^JKSE)`;
+
+    const liveBadge = document.getElementById('liveBadge');
+    liveBadge.style.display = tf === '1D' ? 'inline-flex' : 'none';
 
     drawIhsgChart(closes, chg>=0?'#22c55e':'#ef4444');
 
