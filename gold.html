@@ -318,14 +318,6 @@
         </div>
       </div>
     </div>
-
-    <div class="card">
-      <h3>🛡️ Account Risk</h3>
-      <div class="row"><span class="label">Risk per Trade</span><span class="val">1.00%</span></div>
-      <div class="row"><span class="label">Account Balance</span><span class="val">$5,000.00</span></div>
-      <div class="row"><span class="label">Risk Amount</span><span class="val bear">$50.00</span></div>
-      <div class="row"><span class="label">Lot Size (XAUUSD)</span><span class="val">0.02</span></div>
-    </div>
   </div>
 
   <!-- CENTER: CHART -->
@@ -499,20 +491,6 @@
   </div>
 </div>
 
-<div class="bottom-grid" id="dashboardBottom">
-  <div class="card">
-    <h3>🔑 Legend</h3>
-    <div class="legend-grid">
-      <div class="li"><span class="sw" style="background:#f0b429"></span>Support</div>
-      <div class="li"><span class="sw" style="background:#ef4444"></span>Resistance</div>
-      <div class="li"><span class="sw box" style="background:rgba(34,197,94,.35); border:1px solid #22c55e"></span>Bullish OB</div>
-      <div class="li"><span class="sw box" style="background:rgba(239,68,68,.35); border:1px solid #ef4444"></span>Bearish OB</div>
-      <div class="li"><span class="sw box" style="background:rgba(59,130,246,.3); border:1px solid #3b82f6"></span>FVG</div>
-      <div class="li">💧 Liquidity</div>
-    </div>
-  </div>
-</div>
-
 <!-- ABOUT PAGE -->
 <div id="aboutPage" style="display:none; max-width:1600px; margin:0 auto; padding:14px;">
   <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px;">
@@ -563,7 +541,6 @@ document.getElementById('tabs').addEventListener('click', e=>{
     const tab = e.target.dataset.tab;
     const isAbout = tab === 'about';
     document.querySelector('.layout').style.display = isAbout ? 'none' : '';
-    document.getElementById('dashboardBottom').style.display = isAbout ? 'none' : '';
     document.getElementById('aboutPage').style.display = isAbout ? 'block' : 'none';
   }
 });
