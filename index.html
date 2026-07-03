@@ -717,29 +717,28 @@ function getSaved(k) { try { return sessionStorage.getItem(k); } catch(e) { retu
 // ================================================================
 // API CALLS
 // ================================================================
-fetch("https://script.google.com/macros/s/AKfycbzMUj-QZ_jKBbEAI-VxL8RWod8N8h7ENF_2dZgBEgY8QNk-6atn7imJWJ3QkMQQNpA6/exec", {
-  method: "POST",
-  headers: { "Content-Type": "text/plain" }, // pakai text/plain biar gak kena CORS preflight
-  body: JSON.stringify({
-    date: "2026-07-03",
-    market: "Gold",
-    symbol: "XAUUSD",
-    direction: "Buy",
-    timeframe: "M15",
-    entry: 2330.5,
-    stopLoss: 2326,
-    takeProfit: 2339.5,
-    risk: 1,
-    result: "Open",
-    plPoint: "",
-    plDollar: "",
-    emotion: "Calm",
-    strategy: "OB + FVG",
-    confidence: 75,
-    lesson: "",
-    notes: ""
-  })
-});
+async function gasGet(action) {
+  try {
+    const res = await fetch(`${GAS_URL}?action=${action}`);
+    return await res.json();
+  } catch (e) {
+    console.warn('[gasGet] gagal fetch, pakai mock data:', e.message);
+    return getMockData(action);
+  }
+}
+
+async function gasPost(body) {
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify(body)
+    });
+    return await res.json();
+  } catch (e) {
+    console.warn('[gasPost] gagal fetch:', e.message);
+    return { success: false, error: e.message };
+  }
+}
 
 // ================================================================
 // MOCK DATA (saat GAS_URL belum diisi)
