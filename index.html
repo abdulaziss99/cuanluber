@@ -88,7 +88,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
   border-bottom: 1px solid var(--line); 
 }
   
-/* CARDS S */
+/* CARDS */
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
 .card-title { font-size: 10px; text-transform: uppercase; letter-spacing: .8px; color: var(--green); font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
 
@@ -2177,6 +2177,17 @@ function closeModal(e) {
 async function submitJournal() {
   const btn = document.getElementById('submitBtn');
   btn.disabled = true; btn.textContent = '⏳ Saving...';
+  const result = document.getElementById('f-result').value;
+  const normalizePL = v => {
+    if (v === '' || v === null || v === undefined) return v;
+    const n = Math.abs(parseFloat(v));
+    if (isNaN(n)) return v;
+    if (result === 'Loss') return -n;      // paksa negatif kalau Loss
+    if (result === 'Win') return n;        // paksa positif kalau Win
+    return v === 0 || parseFloat(v) === 0 ? 0 : v; // Open/Break Even: biarkan apa adanya
+  };
+  const plPoint = normalizePL(document.getElementById('f-pl').value);
+  const plUsd = normalizePL(document.getElementById('f-pl-usd').value);
   const data = {
     Market: document.getElementById('f-market').value,
     Symbol: document.getElementById('f-symbol').value,
@@ -2187,9 +2198,9 @@ async function submitJournal() {
     Take_Profit: document.getElementById('f-tp').value,
     'Risk_(%)': document.getElementById('f-risk').value,
     RR: document.getElementById('f-rr').value,
-    Result: document.getElementById('f-result').value,
-    'P/L_(Point)': document.getElementById('f-pl').value,
-    'P/L_($)': document.getElementById('f-pl-usd').value,
+    Result: result,
+    'P/L_(Point)': plPoint,
+    'P/L_($)': plUsd,
     Emotion: document.getElementById('f-emotion').value,
     Strategy: document.getElementById('f-strategy').value,
     'Confidence_(%)': document.getElementById('f-conf').value,
@@ -2221,7 +2232,7 @@ async function deleteJournal(id) {
 }
 
 // ================================================================
-// NAVIGATION
+// NAVIGATIONN
 // ================================================================
 function setupNav() {
   document.querySelectorAll('.nav-item').forEach(el => {
