@@ -395,6 +395,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
 }
 .hamburger { display: none; align-items: center; justify-content: center; width: 36px; height: 36px; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; cursor: pointer; font-size: 16px; }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 
@@ -557,14 +559,18 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
 
     <!-- ===== JOURNAL PAGE ===== -->
     <div class="page" id="page-journal">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
         <div style="font-size:16px;font-weight:800;">📋 Trading Journal</div>
-        <button class="btn btn-primary" onclick="openModal('journal')">+ New Entry</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-ghost" onclick="exportJournalPDF()">📄 Export PDF</button>
+          <button class="btn btn-primary" onclick="openModal('journal')">+ New Entry</button>
+        </div>
       </div>
 
       <!-- Filters -->
       <div class="card mb-14" style="padding:10px 14px;">
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <button class="period-btn" id="journalPeriodBtn" onclick="openPeriodSheet('journal')">📅 <span id="journalPeriodLabel">All Time</span> ⌵</button>
           <select class="form-select" style="width:auto;" id="filterMarket">
             <option value="">All Market</option>
             <option>XAUUSD</option>
@@ -601,7 +607,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
     <div class="page" id="page-statistics">
       <div class="stats-header">
         <div style="font-size:16px;font-weight:800;">🥧 Statistics</div>
-        <button class="period-btn" id="periodBtn" onclick="openPeriodSheet()">📅 <span id="periodLabel">All Time</span> ⌵</button>
+        <button class="period-btn" id="periodBtn" onclick="openPeriodSheet('stats')">📅 <span id="periodLabel">All Time</span> ⌵</button>
       </div>
       <div id="statsContent"><div class="loading-state"><span class="spinner"></span> Calculating...</div></div>
     </div>
@@ -798,7 +804,10 @@ let journals = [];
 let dashData = {};
 let editingId = null;
 let statsPeriod = { type: 'all', from: null, to: null };
+let journalPeriod = { type: 'all', from: null, to: null };
 let tempPeriodType = 'all';
+let periodSheetContext = 'stats';
+let currentJournalRows = [];
 
 // ================================================================
 // INIT
@@ -1530,8 +1539,9 @@ async function loadJournalPage() {
 }
 
 function renderJournalTable(rows) {
+  currentJournalRows = rows;
   if(!rows.length) {
-    document.getElementById('journalTable').innerHTML = '<div class="loading-state">Belum ada journal. Tap "+ New Entry" untuk mulai.</div>';
+    document.getElementById('journalTable').innerHTML = '<div class="loading-state">Belum ada journal untuk periode/filter ini.</div>';
     return;
   }
   document.getElementById('journalTable').innerHTML = `
@@ -1569,7 +1579,7 @@ function applyFilter() {
   const market = document.getElementById('filterMarket').value;
   const result = document.getElementById('filterResult').value;
   const date   = document.getElementById('filterDate').value;
-  let filtered = [...journals];
+  let filtered = filterByPeriod([...journals], journalPeriod);
   if(market) filtered = filtered.filter(r => r.Market===market || r.Symbol===market);
   if(result) filtered = filtered.filter(r => r.Result===result);
   if(date) { const d = new Date(date); const ds = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; filtered = filtered.filter(r => r.Date===ds); }
@@ -1580,7 +1590,71 @@ function clearFilter() {
   document.getElementById('filterMarket').value='';
   document.getElementById('filterResult').value='';
   document.getElementById('filterDate').value='';
+  journalPeriod = { type: 'all', from: null, to: null };
+  document.getElementById('journalPeriodLabel').textContent = 'All Time';
   renderJournalTable(journals);
+}
+
+// ================================================================
+// EXPORT JOURNAL TO PDF
+// ================================================================
+function exportJournalPDF() {
+  if (!window.jspdf) { showToast('Library PDF belum siap, coba lagi sebentar.', true); return; }
+  const rows = currentJournalRows && currentJournalRows.length ? currentJournalRows : journals;
+  if (!rows.length) { showToast('Tidak ada data journal untuk diexport.', true); return; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+  const now = new Date();
+
+  doc.setFontSize(16); doc.setFont(undefined, 'bold');
+  doc.text('AGS Trading Journal', 40, 38);
+  doc.setFontSize(9); doc.setFont(undefined, 'normal'); doc.setTextColor(90);
+  doc.text(`Diekspor: ${now.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})} ${now.toLocaleTimeString('id-ID')}`, 40, 54);
+
+  const market = document.getElementById('filterMarket')?.value || '';
+  const result = document.getElementById('filterResult')?.value || '';
+  const periodTxt = periodLabelText(journalPeriod);
+  let filterLine = `Periode: ${periodTxt}`;
+  if (market) filterLine += `  |  Market: ${market}`;
+  if (result) filterLine += `  |  Result: ${result}`;
+  doc.text(filterLine, 40, 68);
+
+  const closed = rows.filter(r => ['Win','Loss','Break Even'].includes(r.Result));
+  const wins = closed.filter(r => r.Result==='Win').length;
+  const winRate = closed.length ? Math.round(wins/closed.length*100) : 0;
+  const totalPL = rows.reduce((s,r)=> s + (parseFloat(r['P/L_($)'])||0), 0);
+  doc.setTextColor(20); doc.setFont(undefined,'bold');
+  doc.text(`Total Trade: ${rows.length}   |   Win Rate: ${winRate}%   |   Total P/L: ${totalPL>=0?'+':''}${totalPL.toFixed(2)}`, 40, 86);
+
+  const body = rows.map(r => [
+    r.No||'-', r.Date||'-', r.Market||'-', r.Symbol||'-', r.Direction||'-', r.Entry||'-',
+    r.Stop_Loss||'-', r.Take_Profit||'-', r['Risk_(%)'] ? `${r['Risk_(%)']}%` : '-', r.RR||'-',
+    r.Result||'Open', r['P/L_($)']||'0', r.Strategy||'-'
+  ]);
+
+  doc.autoTable({
+    startY: 100,
+    head: [['No','Date','Market','Symbol','Dir','Entry','SL','TP','Risk%','RR','Result','P/L($)','Strategy']],
+    body,
+    styles: { fontSize: 8, cellPadding: 4, textColor: 20 },
+    headStyles: { fillColor: [16,124,79], textColor: 255, fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [245,247,245] },
+    didParseCell: function(data) {
+      if (data.section === 'body' && data.column.index === 10) {
+        const val = data.cell.raw;
+        if (val === 'Win') data.cell.styles.textColor = [22,163,74];
+        else if (val === 'Loss') data.cell.styles.textColor = [220,38,38];
+      }
+      if (data.section === 'body' && data.column.index === 11) {
+        const num = parseFloat(data.cell.raw);
+        if (!isNaN(num)) data.cell.styles.textColor = num >= 0 ? [22,163,74] : [220,38,38];
+      }
+    }
+  });
+
+  doc.save(`AGS-Trading-Journal-${now.toISOString().slice(0,10)}.pdf`);
+  showToast('PDF berhasil diexport ✅');
 }
 
 // ================================================================
@@ -1641,10 +1715,12 @@ function periodLabelText(period) {
   return map[period.type] || 'All Time';
 }
 
-function openPeriodSheet() {
-  tempPeriodType = statsPeriod.type;
-  document.getElementById('periodFrom').value = statsPeriod.from || '';
-  document.getElementById('periodTo').value = statsPeriod.to || '';
+function openPeriodSheet(context) {
+  periodSheetContext = context || 'stats';
+  const curr = periodSheetContext === 'journal' ? journalPeriod : statsPeriod;
+  tempPeriodType = curr.type;
+  document.getElementById('periodFrom').value = curr.from || '';
+  document.getElementById('periodTo').value = curr.to || '';
   updatePeriodOptionsUI();
   document.getElementById('periodSheetOverlay').classList.add('show');
 }
@@ -1673,14 +1749,21 @@ function setupPeriodOptions() {
 }
 
 function applyPeriodFilter() {
-  statsPeriod = {
+  const periodObj = {
     type: tempPeriodType,
     from: tempPeriodType === 'custom' ? document.getElementById('periodFrom').value : null,
     to: tempPeriodType === 'custom' ? document.getElementById('periodTo').value : null,
   };
-  document.getElementById('periodLabel').textContent = periodLabelText(statsPeriod);
   document.getElementById('periodSheetOverlay').classList.remove('show');
-  loadStats();
+  if (periodSheetContext === 'journal') {
+    journalPeriod = periodObj;
+    document.getElementById('journalPeriodLabel').textContent = periodLabelText(periodObj);
+    applyFilter();
+  } else {
+    statsPeriod = periodObj;
+    document.getElementById('periodLabel').textContent = periodLabelText(periodObj);
+    loadStats();
+  }
 }
 
 // Parse "DD/MM/YYYY" -> Date object (aman utk berbagai variasi)
