@@ -281,6 +281,66 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
 /* STATS PAGE */
 .stats-card { text-align: center; }
 .equity-chart { width: 100%; height: 160px; }
+.stat-delta { font-size: 10px; color: var(--green); margin-top: 3px; font-family: var(--mono); }
+.stat-delta.neg { color: var(--red); }
+
+.score-ring-wrap { display: flex; align-items: center; gap: 18px; }
+.score-ring { position: relative; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.score-ring svg { transform: rotate(-90deg); }
+.score-ring .score-num { position: absolute; text-align: center; }
+.score-ring .score-num b { display: block; font-size: 26px; font-weight: 800; font-family: var(--mono); color: var(--text); line-height: 1; }
+.score-ring .score-num span { font-size: 10px; color: var(--muted); }
+.score-breakdown { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.score-row { display: flex; align-items: center; gap: 8px; font-size: 11.5px; }
+.score-row .score-name { width: 92px; flex-shrink: 0; color: var(--muted); }
+.score-row .score-bar-bg { flex: 1; height: 6px; background: var(--panel2); border-radius: 4px; overflow: hidden; }
+.score-row .score-bar-fill { height: 100%; border-radius: 4px; }
+.score-row .score-val { width: 26px; text-align: right; font-family: var(--mono); font-weight: 700; flex-shrink: 0; }
+
+.donut-wrap { display: flex; align-items: center; gap: 18px; }
+.donut { position: relative; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.donut svg { transform: rotate(-90deg); }
+.donut .donut-num { position: absolute; text-align: center; }
+.donut .donut-num b { display: block; font-size: 24px; font-weight: 800; font-family: var(--mono); }
+.donut .donut-num span { font-size: 9px; color: var(--muted); }
+
+.rank-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 12.5px; }
+.rank-row:last-child { border-bottom: none; }
+.rank-num { width: 20px; height: 20px; border-radius: 50%; background: var(--panel2); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--muted); flex-shrink: 0; }
+.rank-name { flex: 1; }
+.rank-count { font-size: 10px; color: var(--muted); }
+.rank-rate { font-family: var(--mono); font-weight: 700; }
+
+.finding-item { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 12.5px; }
+.finding-item:last-child { border-bottom: none; }
+.finding-item .fi-ico { flex-shrink: 0; }
+.finding-bad .fi-ico { color: var(--red); }
+.finding-warn .fi-ico { color: var(--gold); }
+.finding-good .fi-ico { color: var(--green); }
+
+.rec-item { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; font-size: 12.5px; }
+.rec-item .rec-ico { color: var(--green); flex-shrink: 0; }
+
+.target-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 12.5px; }
+.target-item .tg-box { width: 16px; height: 16px; border-radius: 4px; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; }
+.target-item.done .tg-box { background: rgba(34,197,94,.15); border-color: var(--green); color: var(--green); }
+.progress-track { height: 8px; background: var(--panel2); border-radius: 4px; overflow: hidden; margin-top: 6px; }
+.progress-fill { height: 100%; background: var(--green); border-radius: 4px; }
+
+.weekday-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; font-size: 12px; }
+.weekday-row .wd-name { width: 60px; flex-shrink: 0; color: var(--muted); }
+.weekday-row .wd-bar-bg { flex: 1; height: 8px; background: var(--panel2); border-radius: 4px; overflow: hidden; }
+.weekday-row .wd-bar-fill { height: 100%; border-radius: 4px; }
+.weekday-row .wd-val { width: 36px; text-align: right; font-family: var(--mono); font-weight: 700; flex-shrink: 0; }
+
+.streak-dots { display: flex; gap: 4px; margin: 6px 0; }
+.streak-dots span { width: 16px; height: 16px; border-radius: 50%; background: var(--panel2); border: 1px solid var(--line); }
+.streak-dots span.on { background: var(--green); border-color: var(--green); }
+.streak-dots span.off { background: var(--red); border-color: var(--red); }
+.insight-box { margin-top: 10px; background: rgba(34,197,94,.08); border: 1px solid rgba(34,197,94,.3); border-radius: 8px; padding: 8px 10px; font-size: 11.5px; }
+.insight-box b { color: var(--green); }
+.doctor-row { display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; }
+.doctor-row .dr-label { color: var(--muted); }
 
 /* RESPONSIVE */
 @media (max-width: 900px) {
@@ -1449,39 +1509,384 @@ function clearFilter() {
 }
 
 // ================================================================
-// LOAD STATISTICS
+// LOAD STATISTICS — dihitung penuh dari data Journal (Google Spreadsheet)
 // ================================================================
 async function loadStats() {
-  const res = await gasGet('getStats');
-  if(!res.success) return;
-  const d = res.data;
+  document.getElementById('statsContent').innerHTML = '<div class="loading-state"><span class="spinner"></span> Calculating...</div>';
+  // Selalu ambil data journal terbaru dari spreadsheet yang terhubung
+  const res = await gasGet('getJournal');
+  if (res.success && Array.isArray(res.data)) journals = res.data;
+  const stats = computeFullStats(journals || []);
+  renderStatsPage(stats);
+}
+
+// Parse "DD/MM/YYYY" -> Date object (aman utk berbagai variasi)
+function parseIdDate(str) {
+  if (!str) return null;
+  const parts = String(str).split('/');
+  if (parts.length < 3) { const t = new Date(str); return isNaN(t) ? null : t; }
+  const [d, m, y] = parts.map(n => parseInt(n, 10));
+  if (!d || !m || !y) return null;
+  return new Date(y, m - 1, d);
+}
+
+function computeFullStats(rows) {
+  const num = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
+  const withDate = rows.map(r => ({ ...r, _date: parseIdDate(r.Date), _pl: num(r['P/L_($)']), _risk: num(r['Risk_(%)']), _rr: num(r.RR) }));
+  const closed = withDate.filter(r => ['Win', 'Loss', 'Break Even'].includes(r.Result));
+  const wins = closed.filter(r => r.Result === 'Win');
+  const losses = closed.filter(r => r.Result === 'Loss');
+  const totalTrade = closed.length;
+  const winRate = totalTrade ? (wins.length / totalTrade * 100) : 0;
+  const rrVals = closed.map(r => r._rr).filter(v => v > 0);
+  const avgRR = rrVals.length ? rrVals.reduce((a, b) => a + b, 0) / rrVals.length : 0;
+  const grossProfit = wins.reduce((s, r) => s + Math.max(0, r._pl), 0);
+  const grossLoss = Math.abs(losses.reduce((s, r) => s + Math.min(0, r._pl), 0));
+  const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : (grossProfit > 0 ? grossProfit : 0);
+
+  // Perbandingan periode: 7 hari terakhir vs 7 hari sebelumnya
+  const now = new Date(); now.setHours(0,0,0,0);
+  const dayMs = 86400000;
+  const inRange = (r, from, to) => r._date && r._date >= from && r._date < to;
+  const last7 = closed.filter(r => inRange(r, new Date(now - 7*dayMs), new Date(now + dayMs)));
+  const prev7 = closed.filter(r => inRange(r, new Date(now - 14*dayMs), new Date(now - 7*dayMs)));
+  const rateOf = list => list.length ? (list.filter(r=>r.Result==='Win').length/list.length*100) : 0;
+  const deltaTrade = last7.length - prev7.length;
+  const deltaWinRate = rateOf(last7) - rateOf(prev7);
+  const avgOf = list => { const v=list.map(r=>r._rr).filter(x=>x>0); return v.length? v.reduce((a,b)=>a+b,0)/v.length : 0; };
+  const deltaRR = avgOf(last7) - avgOf(prev7);
+  const pfOf = list => { const gp=list.filter(r=>r.Result==='Win').reduce((s,r)=>s+Math.max(0,r._pl),0); const gl=Math.abs(list.filter(r=>r.Result==='Loss').reduce((s,r)=>s+Math.min(0,r._pl),0)); return gl>0? gp/gl : (gp>0?gp:0); };
+  const deltaPF = pfOf(last7) - pfOf(prev7);
+
+  // Equity curve
+  const sorted = [...closed].sort((a, b) => (a._date - b._date) || (parseInt(a.No)-parseInt(b.No)));
+  let cum = 0;
+  const equity = sorted.map(r => { cum += r._pl; return cum; });
+
+  // Strategy leaderboard
+  const stratMap = {};
+  closed.forEach(r => {
+    const s = r.Strategy && r.Strategy.trim() ? r.Strategy.trim() : 'Lainnya';
+    if (!stratMap[s]) stratMap[s] = { total: 0, win: 0 };
+    stratMap[s].total++; if (r.Result === 'Win') stratMap[s].win++;
+  });
+  const strategies = Object.entries(stratMap)
+    .map(([name, v]) => ({ name, total: v.total, winRate: v.total ? Math.round(v.win / v.total * 100) : 0 }))
+    .sort((a, b) => b.winRate - a.winRate || b.total - a.total);
+
+  // Market / Symbol leaderboard (pengganti "session" karena data jam entry belum ada)
+  const mktMap = {};
+  closed.forEach(r => {
+    const m = r.Market || r.Symbol || 'Lainnya';
+    if (!mktMap[m]) mktMap[m] = { total: 0, win: 0 };
+    mktMap[m].total++; if (r.Result === 'Win') mktMap[m].win++;
+  });
+  const markets = Object.entries(mktMap)
+    .map(([name, v]) => ({ name, total: v.total, winRate: v.total ? Math.round(v.win / v.total * 100) : 0 }))
+    .sort((a, b) => b.winRate - a.winRate);
+
+  // Grouping per tanggal (untuk overtrade & performance by day)
+  const byDate = {};
+  closed.forEach(r => { const k = r.Date || 'unknown'; (byDate[k] = byDate[k] || []).push(r); });
+  const overtradeDays = Object.values(byDate).filter(list => list.length > 3).length;
+
+  const noSL = closed.filter(r => !r.Stop_Loss || num(r.Stop_Loss) === 0).length;
+  const overRisk = closed.filter(r => r._risk > 2).length;
+  const fomoCount = closed.filter(r => r.Emotion === 'FOMO').length;
+  const badEmotionCount = closed.filter(r => ['Greedy', 'Fear', 'FOMO'].includes(r.Emotion)).length;
+  const outOfHours = 0; // tidak ada data jam entry di journal saat ini
+
+  // Skor komposit
+  const riskManagement = totalTrade ? Math.round(((totalTrade - noSL) / totalTrade * 0.6 + (totalTrade - overRisk) / totalTrade * 0.4) * 100) : 0;
+  const psychology = totalTrade ? Math.round((totalTrade - badEmotionCount) / totalTrade * 100) : 0;
+  const discipline = totalTrade ? Math.max(0, Math.round(100 - (overtradeDays * 10) - (overRisk * 5) - (fomoCount * 3))) : 0;
+  const execution = Math.round(winRate);
+  // Consistency: makin kecil variasi P/L relatif terhadap rata2, makin konsisten
+  let consistency = 70;
+  if (closed.length > 1) {
+    const plList = closed.map(r => r._pl);
+    const mean = plList.reduce((a, b) => a + b, 0) / plList.length;
+    const variance = plList.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / plList.length;
+    const sd = Math.sqrt(variance);
+    const cv = mean !== 0 ? Math.abs(sd / mean) : sd > 0 ? 2 : 0;
+    consistency = Math.max(0, Math.min(100, Math.round(100 - Math.min(cv, 2) * 50)));
+  }
+  const overall = Math.round(discipline*0.25 + riskManagement*0.25 + psychology*0.2 + execution*0.2 + consistency*0.1);
+
+  // Temuan (Audit)
+  const findings = [];
+  if (noSL > 0) findings.push({ type: 'bad', text: `${noSL} Trade tanpa Stop Loss` });
+  if (overtradeDays > 0) findings.push({ type: 'warn', text: `${overtradeDays}x Overtrade (lebih dari 3 trade/hari)` });
+  if (overRisk > 0) findings.push({ type: 'bad', text: `${overRisk}x Risk > 2%` });
+  if (fomoCount > 0) findings.push({ type: 'warn', text: `${fomoCount}x Entry FOMO` });
+  if (totalTrade > 0) findings.push({ type: 'good', text: `Konsisten mengikuti setup (${Math.round(winRate)}% win rate)` });
+  if (!findings.length) findings.push({ type: 'good', text: 'Belum ada temuan — data journal masih kosong.' });
+
+  // Rekomendasi dinamis
+  const recs = [];
+  if (noSL > 0) recs.push('Wajib pasang Stop Loss sebelum open posisi');
+  recs.push('Maksimal 3 trade per hari');
+  if (overRisk > 0) recs.push('Gunakan Risk tetap ≤2% per trade');
+  if (fomoCount > 0) recs.push('Hindari entry FOMO, tunggu konfirmasi setup');
+  recs.push('Jika loss 2x berturut-turut → Stop Trading hari itu');
+
+  // Target minggu ini (Senin - Minggu, minggu berjalan)
+  const dow = now.getDay() === 0 ? 7 : now.getDay();
+  const monday = new Date(now - (dow - 1) * dayMs);
+  const weekRows = closed.filter(r => r._date && r._date >= monday && r._date <= now);
+  const weekByDate = {};
+  weekRows.forEach(r => { (weekByDate[r.Date] = weekByDate[r.Date] || []).push(r); });
+  const maxPerDay = Math.max(0, ...Object.values(weekByDate).map(l => l.length));
+  const weekAvgRR = avgOf(weekRows);
+  let revengeFlag = false;
+  Object.values(weekByDate).forEach(list => {
+    for (let i = 0; i < list.length - 1; i++) {
+      if (list[i].Result === 'Loss' && list[i+1].Result === 'Loss') revengeFlag = true;
+    }
+  });
+  const targets = [
+    { label: '100% pakai Stop Loss', done: weekRows.length > 0 && weekRows.every(r => r.Stop_Loss && num(r.Stop_Loss) !== 0) },
+    { label: 'Max 3 Trade / Hari', done: weekRows.length > 0 && maxPerDay <= 3 },
+    { label: 'Avg RR minimal 1 : 2', done: weekAvgRR >= 2 },
+    { label: 'Zero Revenge Trading', done: weekRows.length > 0 && !revengeFlag },
+  ];
+  const targetDone = targets.filter(t => t.done).length;
+
+  // Performance by Day (Senin - Minggu)
+  const dayNames = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const dayStat = dayNames.map(n => ({ name: n, total: 0, win: 0 }));
+  closed.forEach(r => { if (r._date) { const idx = r._date.getDay(); dayStat[idx].total++; if (r.Result === 'Win') dayStat[idx].win++; } });
+  const orderedDays = [1,2,3,4,5,6,0].map(i => ({ name: dayStat[i].name, total: dayStat[i].total, winRate: dayStat[i].total ? Math.round(dayStat[i].win/dayStat[i].total*100) : 0 }));
+  const bestDay = [...orderedDays].filter(d=>d.total>0).sort((a,b)=>b.winRate-a.winRate)[0];
+
+  // Discipline streak: jumlah hari (mundur dari hari terakhir trading) tanpa overtrade / risk>2%
+  const dateKeysSorted = Object.keys(byDate).sort((a,b) => parseIdDate(a) - parseIdDate(b));
+  let streak = 0;
+  for (let i = dateKeysSorted.length - 1; i >= 0; i--) {
+    const list = byDate[dateKeysSorted[i]];
+    const violated = list.length > 3 || list.some(r => r._risk > 2);
+    if (violated) break;
+    streak++;
+  }
+
+  // Trading Doctor: cari skor terlemah
+  const scoreMap = { 'Disiplin': discipline, 'Risk Management': riskManagement, 'Psikologi': psychology, 'Eksekusi': execution };
+  const weakest = Object.entries(scoreMap).sort((a,b) => a[1]-b[1])[0];
+  const diagnosis = totalTrade ? (weakest[1] < 70 ? weakest[0] : 'Overall Stabil') : 'Belum Ada Data';
+
+  return {
+    totalTrade, winRate, avgRR, profitFactor, wins: wins.length, losses: losses.length,
+    deltaTrade, deltaWinRate, deltaRR, deltaPF,
+    equity, strategies, markets, findings, recs, targets, targetDone, weekAvgRR,
+    orderedDays, bestDay, streak, overall, discipline, riskManagement, psychology, execution, consistency,
+    diagnosis, overtradeDays, noSL, overRisk, fomoCount
+  };
+}
+
+function ring(pct, color, size, stroke) {
+  const r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
+  const offset = circ - (circ * Math.min(100, Math.max(0, pct)) / 100);
+  return { r, circ, offset };
+}
+
+function drawEquityCurve(canvasId, data) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width = canvas.offsetWidth || 300;
+  const h = canvas.height = 160;
+  ctx.clearRect(0, 0, w, h);
+  if (!data.length) {
+    ctx.fillStyle = '#6b7f6b'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('Belum ada data equity.', w/2, h/2);
+    return;
+  }
+  const min = Math.min(0, ...data), max = Math.max(0, ...data);
+  const range = (max - min) || 1;
+  const pad = 10;
+  const pts = data.map((v, i) => ({
+    x: data.length > 1 ? pad + (i / (data.length - 1)) * (w - pad*2) : w/2,
+    y: h - pad - ((v - min) / range) * (h - pad*2)
+  }));
+  // area fill
+  ctx.beginPath();
+  pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+  ctx.lineTo(pts[pts.length-1].x, h - pad); ctx.lineTo(pts[0].x, h - pad); ctx.closePath();
+  ctx.fillStyle = 'rgba(34,197,94,.12)'; ctx.fill();
+  // line
+  ctx.beginPath();
+  pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+  ctx.strokeStyle = '#22c55e'; ctx.lineWidth = 2; ctx.stroke();
+}
+
+function fmtDelta(v, suffix='') {
+  const sign = v > 0 ? '+' : '';
+  return `<span class="stat-delta ${v<0?'neg':''}">${sign}${v.toFixed(1)}${suffix} vs 7 hari lalu</span>`;
+}
+
+function renderStatsPage(s) {
+  if (!s.totalTrade) {
+    document.getElementById('statsContent').innerHTML = `
+      <div class="card" style="text-align:center;padding:40px 20px;">
+        <div style="font-size:28px;margin-bottom:8px;">📭</div>
+        <div style="font-weight:700;margin-bottom:4px;">Belum Ada Data Trading</div>
+        <div style="font-size:12.5px;color:var(--muted);">Isi Trading Journal kamu dulu — statistik akan otomatis terhitung dari spreadsheet yang terhubung.</div>
+      </div>`;
+    return;
+  }
+
+  const dScore = ring(s.discipline, '', 200, 16);
+  const oScore = ring(s.overall, '', 130, 12);
+  const wlScore = ring(s.winRate, '', 130, 14);
+  const colorFor = v => v >= 80 ? 'var(--green)' : v >= 50 ? 'var(--gold)' : 'var(--red)';
+
   document.getElementById('statsContent').innerHTML = `
     <div class="grid-4 mb-14">
-      <div class="card stats-card"><div class="stat-num">${d.totalTrade||0}</div><div class="stat-label">Total Trade</div></div>
-      <div class="card stats-card"><div class="stat-num" style="color:${parseFloat(d.winRate)>=60?'var(--green)':'var(--red)'};">${d.winRate||0}%</div><div class="stat-label">Win Rate</div></div>
-      <div class="card stats-card"><div class="stat-num">${d.avgRR||0}</div><div class="stat-label">Avg R:R</div></div>
-      <div class="card stats-card"><div class="stat-num" style="color:var(--gold);">${d.profitFactor||0}</div><div class="stat-label">Profit Factor</div></div>
+      <div class="card stats-card">
+        <div class="stat-num">${s.totalTrade}</div><div class="stat-label">Total Trade</div>
+        ${fmtDelta(s.deltaTrade)}
+      </div>
+      <div class="card stats-card">
+        <div class="stat-num" style="color:${s.winRate>=60?'var(--green)':'var(--red)'};">${s.winRate.toFixed(0)}%</div><div class="stat-label">Win Rate</div>
+        ${fmtDelta(s.deltaWinRate,'%')}
+      </div>
+      <div class="card stats-card">
+        <div class="stat-num">${s.avgRR.toFixed(2)}</div><div class="stat-label">Avg R:R</div>
+        ${fmtDelta(s.deltaRR)}
+      </div>
+      <div class="card stats-card">
+        <div class="stat-num" style="color:var(--gold);">${s.profitFactor.toFixed(2)}</div><div class="stat-label">Profit Factor</div>
+        ${fmtDelta(s.deltaPF)}
+      </div>
     </div>
-    <div class="grid-2">
+
+    <div class="grid-2 mb-14">
+      <div class="card">
+        <div class="card-title">📈 Performance Overview</div>
+        <canvas id="equityCanvas" class="equity-chart"></canvas>
+      </div>
       <div class="card">
         <div class="card-title">📊 Win/Loss</div>
-        <div style="display:flex;gap:20px;align-items:center;padding:10px 0;">
-          <div style="text-align:center;"><div style="font-size:32px;font-weight:800;color:var(--green);">${d.wins||0}</div><div style="font-size:11px;color:var(--muted);">WIN</div></div>
-          <div style="flex:1;height:12px;background:var(--panel2);border-radius:6px;overflow:hidden;">
-            <div style="height:100%;width:${d.totalTrade?((d.wins||0)/d.totalTrade*100).toFixed(0):0}%;background:var(--green);border-radius:6px;"></div>
+        <div class="donut-wrap">
+          <div class="donut">
+            <svg width="130" height="130" viewBox="0 0 130 130">
+              <circle cx="65" cy="65" r="${wlScore.r}" fill="none" stroke="var(--line)" stroke-width="14"/>
+              <circle cx="65" cy="65" r="${wlScore.r}" fill="none" stroke="var(--green)" stroke-width="14"
+                stroke-dasharray="${wlScore.circ}" stroke-dashoffset="${wlScore.offset}" stroke-linecap="round"/>
+            </svg>
+            <div class="donut-num"><b>${s.totalTrade}</b><span>Total</span></div>
           </div>
-          <div style="text-align:center;"><div style="font-size:32px;font-weight:800;color:var(--red);">${d.losses||0}</div><div style="font-size:11px;color:var(--muted);">LOSS</div></div>
+          <div>
+            <div style="margin-bottom:8px;"><span style="color:var(--green);font-weight:800;font-size:18px;">${s.wins}</span> <span style="font-size:11px;color:var(--muted);">WIN</span></div>
+            <div><span style="color:var(--red);font-weight:800;font-size:18px;">${s.losses}</span> <span style="font-size:11px;color:var(--muted);">LOSS</span></div>
+            <div style="margin-top:8px;font-size:11px;color:var(--muted);">${s.winRate.toFixed(0)}% Win Rate</div>
+          </div>
         </div>
+      </div>
+    </div>
+
+    <div class="grid-2 mb-14">
+      <div class="card">
+        <div class="card-title">🧠 Trading Score (Overall)</div>
+        <div class="score-ring-wrap">
+          <div class="score-ring">
+            <svg width="130" height="130" viewBox="0 0 130 130">
+              <circle cx="65" cy="65" r="${oScore.r}" fill="none" stroke="var(--line)" stroke-width="12"/>
+              <circle cx="65" cy="65" r="${oScore.r}" fill="none" stroke="${colorFor(s.overall)}" stroke-width="12"
+                stroke-dasharray="${oScore.circ}" stroke-dashoffset="${oScore.offset}" stroke-linecap="round"/>
+            </svg>
+            <div class="score-num"><b>${s.overall}</b><span>/100 ${s.overall>=80?'Good':s.overall>=50?'Fair':'Low'}</span></div>
+          </div>
+          <div class="score-breakdown">
+            ${[['Disiplin',s.discipline],['Risk Management',s.riskManagement],['Psikologi',s.psychology],['Eksekusi',s.execution],['Konsistensi',s.consistency]].map(([n,v])=>`
+              <div class="score-row">
+                <span class="score-name">${n}</span>
+                <div class="score-bar-bg"><div class="score-bar-fill" style="width:${v}%;background:${colorFor(v)};"></div></div>
+                <span class="score-val">${v}</span>
+              </div>`).join('')}
+          </div>
+        </div>
+        <div class="insight-box">📌 <b>Insight:</b> ${s.overall>=80?'Terus pertahankan disiplinmu dan kurangi overtrading!':s.overall>=50?'Masih ada ruang perbaikan, fokus pada area skor terendah.':'Perlu perbaikan serius pada manajemen risiko & disiplin.'}</div>
       </div>
       <div class="card">
         <div class="card-title">🏆 Best Strategy</div>
-        ${(d.strategies||[]).slice(0,3).map(s=>`
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:12.5px;">
-            <span>${s.name}</span>
-            <span style="font-family:var(--mono);color:var(--green);font-weight:700;">${s.winRate}% <span style="color:var(--muted);font-size:10px;">(${s.total} trade)</span></span>
+        ${s.strategies.slice(0,5).map((st,i)=>`
+          <div class="rank-row">
+            <div class="rank-num">${i+1}</div>
+            <div class="rank-name">${st.name}</div>
+            <div class="rank-count">${st.total} Trade</div>
+            <div class="rank-rate" style="color:${colorFor(st.winRate)};">${st.winRate}%</div>
           </div>`).join('') || '<div style="color:var(--muted);font-size:12px;padding:10px 0;">Belum ada data.</div>'}
       </div>
-    </div>`;
+    </div>
+
+    <div class="grid-2 mb-14">
+      <div class="card">
+        <div class="card-title">⚠️ Temuan (Trading Audit)</div>
+        ${s.findings.map(f=>`
+          <div class="finding-item finding-${f.type}">
+            <span class="fi-ico">${f.type==='bad'?'❌':f.type==='warn'?'⚠️':'✅'}</span>
+            <span>${f.text}</span>
+          </div>`).join('')}
+      </div>
+      <div class="card">
+        <div class="card-title">💡 Rekomendasi</div>
+        ${s.recs.map(r=>`<div class="rec-item"><span class="rec-ico">✅</span><span>${r}</span></div>`).join('')}
+      </div>
+    </div>
+
+    <div class="grid-2 mb-14">
+      <div class="card">
+        <div class="card-title">🎯 Target Minggu Ini <span style="margin-left:auto;color:var(--muted);font-weight:500;">${s.targetDone}/${s.targets.length}</span></div>
+        ${s.targets.map(t=>`
+          <div class="target-item ${t.done?'done':''}">
+            <span class="tg-box">${t.done?'✓':''}</span>
+            <span>${t.label}</span>
+          </div>`).join('')}
+        <div class="progress-track"><div class="progress-fill" style="width:${(s.targetDone/s.targets.length*100).toFixed(0)}%;"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">📅 Performance by Day</div>
+        ${s.orderedDays.map(d=>`
+          <div class="weekday-row">
+            <span class="wd-name">${d.name}</span>
+            <div class="wd-bar-bg"><div class="wd-bar-fill" style="width:${d.winRate}%;background:${colorFor(d.winRate)};"></div></div>
+            <span class="wd-val">${d.total? d.winRate+'%' : '-'}</span>
+          </div>`).join('')}
+        ${s.bestDay ? `<div class="insight-box">💡 <b>Insight:</b> ${s.bestDay.name} adalah hari terbaikmu (${s.bestDay.winRate}% win rate).</div>` : ''}
+      </div>
+    </div>
+
+    <div class="grid-2 mb-14">
+      <div class="card">
+        <div class="card-title">📌 Performance by Market/Symbol</div>
+        ${s.markets.slice(0,6).map(m=>`
+          <div class="rank-row">
+            <div class="rank-name">${m.name}</div>
+            <div class="rank-count">${m.total} Trade</div>
+            <div class="rank-rate" style="color:${colorFor(m.winRate)};">${m.winRate}%</div>
+          </div>`).join('') || '<div style="color:var(--muted);font-size:12px;padding:10px 0;">Belum ada data.</div>'}
+      </div>
+      <div class="card">
+        <div class="card-title">🔥 Discipline Streak</div>
+        <div style="font-size:32px;font-weight:800;color:var(--green);">${s.streak} <span style="font-size:14px;color:var(--muted);font-weight:500;">hari beruntun</span></div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:4px;">Tanpa overtrade & risk melebihi 2% per trade.</div>
+        ${s.overtradeDays>0 || s.overRisk>0 ? `<div class="insight-box" style="background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.3);">⚠️ Streak terhenti karena ${s.overtradeDays>0?`overtrade (${s.overtradeDays}x)`:''}${s.overtradeDays>0&&s.overRisk>0?' & ':''}${s.overRisk>0?`risk berlebih (${s.overRisk}x)`:''}.</div>`:''}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🩺 Trading Doctor</div>
+      <div class="doctor-row"><span class="dr-label">Diagnosis</span><span style="font-weight:700;color:${s.diagnosis==='Overall Stabil'?'var(--green)':'var(--red)'};">${s.diagnosis}</span></div>
+      <div class="doctor-row"><span class="dr-label">Total Trade</span><span>${s.totalTrade}</span></div>
+      <div class="doctor-row"><span class="dr-label">Win Rate</span><span>${s.winRate.toFixed(0)}%</span></div>
+      <div class="doctor-row"><span class="dr-label">Trade Tanpa SL</span><span>${s.noSL}</span></div>
+      <div class="doctor-row"><span class="dr-label">Risk &gt; 2%</span><span>${s.overRisk}x</span></div>
+      <div class="doctor-row"><span class="dr-label">Entry FOMO</span><span>${s.fomoCount}x</span></div>
+    </div>
+  `;
+  drawEquityCurve('equityCanvas', s.equity);
 }
 
 // ================================================================
