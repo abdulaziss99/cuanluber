@@ -342,6 +342,47 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
 .doctor-row { display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; }
 .doctor-row .dr-label { color: var(--muted); }
 
+/* PERIOD FILTER (bottom sheet, ala Stockbit) */
+.stats-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+.period-btn {
+  display: inline-flex; align-items: center; gap: 6px; background: var(--panel2); border: 1px solid var(--line);
+  color: var(--green); font-weight: 700; font-size: 12.5px; padding: 8px 14px; border-radius: 20px; cursor: pointer;
+  font-family: var(--sans); transition: .15s;
+}
+.period-btn:hover { border-color: var(--green); }
+.sheet-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 210;
+  display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.sheet-overlay.show { opacity: 1; pointer-events: all; }
+.sheet {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 20px 20px 0 0;
+  padding: 10px 20px 20px; width: 100%; max-width: 560px; max-height: 85vh; overflow-y: auto;
+  transform: translateY(100%); transition: transform .25s ease;
+}
+.sheet-overlay.show .sheet { transform: translateY(0); }
+.sheet-handle { width: 40px; height: 4px; background: var(--line); border-radius: 3px; margin: 6px auto 14px; }
+.sheet-title { font-size: 16px; font-weight: 800; text-align: center; margin-bottom: 10px; }
+.period-option {
+  display: flex; align-items: center; justify-content: space-between; padding: 14px 4px;
+  border-bottom: 1px solid var(--line); font-size: 14px; font-weight: 700; cursor: pointer;
+}
+.period-option:last-of-type { border-bottom: none; }
+.radio-check {
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 12px; color: #fff; transition: .15s;
+}
+.period-option.selected .radio-check { background: var(--green); border-color: var(--green); }
+.custom-range { display: none; gap: 10px; padding: 6px 4px 14px; }
+.custom-range.show { display: flex; }
+.custom-range .form-group { flex: 1; }
+.sheet-apply-btn {
+  width: 100%; background: var(--green); color: #fff; border: none; border-radius: 10px;
+  padding: 14px; font-size: 14px; font-weight: 800; cursor: pointer; margin-top: 8px; font-family: var(--sans);
+}
+.sheet-apply-btn:hover { background: var(--green2); }
+
 /* RESPONSIVE */
 @media (max-width: 900px) {
   .sidebar { transform: translateX(-100%); }
@@ -558,7 +599,10 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
 
     <!-- ===== STATISTICS PAGE ===== -->
     <div class="page" id="page-statistics">
-      <div style="font-size:16px;font-weight:800;margin-bottom:14px;">🥧 Statistics</div>
+      <div class="stats-header">
+        <div style="font-size:16px;font-weight:800;">🥧 Statistics</div>
+        <button class="period-btn" id="periodBtn" onclick="openPeriodSheet()">📅 <span id="periodLabel">All Time</span> ⌵</button>
+      </div>
       <div id="statsContent"><div class="loading-state"><span class="spinner"></span> Calculating...</div></div>
     </div>
 
@@ -703,6 +747,34 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
   </div>
 </div>
 
+<!-- PERIOD FILTER BOTTOM SHEET -->
+<div class="sheet-overlay" id="periodSheetOverlay" onclick="closePeriodSheet(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Periode</div>
+    <div id="periodOptionsList">
+      <div class="period-option" data-type="all"><span>All Time</span><span class="radio-check"></span></div>
+      <div class="period-option" data-type="1m"><span>Last 1 Month</span><span class="radio-check"></span></div>
+      <div class="period-option" data-type="3m"><span>Last 3 Months</span><span class="radio-check"></span></div>
+      <div class="period-option" data-type="ytd"><span>Year to Date</span><span class="radio-check"></span></div>
+      <div class="period-option" data-type="1y"><span>Last 1 Year</span><span class="radio-check"></span></div>
+      <div class="period-option" data-type="3y"><span>Last 3 Years</span><span class="radio-check"></span></div>
+      <div class="period-option" data-type="custom"><span>Custom</span><span class="radio-check"></span></div>
+    </div>
+    <div class="custom-range" id="customRangeBox">
+      <div class="form-group">
+        <label class="form-label">Dari</label>
+        <input class="form-input" type="date" id="periodFrom">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sampai</label>
+        <input class="form-input" type="date" id="periodTo">
+      </div>
+    </div>
+    <button class="sheet-apply-btn" onclick="applyPeriodFilter()">Apply Filters</button>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -725,6 +797,8 @@ let newsCache = { global: [], indo: [], combined: [] };
 let journals = [];
 let dashData = {};
 let editingId = null;
+let statsPeriod = { type: 'all', from: null, to: null };
+let tempPeriodType = 'all';
 
 // ================================================================
 // INIT
@@ -734,6 +808,7 @@ document.addEventListener('DOMContentLoaded', () => {
   applyTheme(getSaved('ags_theme') || 'dark');
   loadDashboard();
   setupNav();
+  setupPeriodOptions();
   document.getElementById('hamburger').addEventListener('click', () => {
     document.getElementById('sidebar').classList.toggle('open');
   });
@@ -1516,8 +1591,96 @@ async function loadStats() {
   // Selalu ambil data journal terbaru dari spreadsheet yang terhubung
   const res = await gasGet('getJournal');
   if (res.success && Array.isArray(res.data)) journals = res.data;
-  const stats = computeFullStats(journals || []);
+  const filteredRows = filterByPeriod(journals || [], statsPeriod);
+  const stats = computeFullStats(filteredRows);
   renderStatsPage(stats);
+}
+
+// ================================================================
+// PERIOD FILTER (bottom sheet ala Stockbit)
+// ================================================================
+function getPeriodRange(period) {
+  const now = new Date(); now.setHours(23, 59, 59, 999);
+  const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
+  let from = null, to = now;
+  switch (period.type) {
+    case '1m': from = new Date(startOfToday); from.setMonth(from.getMonth() - 1); break;
+    case '3m': from = new Date(startOfToday); from.setMonth(from.getMonth() - 3); break;
+    case 'ytd': from = new Date(startOfToday.getFullYear(), 0, 1); break;
+    case '1y': from = new Date(startOfToday); from.setFullYear(from.getFullYear() - 1); break;
+    case '3y': from = new Date(startOfToday); from.setFullYear(from.getFullYear() - 3); break;
+    case 'custom':
+      from = period.from ? new Date(period.from) : null;
+      to = period.to ? new Date(period.to) : now;
+      to.setHours(23, 59, 59, 999);
+      break;
+    default: from = null; // all time
+  }
+  return { from, to };
+}
+
+function filterByPeriod(rows, period) {
+  if (period.type === 'all') return rows;
+  const { from, to } = getPeriodRange(period);
+  return rows.filter(r => {
+    const d = parseIdDate(r.Date);
+    if (!d) return false;
+    if (from && d < from) return false;
+    if (to && d > to) return false;
+    return true;
+  });
+}
+
+function periodLabelText(period) {
+  const map = { all: 'All Time', '1m': 'Last 1 Month', '3m': 'Last 3 Months', ytd: 'Year to Date', '1y': 'Last 1 Year', '3y': 'Last 3 Years' };
+  if (period.type === 'custom') {
+    const f = period.from ? new Date(period.from).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }) : '?';
+    const t = period.to ? new Date(period.to).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }) : '?';
+    return `${f} - ${t}`;
+  }
+  return map[period.type] || 'All Time';
+}
+
+function openPeriodSheet() {
+  tempPeriodType = statsPeriod.type;
+  document.getElementById('periodFrom').value = statsPeriod.from || '';
+  document.getElementById('periodTo').value = statsPeriod.to || '';
+  updatePeriodOptionsUI();
+  document.getElementById('periodSheetOverlay').classList.add('show');
+}
+
+function closePeriodSheet(e) {
+  if (e && e.target !== document.getElementById('periodSheetOverlay')) return;
+  document.getElementById('periodSheetOverlay').classList.remove('show');
+}
+
+function updatePeriodOptionsUI() {
+  document.querySelectorAll('.period-option').forEach(el => {
+    const isSel = el.dataset.type === tempPeriodType;
+    el.classList.toggle('selected', isSel);
+    el.querySelector('.radio-check').textContent = isSel ? '✓' : '';
+  });
+  document.getElementById('customRangeBox').classList.toggle('show', tempPeriodType === 'custom');
+}
+
+function setupPeriodOptions() {
+  document.querySelectorAll('.period-option').forEach(el => {
+    el.addEventListener('click', () => {
+      tempPeriodType = el.dataset.type;
+      updatePeriodOptionsUI();
+    });
+  });
+}
+
+function applyPeriodFilter() {
+  statsPeriod = {
+    type: tempPeriodType,
+    from: tempPeriodType === 'custom' ? document.getElementById('periodFrom').value : null,
+    to: tempPeriodType === 'custom' ? document.getElementById('periodTo').value : null,
+  };
+  document.getElementById('periodLabel').textContent = periodLabelText(statsPeriod);
+  document.getElementById('periodSheetOverlay').classList.remove('show');
+  loadStats();
 }
 
 // Parse "DD/MM/YYYY" -> Date object (aman utk berbagai variasi)
