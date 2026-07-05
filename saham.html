@@ -67,21 +67,6 @@ html.ags-embedded .hamburger { display: none !important; }
 html.ags-embedded .topbar { display: none; }
 html.ags-embedded .content { padding-top: 16px; }
 
-/* RUNNING TEXT TICKER — harga saham live dari Yahoo Finance (basket STOCK_UNIVERSE) */
-.ticker-bar { background: var(--sidebar); border-bottom: 1px solid var(--line); overflow: hidden; position: sticky; top: 0; z-index: 49; white-space: nowrap; }
-html.ags-embedded .ticker-bar { top: 0; }
-.ticker-track { display: inline-flex; align-items: center; animation: tickerScroll 45s linear infinite; will-change: transform; }
-.ticker-bar:hover .ticker-track { animation-play-state: paused; }
-@keyframes tickerScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-.ticker-item { display: inline-flex; align-items: center; gap: 7px; padding: 8px 18px; font-family: var(--mono); font-size: 12px; font-weight: 700; border-right: 1px solid var(--line); flex-shrink: 0; }
-.ticker-item .t-sym { color: var(--text); font-weight: 800; }
-.ticker-item .t-price { color: var(--muted); font-weight: 600; }
-.ticker-item .t-chg { display: inline-flex; align-items: center; gap: 3px; }
-.ticker-item .t-chg.up { color: var(--green); }
-.ticker-item .t-chg.down { color: var(--red); }
-.ticker-item .t-chg.flat { color: var(--muted); }
-.ticker-empty { padding: 8px 18px; font-size: 11.5px; color: var(--muted); }
-
 /* CARDS */
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
 .card-title { font-size: 10px; text-transform: uppercase; letter-spacing:.8px; color: var(--green); font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
@@ -278,12 +263,6 @@ html.ags-embedded .ticker-bar { top: 0; }
       <div id="liveDate">--</div>
     </div>
   </header>
-
-  <div class="ticker-bar" id="tickerBar">
-    <div class="ticker-track" id="tickerTrack">
-      <div class="ticker-empty">Memuat harga saham...</div>
-    </div>
-  </div>
 
   <div class="content">
 
@@ -853,44 +832,6 @@ async function loadUniverseQuotes() {
   renderHeatmap();
   renderWatchlist();
   renderSentiment();
-  renderTickerBar();
-}
-
-// ================================================================
-// RUNNING TEXT TICKER — marquee harga saham live, sumbernya SAMA
-// dengan Top Movers/Heatmap (quotesCache, hasil fetchYahooQuote per
-// simbol di STOCK_UNIVERSE). Tidak nambah request baru ke Yahoo/proxy;
-// cuma render ulang data yang sudah ke-fetch loadUniverseQuotes().
-// Ditampilkan 2x berturut-turut (list + duplikatnya) supaya animasi
-// scroll -50% keliatan menyambung mulus tanpa jeda/patah di ujung.
-// ================================================================
-function renderTickerBar() {
-  const track = document.getElementById('tickerTrack');
-  if (!track) return;
-
-  const rows = STOCK_UNIVERSE
-    .map(s => ({ ...s, q: quotesCache[s.sym] }))
-    .filter(r => r.q);
-
-  if (!rows.length) {
-    track.innerHTML = '<div class="ticker-empty">Gagal memuat harga saham.</div>';
-    return;
-  }
-
-  const itemHtml = r => {
-    const { price, chg, chgPct } = r.q;
-    const dir = chg > 0 ? 'up' : chg < 0 ? 'down' : 'flat';
-    const arrow = dir === 'up' ? '▲' : dir === 'down' ? '▼' : '▬';
-    const sign = chg > 0 ? '+' : '';
-    return `<div class="ticker-item">
-      <span class="t-sym">${r.sym}</span>
-      <span class="t-price">${price.toLocaleString('id-ID', {maximumFractionDigits:0})}</span>
-      <span class="t-chg ${dir}">${arrow} ${sign}${chgPct.toFixed(2)}%</span>
-    </div>`;
-  };
-
-  const html = rows.map(itemHtml).join('');
-  track.innerHTML = html + html; // duplikat buat loop mulus
 }
 
 // ================================================================
@@ -1331,7 +1272,7 @@ async function renderCorpActionReal() {
 //   rentang umum 30 hari (tanpa reviu akuntan) s/d 60 hari (dengan
 //   reviu terbatas) setelah akhir periode — tanggal pasti tiap emiten
 //   bisa beda tergantung skema yang dipakai, jadi ditampilkan sebagai
-//   rentang, bukan tanggal tunggal.
+//   rentang, bukan tanggal tunggall.
 // ================================================================
 function addDays(date, n) { const d = new Date(date); d.setDate(d.getDate() + n); return d; }
 
