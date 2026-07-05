@@ -649,52 +649,14 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
       </div>
     </div>
 
-    <!-- ===== ABOUT PAGE ===== -->
-    <div class="page" id="page-about">
-      <div style="font-size:16px;font-weight:800;margin-bottom:14px;">ℹ️ About AGS</div>
-      <div class="grid-3">
-        <div class="card">
-          <div class="card-title">✅ Entry Rules (Buy)</div>
-          <div style="font-size:13px;display:flex;flex-direction:column;gap:7px;">
-            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--green)">✔</span> Trend Bullish (H1+H4)</div>
-            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--green)">✔</span> Price Retrace to Bullish OB</div>
-            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--green)">✔</span> FVG Filled</div>
-            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--green)">✔</span> Liquidity Sweep (EQ Low)</div>
-            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--green)">✔</span> RSI Rebound Above 40</div>
-            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--green)">✔</span> Volume Increasing</div>
-            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--green)">✔</span> No High Impact News</div>
-            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--green)">✔</span> Min R:R 1:2</div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-title" style="color:var(--red);">🔻 Entry Rules (Sell)</div>
-          <div style="font-size:13px;display:flex;flex-direction:column;gap:7px;">
-            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--red)">✔</span> Trend Bearish (H1+H4)</div>
-            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--red)">✔</span> Price Retrace to Bearish OB</div>
-            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--red)">✔</span> FVG Filled</div>
-            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--red)">✔</span> Liquidity Sweep (EQ High)</div>
-            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--red)">✔</span> RSI Rejection Below 60</div>
-            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--red)">✔</span> Volume Increasing</div>
-            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--red)">✔</span> No High Impact News</div>
-            <div style="display:flex;gap:8px;align-items:center;"><span style="color:var(--red)">✔</span> Min R:R 1:2</div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-title">📖 How To Use</div>
-          <div style="font-size:13px;display:flex;flex-direction:column;gap:7px;counter-reset:steps;">
-            <div>1. Check Trend &amp; AI Score</div>
-            <div>2. Wait for Price Retrace to OB</div>
-            <div>3. Wait for Liquidity Sweep</div>
-            <div>4. Confirm with FVG + RSI + Volume</div>
-            <div>5. Set SL &amp; TP with Risk Calculator</div>
-            <div>6. Execute with Discipline</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /content -->
-</div><!-- /main -->
+    <!-- ===== ABOUT PAGE (Economic Calendar) ===== -->
+<div class="page" id="page-about">
+  <div style="font-size:16px;font-weight:800;margin-bottom:4px;">📅 Economic Calendar</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Kalender ekonomi real-time dari FinancialJuice.</div>
+  <div class="card" style="display:flex;justify-content:center;padding:14px;">
+    <div id="financialjuice-eco-widget-container"></div>
+  </div>
+</div>
 
 <!-- ===== MODAL: NEW JOURNAL ===== -->
 <div class="video-modal-overlay" id="videoModalOverlay" onclick="closeVideoModal(event)">
@@ -2297,11 +2259,19 @@ async function deleteJournal(id) {
 // supaya tidak menampilkan data yang tidak bisa diverifikasi. Klik video
 // untuk buka & lihat statistik aslinya langsung di YouTube.
 const studyVideos = [
-  { id: 'h7FtW9umIeE', category: 'teknikal' }, // Forex Sarjana - Scalping M5 Price Action + Order Block
-  { id: 'fQ0b3uaT4zs', category: 'teknikal' }, // Rizki Aditama - Teknikal Analisis dari Nol
+  // Teknikal Analisis
+  { id: 'h7FtW9umIeE', category: 'teknikal' },
+  { id: 'fQ0b3uaT4zs', category: 'teknikal' },
+  { id: 'YQdlHOfrJnc', category: 'teknikal' },
+  { id: 'H3D9wPRcuJI', category: 'teknikal' },
+  // Fundamental Saham
   { id: 'ki7Rrk474F8', category: 'fundamental' },
   { id: '5MWvAeOWsDA', category: 'fundamental' },
+  { id: 'SbUZ0PgIRbY', category: 'fundamental' },
+  // XAUUSD (Gold)
   { id: 'TgRb3kJYKfE', category: 'gold' },
+  { id: 'M2v0MFdC0Nk', category: 'gold' },
+  { id: 'wf5DPRfjV4A', category: 'gold' },
 ];
 const studyCatLabel = { teknikal: 'Teknikal Analisis', fundamental: 'Fundamental Saham', gold: 'XAUUSD (Gold)' };
 let studyMetaCache = {};
@@ -2407,6 +2377,7 @@ function switchPage(page) {
   if(page==='journal') loadJournalPage();
   if(page==='statistics') loadStats();
   if(page==='study') loadStudyPage();
+  if(page==='about') loadFinancialJuiceWidget();
 }
 
 // expose ke iframe anak (gold.html / saham.htmll) supaya tombol "Kembali ke Dashboard"
@@ -2427,6 +2398,47 @@ function showToast(msg, isError=false) {
   t.className = 'toast show' + (isError?' error':'');
   setTimeout(() => t.classList.remove('show'), 3000);
 }
+
+<!-- FinancialJuice Widget -->
+<script type="text/javascript">
+function loadFinancialJuiceWidget() {
+  if (document.getElementById('FJ-Widgets')) {
+    // sudah pernah dimuat, cukup re-init widget-nya
+    if (window.FJWidgets) {
+      document.getElementById('financialjuice-eco-widget-container').innerHTML = '';
+      new window.FJWidgets.createWidget({
+        container: 'financialjuice-eco-widget-container',
+        mode: 'standard',
+        width: '340px',
+        height: '600px',
+        backColor: '1e222d',
+        fontColor: 'b2b5be',
+        widgetType: 'ECOCAL'
+      });
+    }
+    return;
+  }
+  var jo = document.createElement('script');
+  jo.type = 'text/javascript';
+  jo.id = 'FJ-Widgets';
+  var r = Math.floor(Math.random() * 9999);
+  jo.src = 'https://feed.financialjuice.com/widgets/widgets.js?r=' + r;
+  jo.onload = function () {
+    new window.FJWidgets.createWidget({
+      container: 'financialjuice-eco-widget-container',
+      mode: 'standard',
+      width: '340px',
+      height: '600px',
+      backColor: '1e222d',
+      fontColor: 'b2b5be',
+      widgetType: 'ECOCAL'
+    });
+  };
+  document.getElementsByTagName('head')[0].appendChild(jo);
+}
+</script>
+
+  
 </script>
 </body>
 </html>
