@@ -125,7 +125,11 @@ html.ags-embedded .ticker-bar { top: 0; }
 .tf-btn.active { background: rgba(34,197,94,.15); color: var(--green); border-color: rgba(34,197,94,.3); }
 .ihsg-chart-wrap { width: 100%; height: 220px; position: relative; }
 .ihsg-chart-wrap canvas { width: 100%; height: 100%; }
-.breadth-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 12px; }
+.breadth-row{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+gap:10px;
+}
 .breadth-item { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; text-align: center; }
 .breadth-num { font-size: 15px; font-weight: 800; font-family: var(--mono); }
 .breadth-label { font-size: 9px; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: .4px; }
@@ -661,7 +665,19 @@ async function loadIhsg(tf) {
     meta.textContent = 'Gagal memuat data IHSG. Coba refresh.';
   }
 }
+
+let lastChartData = [];
+let lastChartColor = '#22c55e';
+  
 function drawIhsgChart(data, color) {
+   lastChartData = [...data];
+    lastChartColor = color;
+
+    const canvas = document.getElementById('ihsgChart');
+    const wrap = canvas.parentElement;
+
+    canvas.width = wrap.clientWidth;
+    canvas.height = wrap.clientHeight;
   const canvas = document.getElementById('ihsgChart');
   const wrap = canvas.parentElement;
   canvas.width = wrap.clientWidth; canvas.height = wrap.clientHeight;
@@ -684,6 +700,21 @@ function drawIhsgChart(data, color) {
   grad.addColorStop(0, color+'33'); grad.addColorStop(1, color+'00');
   ctx.fillStyle = grad; ctx.fill();
 }
+let resizeTimer;
+
+window.addEventListener("resize", () => {
+
+    clearTimeout(resizeTimer);
+
+    resizeTimer = setTimeout(() => {
+
+        if(lastChartData.length){
+            drawIhsgChart(lastChartData, lastChartColor);
+        }
+
+    },150);
+
+});
 // ================================================================
 // BREADTH REAL — scraping endpoint publik idx.co.id (Stock Summary).
 // PERINGATAN: ini BUKAN API resmi/berkontrak. idx.co.id punya bot-
