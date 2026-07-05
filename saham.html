@@ -133,6 +133,7 @@ html.ags-embedded .content { padding-top: 16px; }
 .tbl td { padding: 7px 6px; border-bottom: 1px solid var(--line); vertical-align: middle; }
 .tbl tr:last-child td { border-bottom: none; }
 .tbl tr:hover td { background: var(--panel2); }
+.scr-tag { display:inline-block; font-size:9px; font-weight:700; padding:2px 6px; border-radius:20px; margin-right:3px; margin-bottom:2px; }
 .sym-icon { width: 22px; height: 22px; border-radius: 6px; background: var(--green); display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #fff; margin-right: 6px; flex-shrink:0; }
 .up { color: var(--green); font-family: var(--mono); font-weight: 700; }
 .down { color: var(--red); font-family: var(--mono); font-weight: 700; }
@@ -384,6 +385,19 @@ html.ags-embedded .content { padding-top: 16px; }
         <div class="card-source-sub">Dihitung otomatis dari aturan OJK/IDX, bukan jadwal per-perusahaan</div>
         <div id="earnCal"><div class="loading-state"><span class="spinner"></span></div></div>
       </div>
+    </div>
+
+    <!-- ===== STOCK SCREENER (Teknikal + Fundamental) ===== -->
+    <div class="card mb-14" style="margin-top:14px;">
+      <div class="card-title-row">
+        <div class="card-title" style="margin-bottom:0;">🎯 Stock Screener (Teknikal + Fundamental)</div>
+        <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;" onclick="renderScreener()">Muat / Refresh</button>
+      </div>
+      <div class="card-source-sub">Basket ~38 saham likuid IDX · Teknikal &amp; harga dari Yahoo Finance (real) · Fundamental (PE/PBV) dari Yahoo, N/A kalau gak tersedia</div>
+      <div class="data-note" style="margin-bottom:10px;">
+        <b>Ini BUKAN rekomendasi beli/jual.</b> Cuma alat screening otomatis dari data teknikal (trend MA, RSI, volume) &amp; fundamental dasar (PE, PBV) yang tersedia gratis. Selalu riset ulang &amp; jangan jadiin ini satu-satunya dasar keputusan.
+      </div>
+      <div id="screenerWrap"><div class="loading-state">Klik "Muat / Refresh" buat mulai screening (~38 saham, agak lama karena batching biar proxy gak overload)</div></div>
     </div>
 
   </div>
@@ -778,10 +792,18 @@ function renderBreadthIndicative(chgPct) {
 // ================================================================
 async function fetchYahooQuote(yahooSym) {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSym}?interval=1d&range=5d`;
-  const res = await fetch(CORS_PROXY + encodeURIComponent(url));
+  let res;
+  try {
+    res = await fetch(CORS_PROXY + encodeURIComponent(url));
+  } catch (e) {
+    const err = new Error('Gagal konek ke server data'); err.code = 'FETCH_FAILED'; throw err;
+  }
+  if (!res.ok) { const err = new Error('HTTP ' + res.status); err.code = 'FETCH_FAILED'; throw err; }
   const data = await res.json();
+  // Yahoo balikin chart.error kalau simbolnya BENERAN gak dikenal (bukan sekadar gagal fetch)
+  if (data?.chart?.error) { const err = new Error(data.chart.error.description || 'Symbol tidak dikenal'); err.code = 'INVALID_SYMBOL'; throw err; }
   const meta = data?.chart?.result?.[0]?.meta;
-  if (!meta || meta.regularMarketPrice == null) throw new Error('no data');
+  if (!meta || meta.regularMarketPrice == null) { const err = new Error('Response tidak lengkap'); err.code = 'FETCH_FAILED'; throw err; }
   const price = meta.regularMarketPrice;
   const prevClose = meta.chartPreviousClose ?? meta.previousClose ?? price;
   const chg = price - prevClose;
@@ -789,16 +811,149 @@ async function fetchYahooQuote(yahooSym) {
   return { price, prevClose, chg, chgPct, volume: meta.regularMarketVolume || 0, name: meta.longName || meta.shortName || null };
 }
 
+// Fetch banyak simbol sekaligus tapi dibatasi per-batch (bukan semua sekaligus),
+// biar proxy CORS gratis (allorigins.win) gak keburu rate-limit/gagal serentak —
+// itu sumber bug lama "kode X tidak ditemukan" padahal simbolnya valid.
+async function fetchInBatches(items, worker, batchSize = 6, delayMs = 250) {
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+    await Promise.all(batch.map(worker));
+    if (i + batchSize < items.length) await new Promise(r => setTimeout(r, delayMs));
+  }
+}
+
 async function loadUniverseQuotes() {
-  await Promise.all(STOCK_UNIVERSE.map(async s => {
+  await fetchInBatches(STOCK_UNIVERSE, async s => {
     try { quotesCache[s.sym] = await fetchYahooQuote(s.yahoo); }
     catch(e) { console.warn('quote fail', s.sym, e.message); }
-  }));
+  });
   renderTopMovers();
   renderSectorPerf();
   renderHeatmap();
   renderWatchlist();
   renderSentiment();
+}
+
+// ================================================================
+// STOCK SCREENER — Teknikal (real, dihitung dari OHLC Yahoo Finance)
+// + Fundamental dasar (PE/PBV dari Yahoo quoteSummary, N/A kalau gagal).
+// BUKAN rekomendasi beli/jual, cuma scoring screening. Dipicu manual
+// (tombol), bukan auto-interval, biar gak nambah beban ke proxy CORS
+// yang udah dipakai bareng fitur lain.
+// ================================================================
+async function fetchYahooHistory(yahooSym, range = '6mo', interval = '1d') {
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSym}?range=${range}&interval=${interval}`;
+  const res = await fetch(CORS_PROXY + encodeURIComponent(url));
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  const result = data?.chart?.result?.[0];
+  if (!result) throw new Error('no history');
+  const closesRaw = result.indicators?.quote?.[0]?.close || [];
+  const volsRaw = result.indicators?.quote?.[0]?.volume || [];
+  const closes = closesRaw.filter(v => v != null);
+  const volumes = volsRaw.filter(v => v != null);
+  if (closes.length < 20) throw new Error('data terlalu pendek');
+  return { closes, volumes };
+}
+
+// Fundamental dasar via Yahoo quoteSummary. Endpoint ini kadang butuh
+// crumb/cookie yang gak selalu tersedia lewat proxy publik — kalau gagal,
+// return null (ditampilkan N/A), BUKAN dikira-kira.
+async function fetchYahooFundamentals(yahooSym) {
+  try {
+    const url = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${yahooSym}?modules=summaryDetail,defaultKeyStatistics`;
+    const res = await fetch(CORS_PROXY + encodeURIComponent(url));
+    if (!res.ok) return null;
+    const data = await res.json();
+    const r = data?.quoteSummary?.result?.[0];
+    if (!r) return null;
+    const pe = r.summaryDetail?.trailingPE?.raw ?? r.defaultKeyStatistics?.trailingPE?.raw ?? null;
+    const pbv = r.defaultKeyStatistics?.priceToBook?.raw ?? null;
+    return { pe, pbv };
+  } catch (e) { return null; }
+}
+
+function sma(arr, period) {
+  if (arr.length < period) return null;
+  const slice = arr.slice(-period);
+  return slice.reduce((a,b)=>a+b,0) / period;
+}
+
+// RSI 14 standar (Wilder smoothing sederhana)
+function rsi(closes, period = 14) {
+  if (closes.length < period + 1) return null;
+  let gains = 0, losses = 0;
+  for (let i = closes.length - period; i < closes.length; i++) {
+    const diff = closes[i] - closes[i-1];
+    if (diff >= 0) gains += diff; else losses -= diff;
+  }
+  const avgGain = gains / period, avgLoss = losses / period;
+  if (avgLoss === 0) return 100;
+  const rs = avgGain / avgLoss;
+  return 100 - (100 / (1 + rs));
+}
+
+async function computeScreenerRow(s) {
+  const row = { sym: s.sym, name: s.name, sector: s.sector, q: quotesCache[s.sym] || null,
+    trend: null, rsiVal: null, volSpike: false, pe: null, pbv: null, score: 0, tags: [] };
+  try {
+    const { closes, volumes } = await fetchYahooHistory(s.yahoo);
+    const ma20 = sma(closes, 20), ma50 = sma(closes, 50);
+    if (ma20 != null && ma50 != null) {
+      row.trend = ma20 > ma50 ? 'Bullish' : 'Bearish';
+      if (row.trend === 'Bullish') { row.score += 1; row.tags.push({t:'Bullish (MA20>50)', c:'var(--green)'}); }
+      else { row.tags.push({t:'Bearish (MA20<50)', c:'var(--red)'}); }
+    }
+    row.rsiVal = rsi(closes, 14);
+    if (row.rsiVal != null) {
+      if (row.rsiVal < 30) { row.score += 1; row.tags.push({t:`Oversold RSI ${row.rsiVal.toFixed(0)}`, c:'var(--blue)'}); }
+      else if (row.rsiVal > 70) { row.score -= 1; row.tags.push({t:`Overbought RSI ${row.rsiVal.toFixed(0)}`, c:'var(--gold)'}); }
+      else { row.score += 0.5; }
+    }
+    if (volumes.length >= 21) {
+      const last = volumes[volumes.length-1];
+      const avg20 = sma(volumes.slice(0,-1), 20);
+      if (avg20 && last > avg20 * 1.5) { row.volSpike = true; row.score += 1; row.tags.push({t:'Volume Spike', c:'var(--green)'}); }
+    }
+  } catch (e) { console.warn('screener history fail', s.sym, e.message); }
+
+  const fund = await fetchYahooFundamentals(s.yahoo);
+  if (fund) {
+    row.pe = fund.pe; row.pbv = fund.pbv;
+    if (fund.pe != null && fund.pe > 0 && fund.pe < 15) { row.score += 1; row.tags.push({t:'PE Murah', c:'var(--green)'}); }
+    if (fund.pbv != null && fund.pbv > 0 && fund.pbv < 2) { row.score += 1; row.tags.push({t:'PBV Murah', c:'var(--green)'}); }
+  }
+  return row;
+}
+
+async function renderScreener() {
+  const wrap = document.getElementById('screenerWrap');
+  wrap.innerHTML = '<div class="loading-state"><span class="spinner"></span> Menghitung teknikal & fundamental ~38 saham (batching, mohon tunggu)...</div>';
+  const rows = [];
+  try {
+    await fetchInBatches(STOCK_UNIVERSE, async s => {
+      const row = await computeScreenerRow(s);
+      rows.push(row);
+    }, 4, 500);
+  } catch (e) { console.error('renderScreener', e); }
+
+  if (!rows.length) { wrap.innerHTML = '<div class="loading-state">Gagal memuat data screener. Coba lagi.</div>'; return; }
+  rows.sort((a,b) => b.score - a.score);
+
+  wrap.innerHTML = `
+    <table class="tbl"><thead><tr>
+      <th>SYMBOL</th><th>LAST</th><th>TREND</th><th>RSI</th><th>PE</th><th>PBV</th><th>SKOR</th><th>TAGS</th>
+    </tr></thead>
+    <tbody>${rows.map(r => `<tr>
+      <td><span class="sym-icon">${r.sym.slice(0,2)}</span>${r.sym}<div style="font-size:9.5px;color:var(--muted);margin-left:28px;">${r.name}</div></td>
+      <td style="font-family:var(--mono);">${r.q ? fmtIDR(r.q.price) : '—'}</td>
+      <td class="${r.trend==='Bullish'?'up':r.trend==='Bearish'?'down':'flat'}">${r.trend || 'N/A'}</td>
+      <td style="font-family:var(--mono);">${r.rsiVal!=null ? r.rsiVal.toFixed(1) : 'N/A'}</td>
+      <td style="font-family:var(--mono);">${r.pe!=null ? r.pe.toFixed(1)+'x' : 'N/A'}</td>
+      <td style="font-family:var(--mono);">${r.pbv!=null ? r.pbv.toFixed(2)+'x' : 'N/A'}</td>
+      <td style="font-family:var(--mono);font-weight:800;">${r.score.toFixed(1)}</td>
+      <td>${r.tags.map(t=>`<span class="scr-tag" style="background:${t.c}22;color:${t.c};">${t.t}</span>`).join('')}</td>
+    </tr>`).join('')}</tbody></table>`;
 }
 
 // Simbol di watchlist yang bukan bagian dari STOCK_UNIVERSE tetap butuh
@@ -919,14 +1074,29 @@ async function addToWatchlist() {
   }
   btn.disabled = true; btn.textContent = '...';
   try {
-    const q = await fetchYahooQuote(sym + '.JK');
+    let q;
+    try {
+      q = await fetchYahooQuote(sym + '.JK');
+    } catch (e1) {
+      // Kalau gagalnya bukan karena simbol invalid (misal proxy CORS lagi rate-limit
+      // gara-gara loadUniverseQuotes nembak 38 request bareng), coba sekali lagi
+      // setelah delay singkat sebelum nyerah beneran.
+      if (e1.code !== 'INVALID_SYMBOL') {
+        await new Promise(r => setTimeout(r, 1200));
+        q = await fetchYahooQuote(sym + '.JK');
+      } else {
+        throw e1;
+      }
+    }
     quotesCache[sym] = q;
     userWatchlist.push(sym);
     saveWatchlistToStorage();
     input.value = '';
     renderWatchlist();
   } catch (e) {
-    errEl.textContent = `Kode "${sym}" tidak ditemukan di IDX. Cek lagi ejaannya.`;
+    errEl.textContent = e.code === 'INVALID_SYMBOL'
+      ? `Kode "${sym}" tidak ditemukan di IDX. Cek lagi ejaannya.`
+      : `Gagal ambil data untuk "${sym}" (server/proxy sedang sibuk). Coba lagi sebentar.`;
     errEl.style.display = 'block';
   } finally {
     btn.disabled = false; btn.textContent = '+ Tambah';
@@ -1091,7 +1261,7 @@ async function renderCorpActionReal() {
 // ================================================================
 // JADWAL WAJIB LAPOR KEUANGAN — dihitung REAL dari aturan OJK/IDX,
 // bukan tanggal earnings call per perusahaan (itu belum ada API gratis
-// yang andal untuk emiten Indonesia). Ini murni matematika tanggal,
+// yang andal untuk emiten Indonesia).Ini murni matematika tanggal,
 // jadi selalu akurat mengikuti kalender berjalan, bukan data yang
 // ditulis mati.
 //
