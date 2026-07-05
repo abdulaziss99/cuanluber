@@ -83,6 +83,7 @@ html.ags-embedded .content { padding-top: 16px; }
 /* GRID */
 .saham-top { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; align-items: start; }
 .saham-mid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-top: 14px; align-items: start; }
+#midRow1 { grid-template-columns: repeat(3,1fr); }
 @media (max-width: 1200px) {
   .saham-top { grid-template-columns: 1fr; }
   .saham-mid { grid-template-columns: 1fr 1fr; }
@@ -93,6 +94,7 @@ html.ags-embedded .content { padding-top: 16px; }
   .main { margin-left: 0; }
   .hamburger { display: flex !important; }
   .saham-mid { grid-template-columns: 1fr; }
+  #midRow1 { grid-template-columns: 1fr; }
 }
 
 /* IHSG OVERVIEW */
@@ -166,6 +168,7 @@ html.ags-embedded .content { padding-top: 16px; }
 
 /* HEATMAP */
 .heatmap-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.hm-scroll { max-height: 320px; overflow-y: auto; padding-right: 2px; }
 .heat-tile { border-radius: 8px; padding: 8px 6px; text-align: center; color: #fff; }
 .heat-tile .h-sym { font-size: 11px; font-weight: 800; }
 .heat-tile .h-chg { font-size: 10px; font-weight: 700; margin-top: 2px; }
@@ -182,6 +185,16 @@ html.ags-embedded .content { padding-top: 16px; }
 
 /* WATCHLIST empty */
 .wl-empty { font-size: 12px; color: var(--muted); text-align: center; padding: 16px 0; }
+.wl-add-row { display:flex; gap:6px; margin-bottom:10px; }
+.wl-input { flex:1; min-width:0; background:var(--panel2); border:1px solid var(--line); color:var(--text); padding:7px 9px; border-radius:8px; font-size:12px; font-family:var(--mono); text-transform:uppercase; }
+.wl-input::placeholder { color:var(--muted); text-transform:none; font-family:var(--sans); }
+.wl-add-btn { background: rgba(34,197,94,.15); border:1px solid rgba(34,197,94,.3); color:var(--green); padding:7px 12px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; font-family:var(--sans); flex-shrink:0; white-space:nowrap; }
+.wl-add-btn:hover { background: rgba(34,197,94,.25); }
+.wl-add-btn:disabled { opacity:.6; cursor:default; }
+.wl-scroll { max-height: 260px; overflow-y: auto; }
+.wl-remove { cursor:pointer; color:var(--muted); font-weight:800; padding:0 4px; }
+.wl-remove:hover { color:var(--red); }
+.wl-err { font-size:10.5px; color:var(--red); margin: -4px 0 8px; }
 </style>
 </head>
 <body>
@@ -259,7 +272,7 @@ html.ags-embedded .content { padding-top: 16px; }
           <div class="card-title" style="margin-bottom:0;">📈 Market Overview (IHSG)</div>
           <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;" onclick="loadIhsg(currentTf)">Refresh</button>
         </div>
-        <div class="card-source-sub">Sumber: Yahoo Finance (^JKSE), live</div>
+        <div class="card-source-sub" id="ihsgSourceSub">Sumber: Yahoo Finance (^JKSE), live · Breadth: IDX (mencoba real-time)</div>
 
         <div class="ihsg-price-row">
           <div class="ihsg-price" id="ihsgPrice">—</div>
@@ -288,6 +301,7 @@ html.ags-embedded .content { padding-top: 16px; }
           <div class="breadth-item"><div class="breadth-num" id="brVal">—</div><div class="breadth-label">Value</div></div>
           <div class="breadth-item"><div class="breadth-num" id="brFf" style="color:var(--green);">—</div><div class="breadth-label">Foreign Net Buy</div></div>
         </div>
+        <div class="data-note" id="brNote" style="display:none;"></div>
       </div>
 
       <div class="card">
@@ -300,8 +314,8 @@ html.ags-embedded .content { padding-top: 16px; }
       </div>
     </div>
 
-    <!-- ===== MID ROW 1: TOP MOVERS / SECTOR / FOREIGN FLOW / CORP ACTION ===== -->
-    <div class="saham-mid">
+    <!-- ===== MID ROW 1: TOP MOVERS / SECTOR / CORP ACTION ===== -->
+    <div class="saham-mid" id="midRow1">
       <div class="card">
         <div class="card-title">🚀 Top Movers</div>
         <div class="tabs-row">
@@ -318,11 +332,6 @@ html.ags-embedded .content { padding-top: 16px; }
       </div>
 
       <div class="card">
-        <div class="card-title">💱 Foreign Flow (IDX)</div>
-        <div id="foreignFlow"><div class="loading-state"><span class="spinner"></span></div></div>
-      </div>
-
-      <div class="card">
         <div class="card-title-row">
           <div class="card-title" style="margin-bottom:0;">🏢 Corporate Action</div>
         </div>
@@ -336,12 +345,18 @@ html.ags-embedded .content { padding-top: 16px; }
         <div class="card-title-row">
           <div class="card-title" style="margin-bottom:0;">⭐ Watchlist Saya</div>
         </div>
-        <div id="watchlist"><div class="loading-state"><span class="spinner"></span></div></div>
+        <div class="wl-add-row">
+          <input id="wlInput" class="wl-input" placeholder="Kode saham, mis. MEDC" maxlength="6" />
+          <button id="wlAddBtn" class="wl-add-btn">+ Tambah</button>
+        </div>
+        <div id="wlErr" class="wl-err" style="display:none;"></div>
+        <div id="watchlist" class="wl-scroll"><div class="loading-state"><span class="spinner"></span></div></div>
       </div>
 
       <div class="card">
-        <div class="card-title">🔥 Heatmap IHSG</div>
-        <div id="heatmap" class="heatmap-grid"><div class="loading-state"><span class="spinner"></span></div></div>
+        <div class="card-title">🔥 Heatmap Saham Likuid</div>
+        <div class="card-source-sub">Basket ~38 saham likuid IDX (bukan seluruh konstituen IHSG)</div>
+        <div id="heatmap" class="heatmap-grid hm-scroll"><div class="loading-state"><span class="spinner"></span></div></div>
         <div class="heat-legend"><span>🟩 &gt; +2%</span><span>🟨 -0.5% – +2%</span><span>🟥 &lt; -0.5%</span></div>
       </div>
 
@@ -364,13 +379,9 @@ html.ags-embedded .content { padding-top: 16px; }
 
       <div class="card">
         <div class="card-title-row">
-          <div class="card-title" style="margin-bottom:0;">🗓️ Earnings Calendar</div>
+          <div class="card-title" style="margin-bottom:0;">🗓️ Jadwal Wajib Lapor Keuangan</div>
         </div>
-        <div class="tabs-row" id="earnTabs">
-          <span class="tab-btn active" data-ed="0" onclick="switchEarnings(0,this)">Hari Ini</span>
-          <span class="tab-btn" data-ed="1" onclick="switchEarnings(1,this)">Besok</span>
-          <span class="tab-btn" data-ed="7" onclick="switchEarnings(7,this)">7 Hari</span>
-        </div>
+        <div class="card-source-sub">Dihitung otomatis dari aturan OJK/IDX, bukan jadwal per-perusahaan</div>
         <div id="earnCal"><div class="loading-state"><span class="spinner"></span></div></div>
       </div>
     </div>
@@ -392,33 +403,75 @@ const NEWSDATA_KEY = 'pub_47e6cda858f64a87b264b4a8aa6a031b';
 const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
 
 // Basket saham likuid yang dipakai untuk Top Movers / Sector / Heatmap / Watchlist / Sentiment
-// (real quotes dari Yahoo Finance — bukan seluruh IDX, tapi representatif & live)
+// (real quotes dari Yahoo Finance — ~38 saham paling likuid di IDX, representatif
+// buat basket "top movers/heatmap", TAPI TETAP BUKAN seluruh 900+ konstituen IHSG.)
 const STOCK_UNIVERSE = [
-  { sym:'BBCA', yahoo:'BBCA.JK', name:'Bank Central Asia',    sector:'Finance' },
-  { sym:'BBRI', yahoo:'BBRI.JK', name:'Bank Rakyat Indonesia',sector:'Finance' },
-  { sym:'BMRI', yahoo:'BMRI.JK', name:'Bank Mandiri',         sector:'Finance' },
-  { sym:'BBNI', yahoo:'BBNI.JK', name:'Bank Negara Indonesia',sector:'Finance' },
-  { sym:'TLKM', yahoo:'TLKM.JK', name:'Telkom Indonesia',     sector:'Technology' },
-  { sym:'GOTO', yahoo:'GOTO.JK', name:'GoTo Gojek Tokopedia', sector:'Technology' },
-  { sym:'EXCL', yahoo:'EXCL.JK', name:'XL Axiata',            sector:'Technology' },
-  { sym:'ASII', yahoo:'ASII.JK', name:'Astra International',  sector:'Industrials' },
-  { sym:'UNVR', yahoo:'UNVR.JK', name:'Unilever Indonesia',   sector:'Consumer' },
-  { sym:'ICBP', yahoo:'ICBP.JK', name:'Indofood CBP',         sector:'Consumer' },
-  { sym:'INDF', yahoo:'INDF.JK', name:'Indofood Sukses Makmur',sector:'Consumer' },
-  { sym:'CPIN', yahoo:'CPIN.JK', name:'Charoen Pokphand',     sector:'Consumer' },
-  { sym:'ANTM', yahoo:'ANTM.JK', name:'Aneka Tambang',        sector:'Basic Materials' },
-  { sym:'INCO', yahoo:'INCO.JK', name:'Vale Indonesia',       sector:'Basic Materials' },
-  { sym:'PTBA', yahoo:'PTBA.JK', name:'Bukit Asam',           sector:'Energy' },
-  { sym:'ADRO', yahoo:'ADRO.JK', name:'Adaro Energy',         sector:'Energy' },
-  { sym:'PGAS', yahoo:'PGAS.JK', name:'Perusahaan Gas Negara',sector:'Energy' },
-  { sym:'KLBF', yahoo:'KLBF.JK', name:'Kalbe Farma',          sector:'Healthcare' },
+  // Finance
+  { sym:'BBCA', yahoo:'BBCA.JK', name:'Bank Central Asia',      sector:'Finance' },
+  { sym:'BBRI', yahoo:'BBRI.JK', name:'Bank Rakyat Indonesia',  sector:'Finance' },
+  { sym:'BMRI', yahoo:'BMRI.JK', name:'Bank Mandiri',           sector:'Finance' },
+  { sym:'BBNI', yahoo:'BBNI.JK', name:'Bank Negara Indonesia',  sector:'Finance' },
+  { sym:'BRIS', yahoo:'BRIS.JK', name:'Bank Syariah Indonesia', sector:'Finance' },
+  { sym:'BBTN', yahoo:'BBTN.JK', name:'Bank Tabungan Negara',   sector:'Finance' },
+  // Technology / Telco
+  { sym:'TLKM', yahoo:'TLKM.JK', name:'Telkom Indonesia',       sector:'Technology' },
+  { sym:'GOTO', yahoo:'GOTO.JK', name:'GoTo Gojek Tokopedia',   sector:'Technology' },
+  { sym:'EXCL', yahoo:'EXCL.JK', name:'XL Axiata',              sector:'Technology' },
+  { sym:'ISAT', yahoo:'ISAT.JK', name:'Indosat Ooredoo Hutchison',sector:'Technology' },
+  // Industrials
+  { sym:'ASII', yahoo:'ASII.JK', name:'Astra International',    sector:'Industrials' },
+  { sym:'UNTR', yahoo:'UNTR.JK', name:'United Tractors',        sector:'Industrials' },
+  // Consumer
+  { sym:'UNVR', yahoo:'UNVR.JK', name:'Unilever Indonesia',     sector:'Consumer' },
+  { sym:'ICBP', yahoo:'ICBP.JK', name:'Indofood CBP',           sector:'Consumer' },
+  { sym:'INDF', yahoo:'INDF.JK', name:'Indofood Sukses Makmur', sector:'Consumer' },
+  { sym:'CPIN', yahoo:'CPIN.JK', name:'Charoen Pokphand',       sector:'Consumer' },
+  { sym:'MYOR', yahoo:'MYOR.JK', name:'Mayora Indah',           sector:'Consumer' },
+  { sym:'AMRT', yahoo:'AMRT.JK', name:'Sumber Alfaria Trijaya', sector:'Consumer' },
+  { sym:'GGRM', yahoo:'GGRM.JK', name:'Gudang Garam',           sector:'Consumer' },
+  { sym:'HMSP', yahoo:'HMSP.JK', name:'HM Sampoerna',           sector:'Consumer' },
+  // Basic Materials
+  { sym:'ANTM', yahoo:'ANTM.JK', name:'Aneka Tambang',          sector:'Basic Materials' },
+  { sym:'INCO', yahoo:'INCO.JK', name:'Vale Indonesia',         sector:'Basic Materials' },
+  { sym:'MDKA', yahoo:'MDKA.JK', name:'Merdeka Copper Gold',    sector:'Basic Materials' },
+  { sym:'TINS', yahoo:'TINS.JK', name:'Timah',                  sector:'Basic Materials' },
+  { sym:'SMGR', yahoo:'SMGR.JK', name:'Semen Indonesia',        sector:'Basic Materials' },
+  { sym:'INTP', yahoo:'INTP.JK', name:'Indocement',             sector:'Basic Materials' },
+  // Energy
+  { sym:'PTBA', yahoo:'PTBA.JK', name:'Bukit Asam',             sector:'Energy' },
+  { sym:'ADRO', yahoo:'ADRO.JK', name:'Adaro Energy',           sector:'Energy' },
+  { sym:'PGAS', yahoo:'PGAS.JK', name:'Perusahaan Gas Negara',  sector:'Energy' },
+  { sym:'MEDC', yahoo:'MEDC.JK', name:'Medco Energi',           sector:'Energy' },
+  { sym:'ITMG', yahoo:'ITMG.JK', name:'Indo Tambangraya Megah', sector:'Energy' },
+  // Healthcare
+  { sym:'KLBF', yahoo:'KLBF.JK', name:'Kalbe Farma',            sector:'Healthcare' },
+  { sym:'SIDO', yahoo:'SIDO.JK', name:'Sido Muncul',            sector:'Healthcare' },
+  { sym:'MIKA', yahoo:'MIKA.JK', name:'Mitra Keluarga Karyasehat',sector:'Healthcare' },
+  // Property & Infrastructure
+  { sym:'BSDE', yahoo:'BSDE.JK', name:'Bumi Serpong Damai',     sector:'Property' },
+  { sym:'PWON', yahoo:'PWON.JK', name:'Pakuwon Jati',           sector:'Property' },
+  { sym:'CTRA', yahoo:'CTRA.JK', name:'Ciputra Development',    sector:'Property' },
+  { sym:'JSMR', yahoo:'JSMR.JK', name:'Jasa Marga',             sector:'Infrastructure' },
 ];
-const DEFAULT_WATCHLIST = ['BBCA','BBRI','BMRI','ANTM','TLKM'];
+// Watchlist custom milik user — disimpan di localStorage biar gak ilang
+// walau tab ditutup. Boleh isi kode saham apa aja (gak harus di STOCK_UNIVERSE),
+// datanya tetap live karena kita fetch langsung ke Yahoo Finance per simbol.
+const WATCHLIST_KEY = 'ags_watchlist_v1';
+function loadWatchlist() {
+  try {
+    const raw = localStorage.getItem(WATCHLIST_KEY);
+    if (raw) { const arr = JSON.parse(raw); if (Array.isArray(arr)) return arr; }
+  } catch(e) {}
+  return ['BBCA','BBRI','BMRI','ANTM','TLKM'];
+}
+function saveWatchlistToStorage() {
+  try { localStorage.setItem(WATCHLIST_KEY, JSON.stringify(userWatchlist)); } catch(e) {}
+}
+let userWatchlist = loadWatchlist();
 
 let quotesCache = {};      // sym -> {price,prevClose,chg,chgPct,volume}
 let currentTf = '1D';
 let currentMoversTab = 'gainers';
-let currentEarnDays = 0;
 
 // ================================================================
 // INIT
@@ -437,12 +490,17 @@ document.addEventListener('DOMContentLoaded', () => {
   loadIhsg('1D');
   fetchSahamNews();
   loadUniverseQuotes();
-  renderForeignFlowPlaceholder();
-  renderCorpActionPlaceholder();
-  renderEarningsPlaceholder(0);
+  loadWatchlistExtraQuotes();
+  document.getElementById('wlAddBtn').addEventListener('click', addToWatchlist);
+  document.getElementById('wlInput').addEventListener('keydown', e => { if (e.key === 'Enter') addToWatchlist(); });
+  renderCorpActionReal();
+  renderReportingDeadlines();
   updateMarketStatus();
   setInterval(updateMarketStatus, 30000);
   setInterval(() => loadUniverseQuotes(), 60000); // refresh live quotes tiap 1 menit
+  setInterval(() => loadWatchlistExtraQuotes(), 60000);
+  setInterval(() => fetchSahamNews(), 60000); // refresh berita tiap 1 menit
+  setInterval(() => renderCorpActionReal(), 60000); // refresh corp action tiap 1 menit
 
   // Auto-refresh chart IHSG tiap 10 detik (khusus timeframe 1D, biar berasa live)
   setInterval(() => { if (currentTf === '1D') loadIhsg('1D'); }, 10000);
@@ -559,8 +617,10 @@ async function loadIhsg(tf) {
 
     drawIhsgChart(closes, chg>=0?'#22c55e':'#ef4444');
 
-    // breadth: indikatif (proporsional ke arah IHSG) — lihat data-note di kartu.
-    renderBreadthIndicative(chgPct);
+    // breadth: coba data REAL dari IDX (scraping endpoint publik idx.co.id).
+    // Kalau diblokir/berubah/gagal (rawan, karena bukan API resmi), fallback
+    // otomatis ke estimasi indikatif dan itu ditandai jelas ke user (lihat brNote).
+    renderBreadthReal(chgPct);
   } catch(e) {
     console.error('IHSG', e);
     meta.textContent = 'Gagal memuat data IHSG. Coba refresh.';
@@ -589,9 +649,116 @@ function drawIhsgChart(data, color) {
   grad.addColorStop(0, color+'33'); grad.addColorStop(1, color+'00');
   ctx.fillStyle = grad; ctx.fill();
 }
+// ================================================================
+// BREADTH REAL — scraping endpoint publik idx.co.id (Stock Summary).
+// PERINGATAN: ini BUKAN API resmi/berkontrak. idx.co.id punya bot-
+// protection dan struktur endpoint/kolomnya bisa berubah sewaktu-waktu
+// tanpa pemberitahuan → wajar kalau ini putus sesekali. Kalau gagal,
+// otomatis fallback ke estimasi indikatif (lama) dan itu DITANDAI JELAS
+// ke user lewat #brNote, bukan disamarkan seolah-olah real.
+// ================================================================
+const IDX_STOCK_SUMMARY_BASE = 'https://www.idx.co.id/umbraco/Surface/TradingSummary/GetStockSummary';
+
+function ymd(d) {
+  return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// Ambil angka dari row IDX walau nama field-nya berubah-ubah antar versi endpoint.
+function pickNum(row, keys) {
+  for (const k of keys) {
+    if (row[k] !== undefined && row[k] !== null && row[k] !== '') {
+      const n = parseFloat(String(row[k]).replace(/,/g,''));
+      if (!isNaN(n)) return n;
+    }
+  }
+  return null;
+}
+
+async function fetchIdxStockSummaryForDate(dateObj) {
+  const url = `${IDX_STOCK_SUMMARY_BASE}?date=${ymd(dateObj)}&start=0&length=9999`;
+  const res = await fetch(CORS_PROXY + encodeURIComponent(url));
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  const rows = data?.data || data?.Data || data?.result || data;
+  if (!Array.isArray(rows) || !rows.length) throw new Error('Data kosong (kemungkinan libur/weekend atau format berubah)');
+  return rows;
+}
+
+// Coba mundur sampai beberapa hari terakhir kalau hari ini libur/weekend/belum ada data.
+async function fetchIdxStockSummaryRecent(maxDaysBack = 6) {
+  const now = new Date();
+  for (let i = 0; i <= maxDaysBack; i++) {
+    const d = new Date(now); d.setDate(d.getDate() - i);
+    try {
+      const rows = await fetchIdxStockSummaryForDate(d);
+      return { rows, dateUsed: d };
+    } catch (e) { /* coba tanggal sebelumnya */ }
+  }
+  throw new Error('Tidak dapat mengambil data IDX beberapa hari terakhir');
+}
+
+async function renderBreadthReal(chgPct) {
+  const noteEl = document.getElementById('brNote');
+  const srcEl = document.getElementById('ihsgSourceSub');
+  try {
+    const { rows, dateUsed } = await fetchIdxStockSummaryRecent();
+
+    let adv = 0, dec = 0, unc = 0, vol = 0, val = 0, foreignBuy = 0, foreignSell = 0;
+    let hasForeign = false;
+
+    rows.forEach(r => {
+      const prev  = pickNum(r, ['Previous','PreviousPrice','previous']);
+      const close = pickNum(r, ['Close','ClosePrice','close']);
+      const chg   = pickNum(r, ['Change','change']);
+      const v     = pickNum(r, ['Volume','volume']);
+      const va    = pickNum(r, ['Value','value']);
+      const fb    = pickNum(r, ['ForeignBuy','Foreign_Buy','foreignBuy','FBuyVol','FBuyValue']);
+      const fs    = pickNum(r, ['ForeignSell','Foreign_Sell','foreignSell','FSellVol','FSellValue']);
+
+      let delta = chg;
+      if (delta === null && prev !== null && close !== null) delta = close - prev;
+      if (delta !== null) {
+        if (delta > 0) adv++; else if (delta < 0) dec++; else unc++;
+      }
+      if (v !== null) vol += v;
+      if (va !== null) val += va;
+      if (fb !== null && fs !== null) { hasForeign = true; foreignBuy += fb; foreignSell += fs; }
+    });
+
+    if (adv + dec + unc === 0) throw new Error('Tidak bisa hitung advancers/decliners (kolom tidak dikenali)');
+
+    document.getElementById('brAdv').textContent = adv;
+    document.getElementById('brDec').textContent = dec;
+    document.getElementById('brUnc').textContent = unc;
+    document.getElementById('brVol').textContent = (vol/1e9).toFixed(2)+' M lbr';
+    document.getElementById('brVal').textContent = 'Rp '+(val/1e12).toFixed(2)+' T';
+
+    const ffEl = document.getElementById('brFf');
+    if (hasForeign) {
+      const netT = (foreignBuy - foreignSell) / 1e12;
+      ffEl.textContent = (netT>=0?'+':'')+'Rp '+netT.toFixed(2)+' T';
+      ffEl.style.color = netT>=0?'var(--green)':'var(--red)';
+    } else {
+      ffEl.textContent = 'N/A';
+      ffEl.style.color = 'var(--muted)';
+    }
+
+    const isToday = ymd(dateUsed) === ymd(new Date());
+    srcEl.textContent = `Sumber: Yahoo Finance (^JKSE) untuk harga · Breadth: IDX real${isToday ? '' : ' (data terakhir: ' + fmtDateShortID(dateUsed) + ', bukan hari ini)'}`;
+    noteEl.style.display = hasForeign ? 'none' : 'block';
+    if (!hasForeign) noteEl.innerHTML = '<b>Catatan:</b> Advancers/Decliners/Volume/Value dari data real IDX. Kolom Foreign Buy/Sell tidak ditemukan di response endpoint saat ini, jadi Foreign Net Buy ditampilkan N/A (bukan dikira-kira).';
+  } catch (e) {
+    console.error('renderBreadthReal → fallback ke estimasi:', e);
+    renderBreadthIndicative(chgPct);
+    srcEl.textContent = 'Sumber: Yahoo Finance (^JKSE) untuk harga · Breadth: ESTIMASI (gagal ambil data real IDX)';
+    noteEl.style.display = 'block';
+    noteEl.innerHTML = '<b>Catatan:</b> Gagal mengambil data breadth real dari IDX (kemungkinan diblokir bot-protection atau endpoint berubah). Angka di bawah adalah <b>estimasi indikatif</b> berdasarkan arah IHSG, bukan data resmi.';
+  }
+}
+
+// Fallback lama: estimasi indikatif, dipakai HANYA kalau scraping IDX di atas gagal.
 function renderBreadthIndicative(chgPct) {
   const pct = parseFloat(chgPct);
-  // sebar indikatif 588 saham aktif IDX proporsional ke arah IHSG (BUKAN data resmi)
   const total = 588;
   const advRatio = Math.min(0.75, Math.max(0.25, 0.5 + pct*0.04));
   const adv = Math.round(total*advRatio), dec = Math.round(total*(1-advRatio)*0.82), unc = total-adv-dec;
@@ -619,7 +786,7 @@ async function fetchYahooQuote(yahooSym) {
   const prevClose = meta.chartPreviousClose ?? meta.previousClose ?? price;
   const chg = price - prevClose;
   const chgPct = prevClose ? (chg/prevClose*100) : 0;
-  return { price, prevClose, chg, chgPct, volume: meta.regularMarketVolume || 0 };
+  return { price, prevClose, chg, chgPct, volume: meta.regularMarketVolume || 0, name: meta.longName || meta.shortName || null };
 }
 
 async function loadUniverseQuotes() {
@@ -632,6 +799,18 @@ async function loadUniverseQuotes() {
   renderHeatmap();
   renderWatchlist();
   renderSentiment();
+}
+
+// Simbol di watchlist yang bukan bagian dari STOCK_UNIVERSE tetap butuh
+// live quote sendiri (mis. saham yang user tambah manual, kayak MEDC).
+async function loadWatchlistExtraQuotes() {
+  const extra = userWatchlist.filter(sym => !STOCK_UNIVERSE.some(u => u.sym === sym));
+  if (!extra.length) return;
+  await Promise.all(extra.map(async sym => {
+    try { quotesCache[sym] = await fetchYahooQuote(sym + '.JK'); }
+    catch(e) { console.warn('watchlist quote fail', sym, e.message); }
+  }));
+  renderWatchlist();
 }
 
 function fmtIDR(n) { return n.toLocaleString('id-ID', {minimumFractionDigits:0, maximumFractionDigits:0}); }
@@ -695,19 +874,63 @@ function renderHeatmap() {
 
 // ---------- WATCHLIST ----------
 function renderWatchlist() {
-  const rows = DEFAULT_WATCHLIST.map(sym => {
-    const s = STOCK_UNIVERSE.find(u=>u.sym===sym); const q = quotesCache[sym];
-    return s && q ? { ...s, q } : null;
-  }).filter(Boolean);
-  if (!rows.length) { document.getElementById('watchlist').innerHTML = '<div class="loading-state">Memuat...</div>'; return; }
-  document.getElementById('watchlist').innerHTML = `
-    <table class="tbl"><thead><tr><th>SYMBOL</th><th>LAST</th><th>CHG</th><th>%</th></tr></thead>
+  const wlEl = document.getElementById('watchlist');
+  if (!userWatchlist.length) {
+    wlEl.innerHTML = '<div class="wl-empty">Watchlist kosong. Tambahkan kode saham di atas ☝️</div>';
+    return;
+  }
+  const rows = userWatchlist.map(sym => {
+    const s = STOCK_UNIVERSE.find(u => u.sym === sym);
+    const q = quotesCache[sym];
+    const name = s?.name || q?.name || '';
+    return { sym, name, q };
+  });
+  wlEl.innerHTML = `
+    <table class="tbl"><thead><tr><th>SYMBOL</th><th>LAST</th><th>CHG</th><th>%</th><th></th></tr></thead>
     <tbody>${rows.map(r => `<tr>
-      <td><span class="sym-icon">${r.sym.slice(0,2)}</span>${r.sym}<div style="font-size:9.5px;color:var(--muted);margin-left:28px;">${r.name}</div></td>
+      <td><span class="sym-icon">${r.sym.slice(0,2)}</span>${r.sym}${r.name?`<div style="font-size:9.5px;color:var(--muted);margin-left:28px;">${r.name}</div>`:''}</td>
+      ${r.q ? `
       <td style="font-family:var(--mono);">${fmtIDR(r.q.price)}</td>
       <td class="${r.q.chg>=0?'up':'down'}">${r.q.chg>=0?'+':''}${fmtIDR(Math.round(r.q.chg))}</td>
       <td class="${r.q.chgPct>=0?'up':'down'}">${r.q.chgPct>=0?'+':''}${r.q.chgPct.toFixed(2)}%</td>
+      ` : `<td colspan="3" style="color:var(--muted);font-size:11px;">Memuat...</td>`}
+      <td><span class="wl-remove" onclick="removeFromWatchlist('${r.sym}')" title="Hapus dari watchlist">✕</span></td>
     </tr>`).join('')}</tbody></table>`;
+}
+
+function removeFromWatchlist(sym) {
+  userWatchlist = userWatchlist.filter(s => s !== sym);
+  if (!STOCK_UNIVERSE.some(u => u.sym === sym)) delete quotesCache[sym];
+  saveWatchlistToStorage();
+  renderWatchlist();
+}
+
+async function addToWatchlist() {
+  const input = document.getElementById('wlInput');
+  const errEl = document.getElementById('wlErr');
+  const btn = document.getElementById('wlAddBtn');
+  errEl.style.display = 'none';
+  let sym = input.value.trim().toUpperCase().replace('.JK', '');
+  if (!sym) return;
+  if (userWatchlist.includes(sym)) {
+    errEl.textContent = `${sym} sudah ada di watchlist.`;
+    errEl.style.display = 'block';
+    return;
+  }
+  btn.disabled = true; btn.textContent = '...';
+  try {
+    const q = await fetchYahooQuote(sym + '.JK');
+    quotesCache[sym] = q;
+    userWatchlist.push(sym);
+    saveWatchlistToStorage();
+    input.value = '';
+    renderWatchlist();
+  } catch (e) {
+    errEl.textContent = `Kode "${sym}" tidak ditemukan di IDX. Cek lagi ejaannya.`;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = '+ Tambah';
+  }
 }
 
 // ---------- AI MARKET SENTIMENT (heuristik dari basket live) ----------
@@ -793,58 +1016,148 @@ async function fetchSahamNews() {
 }
 
 // ================================================================
-// FOREIGN FLOW / CORPORATE ACTION / EARNINGS — placeholder terstruktur
-// (menunggu AGS Backend Server sesuai flowchart: Corporate Action Service,
-// Market Service. Ganti fetch ke SAHAM_API_URL saat backend sudah siap.)
+// CORPORATE ACTION — Dividend & Stock Split diambil REAL dari Yahoo
+// Finance (events=div,splits), gratis, tapi hanya histori yang SUDAH
+// terjadi (Yahoo tidak punya jadwal cum date masa depan). Right Issue
+// & IPO tidak ada sumber gratis real-time, jadi diarahkan sebagai link
+// ke halaman resmi IDX & e-IPO.
+// (Foreign Flow dihapus — tidak ada API gratis untuk data ini sama
+// sekali, baik real-time maupun historis. Data broker summary IDX
+// hanya tersedia lewat IDX Data Services berbayar.)
 // ================================================================
-function renderForeignFlowPlaceholder() {
-  document.getElementById('foreignFlow').innerHTML = `
-    <div class="ff-stat-row">
-      <div class="ff-stat"><div class="ff-stat-label">Net Buy (YTD)</div><div class="ff-stat-val" style="color:var(--green);">+Rp 23.45 T</div></div>
-      <div class="ff-stat"><div class="ff-stat-label">Net Today</div><div class="ff-stat-val" style="color:var(--green);">+Rp 1.25 T</div></div>
+// Ambil histori dividend & stock split REAL dari Yahoo Finance untuk tiap
+// saham di STOCK_UNIVERSE. Yahoo hanya punya event yang SUDAH terjadi
+// (ex-date sudah lewat), bukan jadwal cum date masa depan — makanya label
+// grup dibuat "Terakhir" biar jujur soal keterbatasan datanya.
+async function fetchYahooEvents(yahooSym) {
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSym}?range=2y&interval=1mo&events=div,splits`;
+  const res = await fetch(CORS_PROXY + encodeURIComponent(url));
+  const json = await res.json();
+  return json?.chart?.result?.[0]?.events || {};
+}
+
+function fmtDateID(ts) {
+  const d = new Date(ts * 1000);
+  return d.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+async function renderCorpActionReal() {
+  const el = document.getElementById('corpAction');
+  try {
+    const results = await Promise.all(STOCK_UNIVERSE.map(async s => {
+      try { return { sym: s.sym, events: await fetchYahooEvents(s.yahoo) }; }
+      catch (e) { return { sym: s.sym, events: {} }; }
+    }));
+
+    // Kumpulkan semua dividend & split, urutkan dari yang paling baru
+    let dividends = [];
+    let splits = [];
+    results.forEach(r => {
+      if (r.events.dividends) {
+        Object.values(r.events.dividends).forEach(d => dividends.push({ sym: r.sym, ts: d.date, amount: d.amount }));
+      }
+      if (r.events.splits) {
+        Object.values(r.events.splits).forEach(sp => splits.push({ sym: r.sym, ts: sp.date, ratio: `${sp.numerator}:${sp.denominator}` }));
+      }
+    });
+    dividends.sort((a,b) => b.ts - a.ts);
+    splits.sort((a,b) => b.ts - a.ts);
+    dividends = dividends.slice(0, 5);
+    splits = splits.slice(0, 5);
+
+    const divHtml = dividends.length
+      ? dividends.map(d => `<div class="ca-item"><b>${d.sym}</b><span>Ex-Date: ${fmtDateID(d.ts)} • Rp${d.amount}</span></div>`).join('')
+      : `<div class="ca-item"><span>Tidak ada data dividend 2 tahun terakhir untuk basket saham ini.</span></div>`;
+
+    const splitHtml = splits.length
+      ? splits.map(s => `<div class="ca-item"><b>${s.sym}</b><span>${fmtDateID(s.ts)} • Ratio ${s.ratio}</span></div>`).join('')
+      : `<div class="ca-item"><span>Tidak ada stock split 2 tahun terakhir untuk basket saham ini.</span></div>`;
+
+    el.innerHTML = `
+      <div class="ca-group"><div class="ca-group-title" style="color:var(--green);">💰 Dividend Terakhir (Yahoo Finance)</div>
+        ${divHtml}</div>
+      <div class="ca-group"><div class="ca-group-title" style="color:var(--blue);">✂️ Stock Split Terakhir (Yahoo Finance)</div>
+        ${splitHtml}</div>
+      <div class="ca-group"><div class="ca-group-title" style="color:var(--gold);">📄 Right Issue</div>
+        <div class="ca-item"><span>Belum ada sumber gratis real-time. <a href="https://www.idx.co.id/en/market-data/statistical-reports/digital-statistic/monthly/corporate-action-of-listed-companies/right-issue" target="_blank" rel="noopener noreferrer" style="color:var(--gold);">Cek jadwal resmi di IDX →</a></span></div></div>
+      <div class="ca-group"><div class="ca-group-title">🆕 IPO</div>
+        <div class="ca-item"><span>Belum ada sumber gratis real-time. <a href="https://www.e-ipo.co.id/id/ipo-perdana" target="_blank" rel="noopener noreferrer" style="color:var(--text);">Cek jadwal resmi di e-IPO →</a></span></div></div>
+      <div class="data-note">Dividend &amp; split di atas data <b>histori riil</b> dari Yahoo Finance (bukan jadwal masa depan). Right Issue &amp; IPO belum ada API gratis, jadi diarahkan ke sumber resmi.</div>`;
+  } catch (e) {
+    console.error('renderCorpActionReal', e);
+    el.innerHTML = '<div class="loading-state">Gagal memuat data corporate action.</div>';
+  }
+}
+// ================================================================
+// JADWAL WAJIB LAPOR KEUANGAN — dihitung REAL dari aturan OJK/IDX,
+// bukan tanggal earnings call per perusahaan (itu belum ada API gratis
+// yang andal untuk emiten Indonesia). Ini murni matematika tanggal,
+// jadi selalu akurat mengikuti kalender berjalan, bukan data yang
+// ditulis mati.
+//
+// Sumber aturan:
+// - Laporan Tahunan Auditan: paling lambat 90 hari setelah akhir tahun
+//   buku (POJK 42/2016 & Peraturan Bursa I-E) — INI KEPASTIAN, bukan estimasi.
+// - Laporan Keuangan Interim (triwulanan): berdasarkan POJK 14/2022,
+//   rentang umum 30 hari (tanpa reviu akuntan) s/d 60 hari (dengan
+//   reviu terbatas) setelah akhir periode — tanggal pasti tiap emiten
+//   bisa beda tergantung skema yang dipakai, jadi ditampilkan sebagai
+//   rentang, bukan tanggal tunggal.
+// ================================================================
+function addDays(date, n) { const d = new Date(date); d.setDate(d.getDate() + n); return d; }
+
+function computeReportingDeadlines() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const periods = [];
+
+  [
+    { label: 'Triwulan I', endMonth: 2, endDay: 31 },   // 31 Mar
+    { label: 'Semester I (Triwulan II)', endMonth: 5, endDay: 30 }, // 30 Jun
+    { label: 'Triwulan III', endMonth: 8, endDay: 30 }, // 30 Sep
+  ].forEach(q => {
+    const periodEnd = new Date(year, q.endMonth, q.endDay);
+    periods.push({
+      label: q.label,
+      type: 'interim',
+      sortDate: addDays(periodEnd, 60),
+      deadlineMin: addDays(periodEnd, 30),
+      deadlineMax: addDays(periodEnd, 60),
+    });
+  });
+
+  // Laporan Tahunan Auditan — cek FY tahun ini & tahun lalu biar gak kelewat di awal tahun
+  [year - 1, year].forEach(y => {
+    const fyEnd = new Date(y, 11, 31);
+    const deadline = addDays(fyEnd, 90);
+    periods.push({
+      label: `Laporan Tahunan Auditan FY${y}`,
+      type: 'annual',
+      sortDate: deadline,
+      deadlineMin: deadline,
+      deadlineMax: deadline,
+    });
+  });
+
+  return periods.filter(p => p.sortDate >= now).sort((a, b) => a.sortDate - b.sortDate).slice(0, 4);
+}
+
+function fmtDateShortID(d) {
+  return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function renderReportingDeadlines() {
+  const rows = computeReportingDeadlines();
+  const el = document.getElementById('earnCal');
+  if (!rows.length) { el.innerHTML = '<div class="loading-state">Tidak ada jadwal mendatang.</div>'; return; }
+  el.innerHTML = `
+    <div class="ca-group">${rows.map(r => `
+      <div class="ca-item">
+        <b>${r.label}</b>
+        <span>${r.type === 'annual' ? `Deadline: ${fmtDateShortID(r.deadlineMin)}` : `Estimasi: ${fmtDateShortID(r.deadlineMin)} – ${fmtDateShortID(r.deadlineMax)}`}</span>
+      </div>`).join('')}
     </div>
-    <div class="ff-list-title">Top Foreign Buy</div>
-    <div class="ff-row"><span>BBCA</span><span style="color:var(--green);">+Rp 356.8 M</span></div>
-    <div class="ff-row"><span>BBRI</span><span style="color:var(--green);">+Rp 278.6 M</span></div>
-    <div class="ff-row"><span>BMRI</span><span style="color:var(--green);">+Rp 212.4 M</span></div>
-    <div class="ff-list-title">Top Foreign Sell</div>
-    <div class="ff-row"><span>TLKM</span><span style="color:var(--red);">-Rp 178.6 M</span></div>
-    <div class="ff-row"><span>ASII</span><span style="color:var(--red);">-Rp 121.8 M</span></div>`;
-}
-function renderCorpActionPlaceholder() {
-  document.getElementById('corpAction').innerHTML = `
-    <div class="ca-group"><div class="ca-group-title" style="color:var(--green);">💰 Dividend</div>
-      <div class="ca-item"><b>BBCA</b><span>Cum Date: 08 Jul 2026</span></div>
-      <div class="ca-item"><b>ADRO</b><span>Cum Date: 10 Jul 2026</span></div></div>
-    <div class="ca-group"><div class="ca-group-title" style="color:var(--gold);">📄 Right Issue</div>
-      <div class="ca-item"><b>WIKA</b><span>Cum Date: 15 Jul 2026</span></div>
-      <div class="ca-item"><b>SMGR</b><span>Cum Date: 20 Jul 2026</span></div></div>
-    <div class="ca-group"><div class="ca-group-title" style="color:var(--blue);">✂️ Stock Split</div>
-      <div class="ca-item"><b>BRIS</b><span>Ratio 1:2</span></div>
-      <div class="ca-item"><b>NCKL</b><span>Ratio 1:2</span></div></div>
-    <div class="ca-group"><div class="ca-group-title">🆕 IPO</div>
-      <div class="ca-item"><b>ABCD</b><span>Listing: 07 Jul 2026</span></div>
-      <div class="ca-item"><b>EFGH</b><span>Listing: 09 Jul 2026</span></div></div>`;
-}
-const EARNINGS_MOCK = [
-  { company:'Bank Central Asia', ticker:'BBCA', time:'13:00 WIB', day:0 },
-  { company:'Bank Rakyat Indonesia', ticker:'BBRI', time:'14:00 WIB', day:0 },
-  { company:'Telkom Indonesia', ticker:'TLKM', time:'15:00 WIB', day:1 },
-  { company:'Unilever Indonesia', ticker:'UNVR', time:'16:00 WIB', day:1 },
-  { company:'Indofood CBP', ticker:'ICBP', time:'16:30 WIB', day:5 },
-  { company:'Astra International', ticker:'ASII', time:'10:00 WIB', day:6 },
-];
-function switchEarnings(days, el) {
-  currentEarnDays = days;
-  document.querySelectorAll('#earnTabs .tab-btn').forEach(b=>b.classList.toggle('active', b===el));
-  renderEarningsPlaceholder(days);
-}
-function renderEarningsPlaceholder(days) {
-  const rows = EARNINGS_MOCK.filter(r => days===7 ? r.day<=7 : r.day===days);
-  if (!rows.length) { document.getElementById('earnCal').innerHTML = '<div class="loading-state">Tidak ada earnings pada rentang ini.</div>'; return; }
-  document.getElementById('earnCal').innerHTML = `
-    <table class="tbl"><thead><tr><th>COMPANY</th><th>TICKER</th><th>TIME</th></tr></thead>
-    <tbody>${rows.map(r=>`<tr><td style="font-size:11.5px;">${r.company}</td><td><b>${r.ticker}</b></td><td style="color:var(--muted);font-size:11px;">${r.time}</td></tr>`).join('')}</tbody></table>`;
+    <div class="data-note"><b>Laporan Tahunan Auditan</b> deadline pasti (90 hari, POJK 42/2016). <b>Triwulanan</b> masih rentang indikatif (30–60 hari, POJK 14/2022) karena tergantung skema reviu tiap emiten — cek keterbukaan informasi resmi di IDX untuk tanggal pasti tiap perusahaan.</div>`;
 }
 </script>
 </body>
