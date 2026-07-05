@@ -351,22 +351,6 @@
       <div style="font-size:9px;color:var(--muted);margin-top:6px;font-family:var(--mono);" id="kl-updated"></div>
     </div>
 
-    <div class="card">
-      <h3>💵 DXY Correlation</h3>
-      <div class="row"><span class="label">DXY Trend</span><span class="val" id="dxy-trend">—</span></div>
-      <div class="row"><span class="label">Gold Bias</span><span class="val" id="dxy-goldbias">—</span></div>
-      <div class="row"><span class="label">Correlation</span><span class="val" id="dxy-status">—</span></div>
-      <div style="font-size:9px;color:var(--muted);margin-top:6px;font-family:var(--mono);" id="dxy-updated"></div>
-    </div>
-
-    <div class="card">
-      <h3>📅 Economic Calendar <span style="text-transform:none;font-size:9px;color:var(--muted);">· TradingView · US High Impact</span></h3>
-      <div id="tv_econ_calendar_container" style="min-height:360px;border-radius:8px;overflow:hidden;">
-        <div class="tradingview-widget-container" style="height:100%;width:100%">
-          <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- CENTER: CHART -->
@@ -537,6 +521,37 @@
       <div class="row"><span class="label">Profit TP2</span><span class="val bull" id="rc-profit2">—</span></div>
       <div style="font-size:9px;color:var(--muted);margin-top:6px;font-family:var(--mono);" id="rc-updated"></div>
     </div>
+
+    <div class="card">
+      <h3>🤖 AI Analysis <span style="text-transform:none;font-size:9px;color:var(--muted);">· SMC · Claude</span></h3>
+      <div style="font-size:10.5px;color:var(--muted);margin:-6px 0 10px;">Analisis Smart Money Concept multi-timeframe XAUUSD oleh AI</div>
+      <table class="mv-table" id="ai-analysis-table">
+        <tbody>
+          <tr><td class="mv-comp"><div class="name">Trend</div></td><td class="mv-score" id="ai-trend">—</td></tr>
+          <tr><td class="mv-comp"><div class="name">Sentiment</div></td><td class="mv-score" id="ai-sentiment">—</td></tr>
+          <tr><td class="mv-comp"><div class="name">Support</div></td><td class="mv-score" id="ai-support">—</td></tr>
+          <tr><td class="mv-comp"><div class="name">Resistance</div></td><td class="mv-score" id="ai-resistance">—</td></tr>
+          <tr><td class="mv-comp"><div class="name">Buy Area</div></td><td class="mv-score" id="ai-buyarea">—</td></tr>
+          <tr><td class="mv-comp"><div class="name">Sell Area</div></td><td class="mv-score" id="ai-sellarea">—</td></tr>
+          <tr><td class="mv-comp"><div class="name">Stop Loss</div></td><td class="mv-score" id="ai-sl">—</td></tr>
+          <tr><td class="mv-comp"><div class="name">TP1</div></td><td class="mv-score" id="ai-tp1">—</td></tr>
+          <tr><td class="mv-comp"><div class="name">TP2</div></td><td class="mv-score" id="ai-tp2">—</td></tr>
+          <tr><td class="mv-comp"><div class="name">TP3</div></td><td class="mv-score" id="ai-tp3">—</td></tr>
+          <tr><td class="mv-comp"><div class="name">Risk : Reward</div></td><td class="mv-score" id="ai-rr">—</td></tr>
+          <tr><td class="mv-comp"><div class="name">Confidence</div></td><td class="mv-score" id="ai-confidence">—</td></tr>
+          <tr><td class="mv-comp"><div class="name">Invalidation</div></td><td class="mv-score" id="ai-invalidation">—</td></tr>
+        </tbody>
+      </table>
+      <div class="rec-box" id="ai-rec-box" style="margin-top:10px;">
+        <div class="tag">KESIMPULAN AI</div>
+        <div class="word" id="ai-conclusion">—</div>
+        <div class="sub" id="ai-reasoning">Menunggu analisis AI pertama...</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+        <div style="font-size:9px;color:var(--muted);font-family:var(--mono);" id="ai-updated"></div>
+        <button id="ai-refresh-btn" style="background:var(--panel2);border:1px solid var(--line);color:var(--muted);font-size:10px;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:var(--sans);font-weight:600;">🔄 Refresh</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -612,31 +627,6 @@ buildBar('buyBar', 0);
 buildBar('sellBar', 0);
 
 // ===================================================================
-// ECONOMIC CALENDAR — TradingView widget (no API key / no CORS issues)
-// FMP's economic-calendar endpoint returned "Restricted Endpoint" on the
-// free plan (confirmed), so we use TradingView's official free calendar
-// widget instead — same trusted source already used for the price chart.
-// ===================================================================
-function loadEconCalendar(theme){
-  const wrap = document.querySelector('#tv_econ_calendar_container .tradingview-widget-container__widget');
-  if(!wrap) return;
-  wrap.innerHTML = '';
-  const script = document.createElement('script');
-  script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-events.js';
-  script.async = true;
-  script.innerHTML = JSON.stringify({
-    "colorTheme": theme,
-    "isTransparent": true,
-    "width": "100%",
-    "height": "360",
-    "locale": "id",
-    "importanceFilter": "1",      // high impact only
-    "countryFilter": "us"          // XAUUSD digerakkan terutama oleh data USD
-  });
-  wrap.appendChild(script);
-}
-
-// ===================================================================
 // TRADINGVIEW WIDGET
 // ===================================================================
 function loadTradingView(theme){
@@ -698,7 +688,6 @@ function applyTheme(theme){
   themeToggleBtn.firstChild.textContent = theme === 'dark' ? '🌙 ' : '☀️ ';
   saveTheme(theme);
   loadTradingView(theme);
-  loadEconCalendar(theme);
 }
 
 themeToggleBtn.addEventListener('click', ()=>{
@@ -1185,7 +1174,7 @@ async function fetchAIAnalysis(){
     const ema50=calcEMA(closes,50);
     const aboveEMA=price>ema50;
     const bias = aboveEMA ? 'bull' : 'bear';
-    currentGoldBias = bias; // dipakai DXY Correlation card
+    currentGoldBias = bias; // dipakai konfluensi alert
     const trendScore = aboveEMA ? 20 : 0;
     setMV('trend', aboveEMA?'▲ BULLISH':'▼ BEARISH', aboveEMA?'ok':'bad', trendScore, 20);
     total+=trendScore;
@@ -1420,9 +1409,9 @@ fetchKeyLevels();
 setInterval(fetchKeyLevels, 15*60*1000); // data HTF jarang berubah, 15 menit cukup
 
 // ===================================================================
-// DXY CORRELATION — Gold vs Dollar Index biasanya inverse. Kalau bias
-// gold BUY tapi DXY lagi kuat naik, itu conflict yang perlu diwaspadai
-// meski semua rule SMC di M15 udah centang hijau.
+// DXY CORRELATION (internal only, tidak lagi ditampilkan sebagai card —
+// digantikan AI Analysis. Tetap dihitung di background karena dipakai
+// sebagai salah satu konfluensi di Alert Engine di atas.)
 // ===================================================================
 let currentGoldBias = null; // di-set di fetchAIAnalysis()
 let latestDXYAligned = null;
@@ -1438,41 +1427,161 @@ async function fetchDXY(){
     const price = closes[closes.length-1];
     const dxyBull = price > ema50;
 
-    const trendEl = document.getElementById('dxy-trend');
-    if(trendEl){
-      trendEl.textContent = dxyBull ? '▲ STRENGTHENING' : '▼ WEAKENING';
-      trendEl.style.color = dxyBull ? 'var(--green)' : 'var(--red)';
-    }
-    const biasEl = document.getElementById('dxy-goldbias');
-    if(biasEl){
-      biasEl.textContent = currentGoldBias ? currentGoldBias.toUpperCase() : '— WAIT';
-      biasEl.style.color = currentGoldBias==='bull' ? 'var(--green)' : currentGoldBias==='bear' ? 'var(--red)' : 'var(--muted)';
-    }
-    const statusEl = document.getElementById('dxy-status');
-    if(statusEl && currentGoldBias){
+    if(currentGoldBias){
       // korelasi inverse: gold bullish sehat kalau DXY melemah, & sebaliknya
-      const aligned = (currentGoldBias==='bull' && !dxyBull) || (currentGoldBias==='bear' && dxyBull);
-      statusEl.textContent = aligned ? '✔ ALIGNED' : '✕ CONFLICT';
-      statusEl.style.color = aligned ? 'var(--green)' : 'var(--red)';
-      latestDXYAligned = aligned;
-    } else if(statusEl){
-      statusEl.textContent = '— WAIT BIAS';
-      statusEl.style.color = 'var(--muted)';
+      latestDXYAligned = (currentGoldBias==='bull' && !dxyBull) || (currentGoldBias==='bear' && dxyBull);
+    } else {
+      latestDXYAligned = null;
     }
-
-    const now=new Date();
-    const pad=n=>String(n).padStart(2,'0');
-    const upd=document.getElementById('dxy-updated');
-    if(upd) upd.textContent = `Updated ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
   }catch(e){
-    ['dxy-trend','dxy-goldbias','dxy-status'].forEach(id=>{
-      const el=document.getElementById(id); if(el){ el.textContent='— N/A'; el.style.color='var(--muted)'; }
-    });
+    latestDXYAligned = null;
   }
 }
 
 fetchDXY();
 setInterval(fetchDXY, 5*60*1000);
+
+// ===================================================================
+// AI ANALYSIS (SMC) — Claude via Anthropic API
+// Meminta Claude melakukan analisis Smart Money Concept multi-timeframe
+// untuk XAUUSD (bukan BTC), lengkap dengan konteks makro & sentimen,
+// lalu menampilkan hasilnya dalam tabel + kesimpulan akhir.
+// ===================================================================
+let aiAnalysisLoading = false;
+
+function buildSMCPrompt(){
+  const priceCtx = rcPrice
+    ? `Harga acuan real-time XAUUSD (M15, sumber Twelve Data) saat ini: ${rcPrice.toFixed(2)} USD. ATR(14) M15: ${rcATR ? rcATR.toFixed(2) : 'N/A'}. Gunakan angka ini sebagai acuan harga, lalu sesuaikan/koreksi dengan data terbaru yang kamu temukan.`
+    : '';
+
+  return `Kamu adalah hedge fund analyst profesional.
+Lakukan analisis XAUUSD (Gold Spot / US Dollar) menggunakan metode Smart Money Concept (SMC).
+${priceCtx}
+
+Gunakan sebagai dasar analisis teknikal:
+- Multi Time Frame (1D, 4H, 1H, 15M)
+- Market Structure (BOS / CHoCH)
+- Liquidity (equal highs/lows, liquidity sweep)
+- Order Block (bullish/bearish)
+- Fair Value Gap / Imbalance
+- Volume Profile
+- VWAP
+- EMA 20, 50, 200
+- RSI
+- MACD
+- ATR
+
+Tambahkan konteks fundamental & makro (adaptasi untuk gold, bukan crypto):
+- DXY (US Dollar Index) — trend & korelasi inverse terhadap gold
+- US Treasury real yield & ekspektasi suku bunga The Fed
+- Gold Futures COMEX Open Interest & COT positioning (net long/short spekulan)
+- Gold ETF Flow (GLD, IAU) — inflow/outflow
+- Sentimen risk-on vs risk-off & permintaan safe haven
+- Economic Calendar — rilis data ekonomi AS berdampak tinggi terdekat (NFP, CPI, FOMC, dsb) dan potensi dampaknya ke XAUUSD
+
+Jika kamu memiliki akses pencarian web, cari data terkini (harga, DXY, sentimen, kalender ekonomi) sebelum menjawab supaya analisis mencerminkan kondisi pasar real-time. Jika tidak ada akses, gunakan pengetahuan terbaik yang kamu miliki dan sebutkan bahwa data mungkin tidak 100% real-time di bagian reasoning.
+
+Jawab HANYA dalam format JSON valid (tanpa markdown code fence, tanpa teks pembuka/penutup di luar JSON), dengan struktur PERSIS seperti ini:
+{
+  "trend": "string singkat, mis. 'Bullish (H4 & H1), retrace M15'",
+  "sentiment": "string singkat, mis. 'Risk-off, safe haven demand naik'",
+  "support": "level harga USD",
+  "resistance": "level harga USD",
+  "buy_area": "range harga USD",
+  "sell_area": "range harga USD",
+  "stop_loss": "level harga USD",
+  "tp1": "level harga USD",
+  "tp2": "level harga USD",
+  "tp3": "level harga USD",
+  "risk_reward": "mis. '1:3'",
+  "confidence": "angka persen, mis. '72%'",
+  "reasoning": "penjelasan ringkas 2-4 kalimat kenapa kesimpulan ini diambil, sebutkan konfluensi SMC + makro yang paling menentukan",
+  "invalidation_level": "level harga USD yang membatalkan skenario ini",
+  "conclusion": "salah satu dari: Strong Buy | Buy | Wait | Sell | Strong Sell"
+}`;
+}
+
+async function fetchAISMCAnalysis(){
+  if(aiAnalysisLoading) return;
+  aiAnalysisLoading = true;
+
+  const btn = document.getElementById('ai-refresh-btn');
+  const conclEl = document.getElementById('ai-conclusion');
+  const reasonEl = document.getElementById('ai-reasoning');
+  const recBox = document.getElementById('ai-rec-box');
+
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ Analyzing...'; }
+  if(conclEl){ conclEl.textContent = 'ANALYZING…'; conclEl.style.color = 'var(--gold)'; }
+  if(reasonEl) reasonEl.textContent = 'AI sedang menganalisis multi-timeframe XAUUSD (SMC + makro)...';
+  if(recBox){ recBox.style.borderColor = 'rgba(240,180,41,.35)'; recBox.style.background = 'rgba(240,180,41,.08)'; }
+
+  try{
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1200,
+        messages: [{ role: "user", content: buildSMCPrompt() }],
+        tools: [{ type: "web_search_20250305", name: "web_search" }]
+      })
+    });
+    const data = await response.json();
+
+    const textBlocks = (data.content || []).filter(b => b.type === 'text').map(b => b.text);
+    const raw = textBlocks.join('\n').trim();
+    if(!raw) throw new Error('empty response');
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const jsonMatch = clean.match(/\{[\s\S]*\}/);
+    const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : clean);
+
+    const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = (val ?? '—') || '—'; };
+    set('ai-trend', parsed.trend);
+    set('ai-sentiment', parsed.sentiment);
+    set('ai-support', parsed.support);
+    set('ai-resistance', parsed.resistance);
+    set('ai-buyarea', parsed.buy_area);
+    set('ai-sellarea', parsed.sell_area);
+    set('ai-sl', parsed.stop_loss);
+    set('ai-tp1', parsed.tp1);
+    set('ai-tp2', parsed.tp2);
+    set('ai-tp3', parsed.tp3);
+    set('ai-rr', parsed.risk_reward);
+    set('ai-confidence', parsed.confidence);
+    set('ai-invalidation', parsed.invalidation_level);
+
+    const conclusion = String(parsed.conclusion || '—').toUpperCase();
+    let conclColor = 'var(--muted)';
+    if(conclusion.includes('STRONG BUY')) conclColor = 'var(--green)';
+    else if(conclusion === 'BUY') conclColor = 'var(--green)';
+    else if(conclusion.includes('STRONG SELL')) conclColor = 'var(--red)';
+    else if(conclusion === 'SELL') conclColor = 'var(--red)';
+    else if(conclusion === 'WAIT') conclColor = 'var(--gold)';
+
+    if(conclEl){ conclEl.textContent = conclusion; conclEl.style.color = conclColor; }
+    if(recBox){ recBox.style.borderColor = conclColor + '55'; recBox.style.background = conclColor + '14'; }
+    if(reasonEl) reasonEl.textContent = parsed.reasoning || '—';
+
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const upd = document.getElementById('ai-updated');
+    if(upd) upd.textContent = `Updated ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  }catch(e){
+    if(conclEl){ conclEl.textContent = 'ERROR'; conclEl.style.color = 'var(--red)'; }
+    if(reasonEl) reasonEl.textContent = 'Gagal mengambil analisis AI. Coba klik Refresh lagi.';
+    if(recBox){ recBox.style.borderColor = 'rgba(239,68,68,.35)'; recBox.style.background = 'rgba(239,68,68,.08)'; }
+    console.error('AI SMC analysis error', e);
+  } finally {
+    aiAnalysisLoading = false;
+    if(btn){ btn.disabled = false; btn.textContent = '🔄 Refresh'; }
+  }
+}
+
+const aiRefreshBtn = document.getElementById('ai-refresh-btn');
+if(aiRefreshBtn) aiRefreshBtn.addEventListener('click', fetchAISMCAnalysis);
+
+fetchAISMCAnalysis();
+setInterval(fetchAISMCAnalysis, 20*60*1000); // refresh tiap 20 menit (hemat token)
 
 // ===================================================================
 // LIVE RISK CALCULATOR — harga & ATR dari Twelve Data
