@@ -583,8 +583,9 @@ buildBar('sellBar', 0);
 
 // ===================================================================
 // TRADINGVIEW WIDGET
-// Indikator: EMA 200 (overlay), Stochastic (pengganti RSI),
-// Parabolic SAR (pengganti Volume)
+// Indikator: Stochastic (pengganti RSI), Parabolic SAR (pengganti Volume)
+// Free embed cuma sanggup render 2 studies custom sekaligus, jadi EMA 200
+// gak dipakai lagi.
 // ===================================================================
 function loadTradingView(theme){
   const wrapper = document.querySelector('#tv_chart_container .tradingview-widget-container');
@@ -615,10 +616,7 @@ function loadTradingView(theme){
     "details": false,
     "hide_legend": false,
     "allow_symbol_change": true,
-    "studies": ["Moving Average Exponential", "Stochastic", "Parabolic SAR"],
-    "studies_overrides": {
-      "moving average exponential.length": 200
-    },
+    "studies": ["Stochastic", "Parabolic SAR"],
     "support_host": "https://www.tradingview.com"
   });
   // script must be a direct child of the widget container (sibling to the
