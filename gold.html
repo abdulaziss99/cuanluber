@@ -94,10 +94,10 @@
 
   .layout{
     display:grid;
-    grid-template-columns:260px 1fr 300px;
+    grid-template-columns:240px 1fr 260px;
     gap:14px;
     padding:14px;
-    max-width:1600px;
+    max-width:1700px;
     margin:0 auto;
   }
   .col{display:flex; flex-direction:column; gap:14px;}
@@ -209,7 +209,7 @@
   .fd-tip{display:flex; gap:8px; align-items:flex-start; font-size:10.5px; color:var(--muted); margin-top:10px; line-height:1.4;}
 
   /* chart panel */
-  .chart-card{flex:1; display:flex; flex-direction:column; min-height:680px;}
+  .chart-card{display:flex; flex-direction:column;}
   .chart-head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; flex-wrap:wrap; gap:8px;}
   .chart-title{font-size:16px; font-weight:800; display:flex; align-items:center; gap:8px;}
   .chart-sub{font-size:11.5px; color:var(--muted); margin-top:2px;}
@@ -220,7 +220,7 @@
     font-size:9.5px; font-family:var(--mono); color:#2962ff; background:rgba(41,98,255,.12);
     border:1px solid rgba(41,98,255,.4); padding:2px 7px; border-radius:5px; font-weight:700;
   }
-  #tv_chart_container{width:100%; min-height:680px; min-width:320px; border-radius:8px; overflow:hidden; border:1px solid var(--line);}
+  #tv_chart_container{width:100%; height:520px; border-radius:8px; overflow:hidden; border:1px solid var(--line);}
 
   .legend-grid{display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:12px;}
   .legend-grid .li{display:flex; align-items:center; gap:6px;}
@@ -229,7 +229,7 @@
 
   .bottom-grid{
     display:grid; grid-template-columns:repeat(4,1fr); gap:14px; padding:0 14px 14px;
-    max-width:1600px; margin:0 auto;
+    max-width:1700px; margin:0 auto;
   }
   .entry-list .ei{display:flex; align-items:center; gap:7px; font-size:12.5px; padding:4px 0;}
   .entry-list .ei svg{flex-shrink:0;}
@@ -281,6 +281,7 @@
     .bottom-grid{grid-template-columns:1fr;}
     nav.tabs{order:3; width:100%;}
     .topbar{justify-content:space-between;}
+    #tv_chart_container{height:360px;}
   }
 </style>
 </head>
@@ -332,25 +333,6 @@
       <div style="font-size:9px;color:var(--muted);margin-top:8px;font-family:var(--mono);" id="aiScoreUpdated"></div>
     </div>
 
-    <div class="card">
-      <h3>📈 Market Condition</h3>
-      <div class="row"><span class="label">Trend Strength</span><span class="val" id="mc-strength">—</span></div>
-      <div class="row"><span class="label">Volatility</span><span class="val" id="mc-volatility">—</span></div>
-      <div class="row"><span class="label">Volume</span><span class="val" id="mc-volume">—</span></div>
-      <div class="row"><span class="label">Spread</span><span class="val" id="mc-spread">—</span></div>
-      <div class="row"><span class="label">ATR (14)</span><span class="val" id="mc-atr">—</span></div>
-    </div>
-
-    <div class="card">
-      <h3>🗺️ Key Levels <span style="text-transform:none;font-size:9px;color:var(--muted);">· HTF Confluence</span></h3>
-      <div class="row"><span class="label">Prev Day High</span><span class="val" id="kl-pdh">—</span></div>
-      <div class="row"><span class="label">Prev Day Low</span><span class="val" id="kl-pdl">—</span></div>
-      <div class="row"><span class="label">Daily Pivot</span><span class="val" id="kl-pivot">—</span></div>
-      <div class="row"><span class="label">Weekly Open</span><span class="val" id="kl-wopen">—</span></div>
-      <div class="row"><span class="label">Nearest Level</span><span class="val" id="kl-nearest">—</span></div>
-      <div style="font-size:9px;color:var(--muted);margin-top:6px;font-family:var(--mono);" id="kl-updated"></div>
-    </div>
-
   </div>
 
   <!-- CENTER: CHART -->
@@ -375,7 +357,7 @@
         <div id="utcRow" style="font-size:10px;color:var(--muted);text-align:right;font-family:var(--mono);"></div>
       </div>
 
-      <div id="tv_chart_container" style="flex:1;">
+      <div id="tv_chart_container">
         <div class="tradingview-widget-container" style="height:100%;width:100%">
           <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
         </div>
@@ -521,42 +503,11 @@
       <div class="row"><span class="label">Profit TP2</span><span class="val bull" id="rc-profit2">—</span></div>
       <div style="font-size:9px;color:var(--muted);margin-top:6px;font-family:var(--mono);" id="rc-updated"></div>
     </div>
-
-    <div class="card">
-      <h3>🤖 AI Analysis <span style="text-transform:none;font-size:9px;color:var(--muted);">· SMC · Claude</span></h3>
-      <div style="font-size:10.5px;color:var(--muted);margin:-6px 0 10px;">Analisis Smart Money Concept multi-timeframe XAUUSD oleh AI</div>
-      <table class="mv-table" id="ai-analysis-table">
-        <tbody>
-          <tr><td class="mv-comp"><div class="name">Trend</div></td><td class="mv-score" id="ai-trend">—</td></tr>
-          <tr><td class="mv-comp"><div class="name">Sentiment</div></td><td class="mv-score" id="ai-sentiment">—</td></tr>
-          <tr><td class="mv-comp"><div class="name">Support</div></td><td class="mv-score" id="ai-support">—</td></tr>
-          <tr><td class="mv-comp"><div class="name">Resistance</div></td><td class="mv-score" id="ai-resistance">—</td></tr>
-          <tr><td class="mv-comp"><div class="name">Buy Area</div></td><td class="mv-score" id="ai-buyarea">—</td></tr>
-          <tr><td class="mv-comp"><div class="name">Sell Area</div></td><td class="mv-score" id="ai-sellarea">—</td></tr>
-          <tr><td class="mv-comp"><div class="name">Stop Loss</div></td><td class="mv-score" id="ai-sl">—</td></tr>
-          <tr><td class="mv-comp"><div class="name">TP1</div></td><td class="mv-score" id="ai-tp1">—</td></tr>
-          <tr><td class="mv-comp"><div class="name">TP2</div></td><td class="mv-score" id="ai-tp2">—</td></tr>
-          <tr><td class="mv-comp"><div class="name">TP3</div></td><td class="mv-score" id="ai-tp3">—</td></tr>
-          <tr><td class="mv-comp"><div class="name">Risk : Reward</div></td><td class="mv-score" id="ai-rr">—</td></tr>
-          <tr><td class="mv-comp"><div class="name">Confidence</div></td><td class="mv-score" id="ai-confidence">—</td></tr>
-          <tr><td class="mv-comp"><div class="name">Invalidation</div></td><td class="mv-score" id="ai-invalidation">—</td></tr>
-        </tbody>
-      </table>
-      <div class="rec-box" id="ai-rec-box" style="margin-top:10px;">
-        <div class="tag">KESIMPULAN AI</div>
-        <div class="word" id="ai-conclusion">—</div>
-        <div class="sub" id="ai-reasoning">Menunggu analisis AI pertama...</div>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
-        <div style="font-size:9px;color:var(--muted);font-family:var(--mono);" id="ai-updated"></div>
-        <button id="ai-refresh-btn" style="background:var(--panel2);border:1px solid var(--line);color:var(--muted);font-size:10px;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:var(--sans);font-weight:600;">🔄 Refresh</button>
-      </div>
-    </div>
   </div>
 </div>
 
 <!-- ABOUT PAGE -->
-<div id="aboutPage" style="display:none; max-width:1600px; margin:0 auto; padding:14px;">
+<div id="aboutPage" style="display:none; max-width:1700px; margin:0 auto; padding:14px;">
   <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px;">
     <div class="card entry-list">
       <h3>✅ Entry Rules (Buy)</h3>
@@ -628,6 +579,8 @@ buildBar('sellBar', 0);
 
 // ===================================================================
 // TRADINGVIEW WIDGET
+// Indikator: EMA 200 (overlay), Stochastic (pengganti RSI),
+// Parabolic SAR (pengganti Volume)
 // ===================================================================
 function loadTradingView(theme){
   const container = document.querySelector('#tv_chart_container .tradingview-widget-container__widget');
@@ -647,11 +600,15 @@ function loadTradingView(theme){
     "gridColor": theme === "dark" ? "rgba(29, 37, 49, 0.5)" : "rgba(221, 227, 236, 0.6)",
     "hide_top_toolbar": false,
     "hide_side_toolbar": false,
+    "hide_volume": true,
     "withdateranges": true,
     "details": false,
     "hide_legend": false,
     "allow_symbol_change": true,
-    "studies": ["MASimple@tv-basicstudies","RSI@tv-basicstudies"],
+    "studies": ["MAExp@tv-basicstudies","Stochastic@tv-basicstudies","PSAR@tv-basicstudies"],
+    "studies_overrides": {
+      "moving average exponential.length": 200
+    },
     "support_host": "https://www.tradingview.com"
   });
   container.appendChild(script);
@@ -889,11 +846,9 @@ const TD_SYMBOL = 'XAU/USD';
 
 // ===================================================================
 // API REQUEST QUEUE — Twelve Data plan gratis cuma 8 request/menit.
-// Dashboard ini manggil ±9 endpoint (trend x4, AI analysis, risk calc,
-// key levels x2, DXY) yang kalau ditembak bareng bakal kena 429.
-// Semua fetch ke Twelve Data sekarang lewat queue ini, dieksekusi
-// berjejer dengan jeda, jadi gak numpuk lagi — baik pas load awal
-// maupun pas semua setInterval kebetulan nyala bareng.
+// Semua fetch ke Twelve Data lewat queue ini, dieksekusi berjejer
+// dengan jeda, jadi gak numpuk lagi — baik pas load awal maupun pas
+// semua setInterval kebetulan nyala bareng.
 // ===================================================================
 const REQUEST_GAP_MS = 9000; // ~7 request/menit, aman di bawah limit 8
 let apiQueue = [];
@@ -1295,7 +1250,6 @@ async function fetchAIAnalysis(){
       if(volScore>0) confluence.push('Volume Spike');
       if(latestDXYAligned===true) confluence.push('DXY Aligned');
       else if(latestDXYAligned===false) confluence.push('⚠ DXY Conflict');
-      if(latestKeyLevels && latestKeyLevels.nearestDist < (rcATR || 3)) confluence.push('⚠ Near '+latestKeyLevels.nearestName);
       const atrNow = calcATRFromArrays(highs, lows, closes, 14);
       const isBuySignal = actionWord==='BUY';
       const slAlert  = isBuySignal ? price - atrNow : price + atrNow;
@@ -1343,75 +1297,9 @@ fetchAIAnalysis();
 setInterval(fetchAIAnalysis, 5*60*1000);
 
 // ===================================================================
-// HTF KEY LEVELS — Previous Day High/Low, Daily Pivot, Weekly Open
-// Confluence tambahan: entry yang searah bias TAPI mepet level HTF
-// (misal mau BUY tapi ketemu PDH tepat di atas) itu red flag yang
-// gak keliatan kalau cuma modal M15 doang.
-// ===================================================================
-let latestKeyLevels = null;
-
-async function fetchKeyLevels(){
-  try{
-    const dUrl = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(TD_SYMBOL)}&interval=1day&outputsize=3&apikey=${TD_KEY}`;
-    const wUrl = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(TD_SYMBOL)}&interval=1week&outputsize=2&apikey=${TD_KEY}`;
-    const [dRes, wRes] = await Promise.all([queueApiCall(()=>fetch(dUrl)), queueApiCall(()=>fetch(wUrl))]);
-    const dData = await dRes.json();
-    const wData = await wRes.json();
-    if(!dData.values || dData.values.length<2) throw new Error('no daily data');
-
-    // values[0] = candle hari ini (masih jalan), values[1] = hari kemarin (closed)
-    const prevDay = dData.values[1];
-    const pdh = parseFloat(prevDay.high);
-    const pdl = parseFloat(prevDay.low);
-    const pdc = parseFloat(prevDay.close);
-    const pivot = (pdh + pdl + pdc) / 3;
-    const wOpen = (wData.values && wData.values.length) ? parseFloat(wData.values[0].open) : null;
-
-    const fmt = n => n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-    const set = (id, val) => { const el=document.getElementById(id); if(el) el.textContent = val; };
-    set('kl-pdh', fmt(pdh));
-    set('kl-pdl', fmt(pdl));
-    set('kl-pivot', fmt(pivot));
-    set('kl-wopen', wOpen!==null ? fmt(wOpen) : 'N/A');
-
-    // level HTF terdekat dari harga sekarang, biar keliatan kalau posisi
-    // rawan "mentok" dinding invisible
-    const price = rcPrice || pdc;
-    const levels = [{name:'PDH', val:pdh}, {name:'PDL', val:pdl}, {name:'Pivot', val:pivot}];
-    if(wOpen!==null) levels.push({name:'Weekly Open', val:wOpen});
-    let nearest = levels[0], minDist = Math.abs(price - levels[0].val);
-    levels.forEach(l=>{
-      const dist = Math.abs(price - l.val);
-      if(dist < minDist){ minDist = dist; nearest = l; }
-    });
-    const nearestEl = document.getElementById('kl-nearest');
-    if(nearestEl){
-      const distPts = (minDist*10).toFixed(0);
-      const isClose = minDist < (rcATR || 3); // mepet kalau jaraknya < 1x ATR
-      nearestEl.textContent = `${nearest.name} · ${distPts} pts`;
-      nearestEl.style.color = isClose ? 'var(--gold)' : 'var(--text)';
-    }
-
-    latestKeyLevels = { pdh, pdl, pivot, wOpen, nearestName:nearest.name, nearestDist:minDist };
-
-    const now=new Date();
-    const pad=n=>String(n).padStart(2,'0');
-    const upd=document.getElementById('kl-updated');
-    if(upd) upd.textContent = `Updated ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-  }catch(e){
-    ['kl-pdh','kl-pdl','kl-pivot','kl-wopen','kl-nearest'].forEach(id=>{
-      const el=document.getElementById(id); if(el) el.textContent='— ERROR';
-    });
-  }
-}
-
-fetchKeyLevels();
-setInterval(fetchKeyLevels, 15*60*1000); // data HTF jarang berubah, 15 menit cukup
-
-// ===================================================================
-// DXY CORRELATION (internal only, tidak lagi ditampilkan sebagai card —
-// digantikan AI Analysis. Tetap dihitung di background karena dipakai
-// sebagai salah satu konfluensi di Alert Engine di atas.)
+// DXY CORRELATION (internal only, tidak ditampilkan sebagai card —
+// tetap dihitung di background karena dipakai sebagai salah satu
+// konfluensi di Alert Engine di atas.)
 // ===================================================================
 let currentGoldBias = null; // di-set di fetchAIAnalysis()
 let latestDXYAligned = null;
@@ -1440,148 +1328,6 @@ async function fetchDXY(){
 
 fetchDXY();
 setInterval(fetchDXY, 5*60*1000);
-
-// ===================================================================
-// AI ANALYSIS (SMC) — Claude via Anthropic API
-// Meminta Claude melakukan analisis Smart Money Concept multi-timeframe
-// untuk XAUUSD (bukan BTC), lengkap dengan konteks makro & sentimen,
-// lalu menampilkan hasilnya dalam tabel + kesimpulan akhir.
-// ===================================================================
-let aiAnalysisLoading = false;
-
-function buildSMCPrompt(){
-  const priceCtx = rcPrice
-    ? `Harga acuan real-time XAUUSD (M15, sumber Twelve Data) saat ini: ${rcPrice.toFixed(2)} USD. ATR(14) M15: ${rcATR ? rcATR.toFixed(2) : 'N/A'}. Gunakan angka ini sebagai acuan harga, lalu sesuaikan/koreksi dengan data terbaru yang kamu temukan.`
-    : '';
-
-  return `Kamu adalah hedge fund analyst profesional.
-Lakukan analisis XAUUSD (Gold Spot / US Dollar) menggunakan metode Smart Money Concept (SMC).
-${priceCtx}
-
-Gunakan sebagai dasar analisis teknikal:
-- Multi Time Frame (1D, 4H, 1H, 15M)
-- Market Structure (BOS / CHoCH)
-- Liquidity (equal highs/lows, liquidity sweep)
-- Order Block (bullish/bearish)
-- Fair Value Gap / Imbalance
-- Volume Profile
-- VWAP
-- EMA 20, 50, 200
-- RSI
-- MACD
-- ATR
-
-Tambahkan konteks fundamental & makro (adaptasi untuk gold, bukan crypto):
-- DXY (US Dollar Index) — trend & korelasi inverse terhadap gold
-- US Treasury real yield & ekspektasi suku bunga The Fed
-- Gold Futures COMEX Open Interest & COT positioning (net long/short spekulan)
-- Gold ETF Flow (GLD, IAU) — inflow/outflow
-- Sentimen risk-on vs risk-off & permintaan safe haven
-- Economic Calendar — rilis data ekonomi AS berdampak tinggi terdekat (NFP, CPI, FOMC, dsb) dan potensi dampaknya ke XAUUSD
-
-Jika kamu memiliki akses pencarian web, cari data terkini (harga, DXY, sentimen, kalender ekonomi) sebelum menjawab supaya analisis mencerminkan kondisi pasar real-time. Jika tidak ada akses, gunakan pengetahuan terbaik yang kamu miliki dan sebutkan bahwa data mungkin tidak 100% real-time di bagian reasoning.
-
-Jawab HANYA dalam format JSON valid (tanpa markdown code fence, tanpa teks pembuka/penutup di luar JSON), dengan struktur PERSIS seperti ini:
-{
-  "trend": "string singkat, mis. 'Bullish (H4 & H1), retrace M15'",
-  "sentiment": "string singkat, mis. 'Risk-off, safe haven demand naik'",
-  "support": "level harga USD",
-  "resistance": "level harga USD",
-  "buy_area": "range harga USD",
-  "sell_area": "range harga USD",
-  "stop_loss": "level harga USD",
-  "tp1": "level harga USD",
-  "tp2": "level harga USD",
-  "tp3": "level harga USD",
-  "risk_reward": "mis. '1:3'",
-  "confidence": "angka persen, mis. '72%'",
-  "reasoning": "penjelasan ringkas 2-4 kalimat kenapa kesimpulan ini diambil, sebutkan konfluensi SMC + makro yang paling menentukan",
-  "invalidation_level": "level harga USD yang membatalkan skenario ini",
-  "conclusion": "salah satu dari: Strong Buy | Buy | Wait | Sell | Strong Sell"
-}`;
-}
-
-async function fetchAISMCAnalysis(){
-  if(aiAnalysisLoading) return;
-  aiAnalysisLoading = true;
-
-  const btn = document.getElementById('ai-refresh-btn');
-  const conclEl = document.getElementById('ai-conclusion');
-  const reasonEl = document.getElementById('ai-reasoning');
-  const recBox = document.getElementById('ai-rec-box');
-
-  if(btn){ btn.disabled = true; btn.textContent = '⏳ Analyzing...'; }
-  if(conclEl){ conclEl.textContent = 'ANALYZING…'; conclEl.style.color = 'var(--gold)'; }
-  if(reasonEl) reasonEl.textContent = 'AI sedang menganalisis multi-timeframe XAUUSD (SMC + makro)...';
-  if(recBox){ recBox.style.borderColor = 'rgba(240,180,41,.35)'; recBox.style.background = 'rgba(240,180,41,.08)'; }
-
-  try{
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1200,
-        messages: [{ role: "user", content: buildSMCPrompt() }],
-        tools: [{ type: "web_search_20250305", name: "web_search" }]
-      })
-    });
-    const data = await response.json();
-
-    const textBlocks = (data.content || []).filter(b => b.type === 'text').map(b => b.text);
-    const raw = textBlocks.join('\n').trim();
-    if(!raw) throw new Error('empty response');
-    const clean = raw.replace(/```json|```/g, '').trim();
-    const jsonMatch = clean.match(/\{[\s\S]*\}/);
-    const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : clean);
-
-    const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = (val ?? '—') || '—'; };
-    set('ai-trend', parsed.trend);
-    set('ai-sentiment', parsed.sentiment);
-    set('ai-support', parsed.support);
-    set('ai-resistance', parsed.resistance);
-    set('ai-buyarea', parsed.buy_area);
-    set('ai-sellarea', parsed.sell_area);
-    set('ai-sl', parsed.stop_loss);
-    set('ai-tp1', parsed.tp1);
-    set('ai-tp2', parsed.tp2);
-    set('ai-tp3', parsed.tp3);
-    set('ai-rr', parsed.risk_reward);
-    set('ai-confidence', parsed.confidence);
-    set('ai-invalidation', parsed.invalidation_level);
-
-    const conclusion = String(parsed.conclusion || '—').toUpperCase();
-    let conclColor = 'var(--muted)';
-    if(conclusion.includes('STRONG BUY')) conclColor = 'var(--green)';
-    else if(conclusion === 'BUY') conclColor = 'var(--green)';
-    else if(conclusion.includes('STRONG SELL')) conclColor = 'var(--red)';
-    else if(conclusion === 'SELL') conclColor = 'var(--red)';
-    else if(conclusion === 'WAIT') conclColor = 'var(--gold)';
-
-    if(conclEl){ conclEl.textContent = conclusion; conclEl.style.color = conclColor; }
-    if(recBox){ recBox.style.borderColor = conclColor + '55'; recBox.style.background = conclColor + '14'; }
-    if(reasonEl) reasonEl.textContent = parsed.reasoning || '—';
-
-    const now = new Date();
-    const pad = n => String(n).padStart(2, '0');
-    const upd = document.getElementById('ai-updated');
-    if(upd) upd.textContent = `Updated ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-  }catch(e){
-    if(conclEl){ conclEl.textContent = 'ERROR'; conclEl.style.color = 'var(--red)'; }
-    if(reasonEl) reasonEl.textContent = 'Gagal mengambil analisis AI. Coba klik Refresh lagi.';
-    if(recBox){ recBox.style.borderColor = 'rgba(239,68,68,.35)'; recBox.style.background = 'rgba(239,68,68,.08)'; }
-    console.error('AI SMC analysis error', e);
-  } finally {
-    aiAnalysisLoading = false;
-    if(btn){ btn.disabled = false; btn.textContent = '🔄 Refresh'; }
-  }
-}
-
-const aiRefreshBtn = document.getElementById('ai-refresh-btn');
-if(aiRefreshBtn) aiRefreshBtn.addEventListener('click', fetchAISMCAnalysis);
-
-fetchAISMCAnalysis();
-setInterval(fetchAISMCAnalysis, 20*60*1000); // refresh tiap 20 menit (hemat token)
 
 // ===================================================================
 // LIVE RISK CALCULATOR — harga & ATR dari Twelve Data
@@ -1662,49 +1408,6 @@ async function fetchRCData(){
     rcPrice = parseFloat(vals[0].close);
     rcATR   = calcATR(vals, 14);
     updateRC();
-
-    // ===== MARKET CONDITION =====
-    const closes = vals.map(v=>parseFloat(v.close)).reverse();
-    const vols   = vals.map(v=>parseFloat(v.volume||0)).reverse();
-    const highs  = vals.map(v=>parseFloat(v.high));
-    const lows   = vals.map(v=>parseFloat(v.low));
-
-    // Trend Strength — slope EMA50 vs 5 candle lalu
-    const ema50now  = calcEMA(closes, Math.min(50,closes.length));
-    const ema50prev = calcEMA(closes.slice(0,-5), Math.min(50,closes.length-5));
-    const slope = Math.abs((ema50now - ema50prev) / ema50prev * 100);
-    let strength, strengthColor;
-    if(slope > 0.15){strength='STRONG';strengthColor='var(--gold)';}
-    else if(slope > 0.05){strength='MODERATE';strengthColor='var(--gold)';}
-    else{strength='WEAK';strengthColor='var(--muted)';}
-
-    // Volatility — ATR % of price
-    const atrPct = (rcATR / rcPrice) * 100;
-    let vol, volColor;
-    if(atrPct > 0.4){vol='HIGH';volColor='var(--gold)';}
-    else if(atrPct > 0.2){vol='MEDIUM';volColor='var(--gold)';}
-    else{vol='LOW';volColor='var(--muted)';}
-
-    // Volume trend
-    const avgVol20 = vols.slice(-21,-1).reduce((a,b)=>a+b,0)/20;
-    const lastVol  = vols[vols.length-1];
-    let volTrend, volTrendColor;
-    if(lastVol > avgVol20*1.2){volTrend='INCREASING';volTrendColor='var(--green)';}
-    else if(lastVol < avgVol20*0.8){volTrend='DECREASING';volTrendColor='var(--red)';}
-    else{volTrend='NORMAL';volTrendColor='var(--muted)';}
-
-    // Spread — high-low candle terbaru dalam points (0.1 = 1 point untuk XAU)
-    const spread = ((highs[0] - lows[0]) * 10).toFixed(0);
-
-    const setMC = (id, text, color) => {
-      const el = document.getElementById(id);
-      if(el){ el.textContent=text; el.style.color=color; }
-    };
-    setMC('mc-strength',  strength,  strengthColor);
-    setMC('mc-volatility',vol,       volColor);
-    setMC('mc-volume',    volTrend,  volTrendColor);
-    setMC('mc-spread',    spread+' points', 'var(--text)');
-    setMC('mc-atr',       rcATR.toFixed(1), 'var(--text)');
 
     const now=new Date();
     const pad=n=>String(n).padStart(2,'0');
