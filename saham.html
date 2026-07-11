@@ -668,16 +668,11 @@ async function loadIhsg(tf) {
 
 let lastChartData = [];
 let lastChartColor = '#22c55e';
-  
+
 function drawIhsgChart(data, color) {
-   lastChartData = [...data];
-    lastChartColor = color;
+  lastChartData = [...data];
+  lastChartColor = color;
 
-    const canvas = document.getElementById('ihsgChart');
-    const wrap = canvas.parentElement;
-
-    canvas.width = wrap.clientWidth;
-    canvas.height = wrap.clientHeight;
   const canvas = document.getElementById('ihsgChart');
   const wrap = canvas.parentElement;
   canvas.width = wrap.clientWidth; canvas.height = wrap.clientHeight;
