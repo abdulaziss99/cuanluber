@@ -336,6 +336,13 @@
       <div style="font-size:9px;color:var(--muted);margin-top:8px;font-family:var(--mono);" id="aiScoreUpdated"></div>
     </div>
 
+    <div class="card">
+      <h3>🕐 Fibonacci Time Zone <span style="font-size:9px;color:var(--gold);background:rgba(240,180,41,.12);padding:2px 6px;border-radius:5px;text-transform:none;letter-spacing:0;font-weight:700;">Eksperimental</span></h3>
+      <div style="font-size:10.5px;color:var(--muted);margin:-4px 0 10px;line-height:1.4;">Estimasi waktu potensi reversal dari swing terakhir (deret Fibonacci). Referensi tambahan saja — <b>tidak</b> masuk Setup Score.</div>
+      <div id="fibTimeList"></div>
+      <div style="font-size:9px;color:var(--muted);margin-top:8px;font-family:var(--mono);" id="fibTimeUpdated"></div>
+    </div>
+
   </div>
 
   <!-- CENTER: CHART -->
@@ -594,6 +601,10 @@ buildBar('sellBar', 0);
 // Indikator: Stochastic (pengganti RSI), Parabolic SAR (pengganti Volume)
 // Free embed cuma sanggup render 2 studies custom sekaligus, jadi EMA 200
 // gak dipakai lagi.
+// FIX: studies harus pakai ID resmi TradingView + suffix "@tv-basicstudies"
+// ("Stochastic@tv-basicstudies", "PSAR@tv-basicstudies"). Nama polos kayak
+// "Stochastic" / "Parabolic SAR" gak dikenali widget dan gagal render tanpa
+// error apapun di console — makanya kelihatannya "gak nambah apa-apa".
 // ===================================================================
 function loadTradingView(theme){
   const wrapper = document.querySelector('#tv_chart_container .tradingview-widget-container');
@@ -624,7 +635,7 @@ function loadTradingView(theme){
     "details": false,
     "hide_legend": false,
     "allow_symbol_change": true,
-    "studies": ["Stochastic", "Parabolic SAR"],
+    "studies": ["Stochastic@tv-basicstudies", "PSAR@tv-basicstudies"],
     "support_host": "https://www.tradingview.com"
   });
   // script must be a direct child of the widget container (sibling to the
@@ -1152,6 +1163,78 @@ function detectFibConfluence(highs, lows, closes, bias, atr){
   return {found:false};
 }
 
+// ===================================================================
+// FIBONACCI TIME ZONE (Astronacci-inspired, "Fibonacci Time")
+// EKSPERIMENTAL — tidak divalidasi secara statistik, tidak dihitung ke
+// Setup Score. Murni proyeksi jarak candle Fibonacci dari swing point
+// (high atau low) yang paling baru terbentuk, ditampilkan sebagai
+// referensi tambahan buat user, bukan sinyal keputusan.
+// ===================================================================
+function findLastSwingPoint(swH, swL){
+  const all = [...swH.map(s=>({i:s.i, price:s.price, type:'HIGH'})), ...swL.map(s=>({i:s.i, price:s.price, type:'LOW'}))];
+  if(!all.length) return null;
+  all.sort((a,b)=>a.i-b.i);
+  return all[all.length-1];
+}
+
+function fibTimeTargets(swingIndex, totalCandles, intervalMinutes=15){
+  const fibSeq=[1,2,3,5,8,13,21,34,55,89];
+  const now = new Date();
+  const candlesFromSwingToNow = (totalCandles-1) - swingIndex;
+  return fibSeq.map(n=>{
+    const offsetFromNow = n - candlesFromSwingToNow;
+    const targetTime = new Date(now.getTime() + offsetFromNow*intervalMinutes*60000);
+    return {n, offsetFromNow, targetTime};
+  });
+}
+
+function renderFibTimeZone(highs, lows, closes){
+  const listEl = document.getElementById('fibTimeList');
+  const updEl = document.getElementById('fibTimeUpdated');
+  if(!listEl) return;
+  const {swH, swL} = findSwings(highs, lows);
+  const swingPt = findLastSwingPoint(swH, swL);
+  if(!swingPt){
+    listEl.innerHTML = '<div style="font-size:11px;color:var(--muted);">Belum ada swing point yang cukup jelas.</div>';
+    return;
+  }
+  const targets = fibTimeTargets(swingPt.i, closes.length, 15);
+  // ambil target yang belum lewat (upcoming), maksimal 4, plus 1 yang paling baru lewat sbg konteks
+  const upcoming = targets.filter(t=>t.offsetFromNow >= 0).slice(0,4);
+  const justPassed = [...targets].reverse().find(t=>t.offsetFromNow < 0);
+
+  const fmtTime = d => {
+    const pad=n=>String(n).padStart(2,'0');
+    const days=['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+    return `${days[d.getDay()]} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  let html = `<div style="font-size:10.5px;color:var(--muted);margin-bottom:6px;">Swing terakhir: <b style="color:var(--text);">${swingPt.type}</b> @ ${swingPt.price.toFixed(2)}</div>`;
+
+  if(justPassed){
+    html += `<div style="display:flex;justify-content:space-between;font-size:11.5px;padding:4px 0;opacity:.5;">
+      <span>Candle ke-${justPassed.n} (lewat)</span><span style="font-family:var(--mono);">${fmtTime(justPassed.targetTime)}</span>
+    </div>`;
+  }
+  upcoming.forEach((t,idx)=>{
+    const isNext = idx===0;
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;font-size:11.5px;padding:5px 0;${isNext?'border-left:2px solid var(--gold);padding-left:8px;':''}">
+      <span style="color:${isNext?'var(--gold)':'var(--text)'};font-weight:${isNext?'700':'500'};">Candle ke-${t.n}${isNext?' ⏳':''}</span>
+      <span style="font-family:var(--mono);color:${isNext?'var(--gold)':'var(--muted)'};">${fmtTime(t.targetTime)}</span>
+    </div>`;
+  });
+  if(!upcoming.length){
+    html += '<div style="font-size:11px;color:var(--muted);">Semua target sudah lewat, menunggu swing baru.</div>';
+  }
+  listEl.innerHTML = html;
+
+  if(updEl){
+    const now=new Date();
+    const pad=n=>String(n).padStart(2,'0');
+    updEl.textContent = `Updated ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  }
+}
+
 // Directional score used for the live AI Score card (Buy % / Sell %).
 // Runs the same rule set independently for a bullish and a bearish
 // hypothesis so both scores move on their own, based on real data.
@@ -1359,6 +1442,9 @@ async function fetchAIAnalysis(){
     } else {
       lastAlertedAction = null; // reset so next valid signal can alert again
     }
+
+    // ===== FIBONACCI TIME ZONE (eksperimental, informational only) =====
+    renderFibTimeZone(highs, lows, closes);
 
     // ===== LIVE AI SCORE (Buy % / Sell %) =====
     const buyScore = scoreDirection(price, ema50, opens, highs, lows, closes, vols, 'bull');
