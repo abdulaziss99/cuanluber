@@ -383,7 +383,7 @@
           <tr>
             <td class="mv-comp"><div class="name">Trend (EMA50)</div><div class="desc">Harga di atas EMA50</div></td>
             <td><span class="mv-status neutral" id="mv-trend-status">— LOADING</span></td>
-            <td class="mv-score" id="mv-trend-score">—/20</td>
+            <td class="mv-score" id="mv-trend-score">—/15</td>
           </tr>
           <tr>
             <td class="mv-comp"><div class="name">Structure</div><div class="desc">BOS / CHoCH</div></td>
@@ -394,6 +394,11 @@
             <td class="mv-comp"><div class="name">Order Block</div><div class="desc">Valid Bullish/Bearish OB</div></td>
             <td><span class="mv-status neutral" id="mv-ob-status">— LOADING</span></td>
             <td class="mv-score" id="mv-ob-score">—/15</td>
+          </tr>
+          <tr>
+            <td class="mv-comp"><div class="name">Fibonacci Confluence</div><div class="desc">Price di retracement 0.382–0.786</div></td>
+            <td><span class="mv-status neutral" id="mv-fib-status">— LOADING</span></td>
+            <td class="mv-score" id="mv-fib-score">—/10</td>
           </tr>
           <tr>
             <td class="mv-comp"><div class="name">Fair Value Gap</div><div class="desc">FVG Terisi</div></td>
@@ -408,7 +413,7 @@
           <tr>
             <td class="mv-comp"><div class="name">EMA50</div><div class="desc">Harga di atas EMA50</div></td>
             <td><span class="mv-status neutral" id="mv-ema-status">— LOADING</span></td>
-            <td class="mv-score" id="mv-ema-score">—/10</td>
+            <td class="mv-score" id="mv-ema-score">—/5</td>
           </tr>
           <tr>
             <td class="mv-comp"><div class="name">Volume</div><div class="desc">Volume vs rata-rata</div></td>
@@ -517,6 +522,7 @@
       <h3>✅ Entry Rules (Buy)</h3>
       <div class="ei"><span style="color:var(--green)">✔</span>Trend Bullish (H1+H4)</div>
       <div class="ei"><span style="color:var(--green)">✔</span>Price Retrace to Bullish OB</div>
+      <div class="ei"><span style="color:var(--green)">✔</span>Fib Retracement 0.382–0.786 (Golden 0.5–0.618)</div>
       <div class="ei"><span style="color:var(--green)">✔</span>FVG Filled</div>
       <div class="ei"><span style="color:var(--green)">✔</span>Liquidity Sweep (EQ Low)</div>
       <div class="ei"><span style="color:var(--green)">✔</span>RSI Rebound Above 40</div>
@@ -528,6 +534,7 @@
       <h3>🔻 Entry Rules (Sell)</h3>
       <div class="ei"><span style="color:var(--red)">✔</span>Trend Bearish (H1+H4)</div>
       <div class="ei"><span style="color:var(--red)">✔</span>Price Retrace to Bearish OB</div>
+      <div class="ei"><span style="color:var(--red)">✔</span>Fib Retracement 0.382–0.786 (Golden 0.5–0.618)</div>
       <div class="ei"><span style="color:var(--red)">✔</span>FVG Filled</div>
       <div class="ei"><span style="color:var(--red)">✔</span>Liquidity Sweep (EQ High)</div>
       <div class="ei"><span style="color:var(--red)">✔</span>RSI Rejection Below 60</div>
@@ -539,10 +546,11 @@
       <h3>📖 How To Use</h3>
       <div class="ei">1. Check Trend &amp; AI Score</div>
       <div class="ei">2. Wait for Price Retrace to OB</div>
-      <div class="ei">3. Wait for Liquidity Sweep</div>
-      <div class="ei">4. Confirm with FVG + RSI + Volume</div>
-      <div class="ei">5. Set SL &amp; TP with Risk Calculator</div>
-      <div class="ei">6. Execute with Discipline</div>
+      <div class="ei">3. Cek Confluence Fibonacci (0.5 / 0.618)</div>
+      <div class="ei">4. Wait for Liquidity Sweep</div>
+      <div class="ei">5. Confirm with FVG + RSI + Volume</div>
+      <div class="ei">6. Set SL &amp; TP with Risk Calculator</div>
+      <div class="ei">7. Execute with Discipline</div>
     </div>
   </div>
 </div>
@@ -992,8 +1000,8 @@ function setAI(id, icon, text, color){
 
 // ===================================================================
 // MARKET VALIDATION ENGINE (AGS Rule) — sesuai flowchart:
-// Trend(EMA50) > Structure(BOS/CHoCH) > Order Block > FVG >
-// Liquidity Sweep > EMA50 Position > Volume > News Filter > Session
+// Trend(EMA50) > Structure(BOS/CHoCH) > Order Block > Fibonacci >
+// FVG > Liquidity Sweep > EMA50 Position > Volume > News Filter > Session
 // ===================================================================
 
 function setMV(key, label, cls, score, max){
@@ -1090,6 +1098,60 @@ function detectLiquiditySweep(highs, lows, closes, bias){
   return {taken:false};
 }
 
+// ===================================================================
+// FIBONACCI PRICE CONFLUENCE (Astronacci-inspired, "Fibonacci Price")
+// Ambil swing terakhir yang membentuk leg sesuai bias (low->high untuk
+// bull, high->low untuk bear), lalu cek apakah harga sekarang berada
+// di zona retracement 0.382–0.786 (golden zone 0.5–0.618 dapat bobot
+// lebih tinggi). Toleransi memakai fraksi ATR biar adaptif ke volatilitas.
+// ===================================================================
+function calcFibLevels(swingHigh, swingLow, isBullish){
+  const diff = swingHigh - swingLow;
+  return {
+    '0.236': isBullish ? swingHigh - diff*0.236 : swingLow + diff*0.236,
+    '0.382': isBullish ? swingHigh - diff*0.382 : swingLow + diff*0.382,
+    '0.5':   isBullish ? swingHigh - diff*0.5   : swingLow + diff*0.5,
+    '0.618': isBullish ? swingHigh - diff*0.618 : swingLow + diff*0.618,
+    '0.786': isBullish ? swingHigh - diff*0.786 : swingLow + diff*0.786,
+  };
+}
+
+function findLastSwingLeg(swH, swL, bias){
+  if(bias==='bull'){
+    if(!swL.length || !swH.length) return null;
+    const lastLow = swL[swL.length-1];
+    const highsAfter = swH.filter(h=>h.i>lastLow.i);
+    if(!highsAfter.length) return null;
+    const lastHigh = highsAfter[highsAfter.length-1];
+    if(lastHigh.price<=lastLow.price) return null;
+    return {low:lastLow.price, high:lastHigh.price};
+  } else {
+    if(!swH.length || !swL.length) return null;
+    const lastHigh = swH[swH.length-1];
+    const lowsAfter = swL.filter(l=>l.i>lastHigh.i);
+    if(!lowsAfter.length) return null;
+    const lastLow = lowsAfter[lowsAfter.length-1];
+    if(lastLow.price>=lastHigh.price) return null;
+    return {low:lastLow.price, high:lastHigh.price};
+  }
+}
+
+function detectFibConfluence(highs, lows, closes, bias, atr){
+  const {swH, swL} = findSwings(highs, lows);
+  const leg = findLastSwingLeg(swH, swL, bias);
+  if(!leg) return {found:false};
+  const levels = calcFibLevels(leg.high, leg.low, bias==='bull');
+  const price = closes[closes.length-1];
+  const tol = Math.max(atr*0.25, leg.high*0.0005); // toleransi ~1/4 ATR, minimum kecil biar gak 0
+  const order = ['0.5','0.618','0.382','0.786']; // cek golden zone dulu
+  for(const k of order){
+    if(Math.abs(price - levels[k]) <= tol){
+      return {found:true, level:k, price:levels[k], golden:(k==='0.5'||k==='0.618')};
+    }
+  }
+  return {found:false};
+}
+
 // Directional score used for the live AI Score card (Buy % / Sell %).
 // Runs the same rule set independently for a bullish and a bearish
 // hypothesis so both scores move on their own, based on real data.
@@ -1118,6 +1180,10 @@ function scoreDirection(price, ema50, opens, highs, lows, closes, vols, bias){
   const lastVol = vols[vols.length-1];
   if(lastVol > avgVol*1.05) score += 10;
 
+  const atr14 = calcATRFromArrays(highs, lows, closes, 14);
+  const fib = detectFibConfluence(highs, lows, closes, bias, atr14);
+  if(fib.found) score += (fib.golden ? 10 : 6);
+
   return Math.max(0, Math.min(100, Math.round(score)));
 }
 
@@ -1134,6 +1200,7 @@ async function fetchAIAnalysis(){
     const closes=vals.map(v=>parseFloat(v.close));
     const vols=vals.map(v=>parseFloat(v.volume||0));
     const price=closes[closes.length-1];
+    const atr14=calcATRFromArrays(highs, lows, closes, 14);
 
     let total=0;
 
@@ -1142,8 +1209,8 @@ async function fetchAIAnalysis(){
     const aboveEMA=price>ema50;
     const bias = aboveEMA ? 'bull' : 'bear';
     currentGoldBias = bias; // dipakai konfluensi alert
-    const trendScore = aboveEMA ? 20 : 0;
-    setMV('trend', aboveEMA?'▲ BULLISH':'▼ BEARISH', aboveEMA?'ok':'bad', trendScore, 20);
+    const trendScore = aboveEMA ? 15 : 0;
+    setMV('trend', aboveEMA?'▲ BULLISH':'▼ BEARISH', aboveEMA?'ok':'bad', trendScore, 15);
     total+=trendScore;
 
     // 2) STRUCTURE (BOS / CHoCH)
@@ -1170,7 +1237,18 @@ async function fetchAIAnalysis(){
     setMV('ob', obLabel, obCls, obScore, 15);
     total+=obScore;
 
-    // 4) FAIR VALUE GAP
+    // 4) FIBONACCI PRICE CONFLUENCE
+    const fib = detectFibConfluence(highs, lows, closes, bias, atr14);
+    let fibScore=0, fibLabel='✕ NO CONFLUENCE', fibCls='bad';
+    if(fib.found){
+      fibScore = fib.golden ? 10 : 6;
+      fibLabel = (fib.golden ? '✔ GOLDEN ZONE ' : '⦿ FIB ') + fib.level;
+      fibCls = fib.golden ? 'ok' : 'warn';
+    }
+    setMV('fib', fibLabel, fibCls, fibScore, 10);
+    total+=fibScore;
+
+    // 5) FAIR VALUE GAP
     const fvg = detectFVG(highs, lows, closes, bias);
     let fvgScore=0, fvgLabel='✕ NO FVG', fvgCls='bad';
     if(fvg.found){
@@ -1181,17 +1259,17 @@ async function fetchAIAnalysis(){
     setMV('fvg', fvgLabel, fvgCls, fvgScore, 10);
     total+=fvgScore;
 
-    // 5) LIQUIDITY SWEEP
+    // 6) LIQUIDITY SWEEP
     const liq = detectLiquiditySweep(highs, lows, closes, bias);
     const liqScore = liq.taken ? 10 : 0;
     setMV('liq', liq.taken?'✔ TAKEN':'✕ NOT TAKEN', liq.taken?'ok':'bad', liqScore, 10);
     total+=liqScore;
 
-    // 6) EMA50 POSITION
-    setMV('ema', aboveEMA?'▲ ABOVE':'▼ BELOW', 'ok', 10, 10);
-    total+=10; // posisi EMA selalu konsisten dgn bias karena dipakai sbg acuan
+    // 7) EMA50 POSITION
+    setMV('ema', aboveEMA?'▲ ABOVE':'▼ BELOW', 'ok', 5, 5);
+    total+=5; // posisi EMA selalu konsisten dgn bias karena dipakai sbg acuan
 
-    // 7) VOLUME
+    // 8) VOLUME
     const avgVol=vols.slice(-21,-1).reduce((a,b)=>a+b,0)/20;
     const lastVol=vols[vols.length-1];
     const volOk=lastVol>avgVol*1.05;
@@ -1199,7 +1277,7 @@ async function fetchAIAnalysis(){
     setMV('vol', volOk?'▲ HIGH':'▽ NORMAL', volOk?'ok':'neutral', volScore, 10);
     total+=volScore;
 
-    // 8) NEWS FILTER — dicek manual lewat widget Economic Calendar (TradingView)
+    // 9) NEWS FILTER — dicek manual lewat widget Economic Calendar (TradingView)
     // di sidebar; tanpa API kalender berbayar kita nggak bisa hitung otomatis
     // "menit menuju rilis berikutnya", jadi skor ini netral & minta konfirmasi
     // manual dari kalender di samping.
@@ -1207,7 +1285,7 @@ async function fetchAIAnalysis(){
     setMV('news', 'ⓘ CEK KALENDER', 'neutral', newsScore, 10);
     total+=newsScore;
 
-    // 9) SESSION (informational, max skor 0 sesuai rule AGS)
+    // 10) SESSION (informational, max skor 0 sesuai rule AGS)
     const hUTC=new Date().getUTCHours();
     const activeSessions = SESSIONS.filter(s=>sessIsActive(s,hUTC)).map(s=>s.name);
     const primary = activeSessions.find(n=>n==='LONDON'||n==='NEW YORK') || activeSessions[0];
@@ -1257,12 +1335,13 @@ async function fetchAIAnalysis(){
       const confluence=[];
       if(structScore>0) confluence.push('Structure '+struct.type);
       if(obScore>0) confluence.push(ob.mitigated?'OB Mitigated':'OB Formed');
+      if(fibScore>0) confluence.push('Fib '+fib.level+(fib.golden?' (Golden)':''));
       if(fvgScore>0) confluence.push(fvg.filled?'FVG Filled':'FVG Open');
       if(liqScore>0) confluence.push('Liquidity Swept');
       if(volScore>0) confluence.push('Volume Spike');
       if(latestDXYAligned===true) confluence.push('DXY Aligned');
       else if(latestDXYAligned===false) confluence.push('⚠ DXY Conflict');
-      const atrNow = calcATRFromArrays(highs, lows, closes, 14);
+      const atrNow = atr14;
       const isBuySignal = actionWord==='BUY';
       const slAlert  = isBuySignal ? price - atrNow : price + atrNow;
       const tpAlert  = isBuySignal ? price + atrNow*2 : price - atrNow*2;
@@ -1298,7 +1377,7 @@ async function fetchAIAnalysis(){
     }
 
   } catch(e){
-    ['trend','structure','ob','fvg','liq','ema','vol','news'].forEach(k=>{
+    ['trend','structure','ob','fib','fvg','liq','ema','vol','news'].forEach(k=>{
       const st=document.getElementById('mv-'+k+'-status');
       if(st){ st.className='mv-status neutral'; st.textContent='— ERROR'; }
     });
