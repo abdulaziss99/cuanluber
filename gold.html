@@ -471,6 +471,18 @@
     </div>
 
     <div class="card">
+      <h3>📐 Support/Resistance &amp; FVG Zone</h3>
+      <div style="font-size:10.5px;color:var(--muted);margin:-6px 0 10px;">S/R dari swing fractal terdekat · FVG dari zona gap yang sedang tervalidasi di Market Validation</div>
+      <div class="row"><span class="label">Resistance Terdekat</span><span class="val bear" id="sr-resistance">—</span></div>
+      <div class="row"><span class="label">Harga Sekarang</span><span class="val" id="sr-price">—</span></div>
+      <div class="row"><span class="label">Support Terdekat</span><span class="val bull" id="sr-support">—</span></div>
+      <div style="border-top:1px solid var(--line);margin:8px 0;"></div>
+      <div class="row"><span class="label">FVG Aktif (bias saat ini)</span><span class="val" id="sr-fvg-status">—</span></div>
+      <div class="row"><span class="label">Zona FVG</span><span class="val" id="sr-fvg-range">—</span></div>
+      <div style="font-size:9px;color:var(--muted);margin-top:6px;font-family:var(--mono);" id="sr-updated"></div>
+    </div>
+
+    <div class="card">
       <h3>🧮 Risk Calculator</h3>
 
       <!-- Inputs -->
@@ -598,13 +610,16 @@ buildBar('sellBar', 0);
 
 // ===================================================================
 // TRADINGVIEW WIDGET
-// Indikator: Stochastic (pengganti RSI), Parabolic SAR (pengganti Volume)
-// Free embed cuma sanggup render 2 studies custom sekaligus, jadi EMA 200
-// gak dipakai lagi.
+// Indikator: Stochastic (pengganti RSI), Parabolic SAR (pengganti Volume),
+// Pivot Points High/Low (Support & Resistance otomatis dari swing fractal —
+// method-nya sama kayak yang dipakai TradingView utk Structure/Liquidity).
 // FIX: studies harus pakai ID resmi TradingView + suffix "@tv-basicstudies"
 // ("Stochastic@tv-basicstudies", "PSAR@tv-basicstudies"). Nama polos kayak
 // "Stochastic" / "Parabolic SAR" gak dikenali widget dan gagal render tanpa
 // error apapun di console — makanya kelihatannya "gak nambah apa-apa".
+// Catatan: FVG TIDAK ada di sini karena bukan built-in study TradingView
+// (konsep ICT, gak punya ID resmi di widget publik) — FVG dihitung &
+// ditampilkan sendiri lewat panel "Support/Resistance & FVG Zone" di bawah.
 // ===================================================================
 function loadTradingView(theme){
   const wrapper = document.querySelector('#tv_chart_container .tradingview-widget-container');
@@ -635,7 +650,7 @@ function loadTradingView(theme){
     "details": false,
     "hide_legend": false,
     "allow_symbol_change": true,
-    "studies": ["Stochastic@tv-basicstudies", "PSAR@tv-basicstudies"],
+    "studies": ["Stochastic@tv-basicstudies", "PSAR@tv-basicstudies", "PivotPointsHighLow@tv-basicstudies"],
     "support_host": "https://www.tradingview.com"
   });
   // script must be a direct child of the widget container (sibling to the
@@ -1080,15 +1095,66 @@ function detectFVG(highs, lows, closes, bias){
     if(bias==='bull' && lows[i]>highs[i-2]){
       const gapLow=highs[i-2], gapHigh=lows[i];
       const filled = closes[n-1]<=gapHigh && closes[n-1]>=gapLow;
-      return {found:true, filled};
+      return {found:true, filled, low:gapLow, high:gapHigh};
     }
     if(bias==='bear' && highs[i]<lows[i-2]){
       const gapLow=highs[i], gapHigh=lows[i-2];
       const filled = closes[n-1]>=gapLow && closes[n-1]<=gapHigh;
-      return {found:true, filled};
+      return {found:true, filled, low:gapLow, high:gapHigh};
     }
   }
   return {found:false};
+}
+
+// ===================================================================
+// SUPPORT & RESISTANCE (dari swing fractal yang sama dengan Structure/
+// Liquidity Sweep) — ambil swing high terdekat di atas harga sbg
+// resistance, swing low terdekat di bawah harga sbg support.
+// ===================================================================
+function findNearestSR(highs, lows, closes){
+  const {swH, swL} = findSwings(highs, lows);
+  const price = closes[closes.length-1];
+  const resistances = swH.map(h=>h.price).filter(p=>p>price);
+  const supports = swL.map(l=>l.price).filter(p=>p<price);
+  return {
+    resistance: resistances.length ? Math.min(...resistances) : null,
+    support: supports.length ? Math.max(...supports) : null,
+  };
+}
+
+function renderSRFVG(highs, lows, closes, bias, fvg){
+  const price = closes[closes.length-1];
+  const sr = findNearestSR(highs, lows, closes);
+  const fmt = n => n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  const resEl = document.getElementById('sr-resistance');
+  const supEl = document.getElementById('sr-support');
+  const priceEl = document.getElementById('sr-price');
+  const fvgStatusEl = document.getElementById('sr-fvg-status');
+  const fvgRangeEl = document.getElementById('sr-fvg-range');
+  const updEl = document.getElementById('sr-updated');
+
+  if(resEl) resEl.textContent = sr.resistance ? fmt(sr.resistance) : '—';
+  if(supEl) supEl.textContent = sr.support ? fmt(sr.support) : '—';
+  if(priceEl) priceEl.textContent = fmt(price);
+
+  if(fvgStatusEl){
+    if(fvg.found){
+      fvgStatusEl.textContent = (bias==='bull'?'▲ BULLISH · ':'▼ BEARISH · ') + (fvg.filled?'FILLED':'OPEN');
+      fvgStatusEl.style.color = fvg.filled ? 'var(--green)' : 'var(--gold)';
+    } else {
+      fvgStatusEl.textContent = '✕ TIDAK ADA';
+      fvgStatusEl.style.color = 'var(--muted)';
+    }
+  }
+  if(fvgRangeEl){
+    fvgRangeEl.textContent = fvg.found ? `${fmt(fvg.low)} – ${fmt(fvg.high)}` : '—';
+  }
+  if(updEl){
+    const now=new Date();
+    const pad=n=>String(n).padStart(2,'0');
+    updEl.textContent = `Updated ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  }
 }
 
 function detectLiquiditySweep(highs, lows, closes, bias){
@@ -1341,6 +1407,9 @@ async function fetchAIAnalysis(){
     }
     setMV('fvg', fvgLabel, fvgCls, fvgScore, 10);
     total+=fvgScore;
+
+    // ===== SUPPORT/RESISTANCE & FVG ZONE INFO PANEL =====
+    renderSRFVG(highs, lows, closes, bias, fvg);
 
     // 6) LIQUIDITY SWEEP
     const liq = detectLiquiditySweep(highs, lows, closes, bias);
