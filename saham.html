@@ -18,7 +18,15 @@ html[data-theme="light"] {
   --panel2: #f0f7f0; --line: #d0e8d0; --text: #1a2e1a; --muted: #5a7a5a;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--text); font-family: var(--sans); display: flex; min-height: 100vh; }
+html, body { max-width: 100%; overflow-x: hidden; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+/* CATATAN FIX: body sebelumnya "display:flex", padahal .sidebar posisinya
+   fixed (sudah keluar dari flow). Kombinasi itu bikin .main dihitung
+   selebar viewport PENUH lalu ditambah margin-left:220px di atasnya →
+   total lebar = 100% + 220px, overflow horizontal sebesar lebar sidebar.
+   .main sebagai block element biasa sudah otomatis mengurangi margin dari
+   lebarnya sendiri, jadi flex di body ini tidak perlu & malah jadi biang
+   scroll-kesamping. */
 
 /* SIDEBAR */
 .sidebar { width: var(--sidebar-w); background: var(--sidebar); border-right: 1px solid var(--line); display: flex; flex-direction: column; position: fixed; top:0; left:0; height:100vh; z-index:100; transition: transform .3s; }
@@ -99,17 +107,32 @@ html.ags-embedded .ticker-bar { top: 0; }
 .saham-top { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; align-items: start; }
 .saham-mid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-top: 14px; align-items: start; }
 #midRow1 { grid-template-columns: repeat(3,1fr); }
-@media (max-width: 1200px) {
+@media (max-width: 1300px) {
   .saham-top { grid-template-columns: 1fr; }
-  .saham-mid { grid-template-columns: 1fr 1fr; }
+  .saham-mid, #midRow1 { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 900px) {
   .sidebar { transform: translateX(-100%); }
   .sidebar.open { transform: translateX(0); }
   .main { margin-left: 0; }
   .hamburger { display: flex !important; }
-  .saham-mid { grid-template-columns: 1fr; }
-  #midRow1 { grid-template-columns: 1fr; }
+  .saham-mid, #midRow1 { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .content { padding: 10px 12px; }
+  .topbar { padding: calc(12px + env(safe-area-inset-top)) 14px 12px; flex-wrap: wrap; gap: 8px; }
+  .topbar-left .greeting { font-size: 15px; }
+  .card { padding: 12px; }
+  .ihsg-price { font-size: 24px; }
+  .breadth-row { grid-template-columns: repeat(2,1fr); }
+  .ticker-item { padding: 7px 12px; font-size: 11px; }
+  .sentiment-legend { grid-template-columns: repeat(3,1fr); }
+  /* Tabel dinamis (top movers, watchlist, screener, dll) dirender lewat
+     innerHTML JS, jadi kita bungkus wrapper-nya sendiri lewat CSS supaya
+     kalau tabelnya lebih lebar dari card, yang scroll cuma tabelnya —
+     bukan seluruh halaman. */
+  #topMovers, #watchlist, #screenerWrap { overflow-x: auto; }
+  #topMovers .tbl, #watchlist .tbl, #screenerWrap .tbl { min-width: 420px; }
 }
 
 /* IHSG OVERVIEW */
