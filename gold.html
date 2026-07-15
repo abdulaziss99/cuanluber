@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>CUAANNN GOLD SYSTEM — AGS Lite</title>
+<title>AZIS GOLD SYSTEM — AGS Lite</title>
 
-<!-- ===== ADD TO HOME SCREEN SETUPP ===== -->
+<!-- ===== ADD TO HOME SCREEN SETUP ===== -->
 <!-- Android (Chrome): pakai manifest.json -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0b0f17">
@@ -62,13 +62,13 @@
   }
   .theme-toggle:hover{color:var(--text);}
   .topbar{
-  display:flex; align-items:center; gap:12px;
-  padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
-  background:var(--panel);
-  border-bottom:1px solid var(--line);
-  flex-wrap:wrap;
-  position:sticky; top:0; z-index:50;
-}
+    display:flex; align-items:center; gap:12px;
+    padding:12px 16px;
+    background:var(--panel);
+    border-bottom:1px solid var(--line);
+    flex-wrap:wrap;
+    position:sticky; top:0; z-index:50;
+  }
   .brand{
     font-weight:800; font-size:15px; letter-spacing:.3px;
     display:flex; align-items:center; gap:8px; margin-right:8px;
@@ -94,23 +94,24 @@
 
   .layout{
     display:grid;
-    grid-template-columns:240px 1fr 260px;
-    gap:14px;
-    padding:14px;
-    max-width:1700px;
+    grid-template-columns:240px 1fr 290px;
+    gap:12px;
+    padding:12px 14px;
+    max-width:1600px;
     margin:0 auto;
+    align-items:start;
   }
-  .col{display:flex; flex-direction:column; gap:14px;}
+  .col{display:flex; flex-direction:column; gap:12px;}
 
   .card{
     background:var(--panel);
     border:1px solid var(--line);
     border-radius:12px;
-    padding:14px;
+    padding:12px 14px;
   }
   .card h3{
-    font-size:11px; text-transform:uppercase; letter-spacing:.6px;
-    color:var(--muted); margin-bottom:10px; display:flex; align-items:center; gap:6px;
+    font-size:10.5px; text-transform:uppercase; letter-spacing:.6px;
+    color:var(--muted); margin-bottom:8px; display:flex; align-items:center; gap:6px;
     font-weight:700;
   }
   .row{display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-size:13px;}
@@ -157,59 +158,67 @@
   .check-item .ico.off{color:var(--red);}
 
   /* ===== MARKET VALIDATION TABLE ===== */
-  .mv-table{width:100%; border-collapse:collapse; margin-top:2px;}
+  .mv-table{width:100%; border-collapse:collapse; margin-top:2px; table-layout:fixed;}
+  .mv-table colgroup .col-comp{width:auto;}
+  .mv-table colgroup .col-status{width:100px;}
+  .mv-table colgroup .col-score{width:38px;}
   .mv-table thead th{
-    text-align:left; font-size:9.5px; text-transform:uppercase; letter-spacing:.4px;
-    color:var(--muted); font-weight:700; padding:0 0 8px 0; border-bottom:1px solid var(--line);
+    text-align:left; font-size:9px; text-transform:uppercase; letter-spacing:.4px;
+    color:var(--muted); font-weight:700; padding:0 4px 6px 0; border-bottom:1px solid var(--line);
   }
-  .mv-table thead th:last-child, .mv-table thead th:nth-child(3){text-align:right;}
+  .mv-table thead th:last-child{text-align:right; padding-right:0;}
   .mv-table tbody tr{border-bottom:1px solid var(--line);}
   .mv-table tbody tr:last-child{border-bottom:none;}
-  .mv-table td{padding:9px 0; vertical-align:middle;}
-  .mv-comp .name{font-size:12.5px; font-weight:700; display:flex; align-items:center; gap:6px;}
-  .mv-comp .desc{font-size:10.5px; color:var(--muted); margin-top:1px;}
+  .mv-table td{padding:5px 4px 5px 0; vertical-align:middle;}
+  .mv-table td:last-child{padding-right:0;}
+  .mv-comp .name{font-size:11px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .mv-comp .desc{font-size:9px; color:var(--muted); margin-top:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .mv-status{
-    display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700;
-    padding:3px 8px; border-radius:999px; white-space:nowrap;
+    display:inline-flex; align-items:center; font-size:9.5px; font-weight:700;
+    padding:2px 6px; border-radius:999px; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis;
   }
   .mv-status.ok{color:var(--green); background:rgba(34,197,94,.12);}
   .mv-status.bad{color:var(--red); background:rgba(239,68,68,.12);}
   .mv-status.warn{color:var(--gold); background:rgba(240,180,41,.12);}
   .mv-status.neutral{color:var(--muted); background:var(--panel2);}
-  .mv-score{font-family:var(--mono); font-weight:800; font-size:12.5px; text-align:right; white-space:nowrap;}
+  .mv-score{font-family:var(--mono); font-weight:800; font-size:10.5px; text-align:right; white-space:nowrap; padding-right:0;}
   .mv-score.ok{color:var(--green);}
   .mv-score.bad{color:var(--red);}
   .mv-score.warn{color:var(--gold);}
 
-  .setup-score-box{margin-top:16px;}
-  .setup-score-box .ssb-head{display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.5px;}
-  .setup-score-box .ssb-num{font-family:var(--mono); font-size:30px; font-weight:800; margin:4px 0 8px;}
-  .setup-score-box .ssb-bar{height:9px; background:var(--panel2); border-radius:5px; overflow:hidden;}
-  .setup-score-box .ssb-fill{height:100%; border-radius:5px; transition:width .4s ease, background .4s ease;}
-  .setup-score-legend{display:flex; justify-content:space-between; margin-top:8px; font-size:9.5px; color:var(--muted);}
-  .setup-score-legend span{display:flex; align-items:center; gap:4px;}
-  .setup-score-legend .dot{width:7px; height:7px; border-radius:50%;}
+  .setup-score-box{margin-top:10px; padding-top:10px; border-top:1px solid var(--line);}
+  .setup-score-box .ssb-head{display:flex; justify-content:space-between; align-items:center; font-size:10px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.5px;}
+  .setup-score-box .ssb-row{display:flex; align-items:baseline; gap:6px; margin:2px 0 6px;}
+  .setup-score-box .ssb-num{font-family:var(--mono); font-size:24px; font-weight:800;}
+  .setup-score-box .ssb-cat{font-size:11px; font-weight:700;}
+  .setup-score-box .ssb-bar{height:7px; background:var(--panel2); border-radius:4px; overflow:hidden;}
+  .setup-score-box .ssb-fill{height:100%; border-radius:4px; transition:width .4s ease, background .4s ease;}
+  .setup-score-legend{display:grid; grid-template-columns:1fr 1fr; gap:3px 8px; margin-top:6px; font-size:9px; color:var(--muted);}
+  .setup-score-legend span{display:flex; align-items:center; gap:3px;}
+  .setup-score-legend .dot{width:6px; height:6px; border-radius:50%; flex:none;}
 
   .final-decision-box{
-    margin-top:14px; border-radius:12px; padding:14px;
-    display:flex; align-items:center; gap:12px; justify-content:space-between;
-    border:1px solid var(--line);
+    margin-top:10px; border-radius:10px; padding:10px 11px;
+    display:flex; align-items:center; gap:10px; justify-content:space-between;
+    border:1px solid var(--line); background:var(--panel2);
   }
-  .final-decision-box .fd-left{display:flex; align-items:center; gap:12px;}
+  .final-decision-box .fd-left{display:flex; align-items:center; gap:9px; min-width:0; flex:1;}
   .final-decision-box .fd-icon{
-    width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-    font-size:20px; flex:none;
+    width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:17px; flex:none;
   }
-  .final-decision-box .fd-label{font-size:10px; color:var(--muted); font-weight:700; letter-spacing:.5px; text-transform:uppercase;}
-  .final-decision-box .fd-word{font-size:21px; font-weight:800; margin-top:1px;}
-  .final-decision-box .fd-sub{font-size:10.5px; color:var(--muted); margin-top:3px; max-width:230px; line-height:1.35;}
+  .final-decision-box .fd-text{min-width:0; flex:1;}
+  .final-decision-box .fd-label{font-size:9px; color:var(--muted); font-weight:700; letter-spacing:.5px; text-transform:uppercase;}
+  .final-decision-box .fd-cat{font-size:10.5px; font-weight:700; margin-top:0;}
+  .final-decision-box .fd-word{font-size:19px; font-weight:800; line-height:1.1;}
+  .final-decision-box .fd-sub{font-size:9px; color:var(--muted); margin-top:1px; line-height:1.3;}
   .final-decision-box .fd-conf{text-align:right; flex:none;}
-  .final-decision-box .fd-conf .pct{font-family:var(--mono); font-weight:800; font-size:22px;}
-  .final-decision-box .fd-conf .lbl{font-size:9px; color:var(--muted); font-weight:700; letter-spacing:.4px;}
-  .fd-tip{display:flex; gap:8px; align-items:flex-start; font-size:10.5px; color:var(--muted); margin-top:10px; line-height:1.4;}
+  .final-decision-box .fd-conf .pct{font-family:var(--mono); font-weight:800; font-size:18px;}
+  .final-decision-box .fd-conf .lbl{font-size:8px; color:var(--muted); font-weight:700; letter-spacing:.4px;}
+  .fd-tip{display:flex; gap:5px; align-items:flex-start; font-size:9px; color:var(--muted); margin-top:6px; line-height:1.4;}
 
   /* chart panel */
-  .chart-card{display:flex; flex-direction:column;}
+  .chart-card{display:flex; flex-direction:column; height:auto;}
   .chart-head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; flex-wrap:wrap; gap:8px;}
   .chart-title{font-size:16px; font-weight:800; display:flex; align-items:center; gap:8px;}
   .chart-sub{font-size:11.5px; color:var(--muted); margin-top:2px;}
@@ -220,10 +229,7 @@
     font-size:9.5px; font-family:var(--mono); color:#2962ff; background:rgba(41,98,255,.12);
     border:1px solid rgba(41,98,255,.4); padding:2px 7px; border-radius:5px; font-weight:700;
   }
-  #tv_chart_container{width:100%; height:640px; border-radius:8px; overflow:hidden; border:1px solid var(--line);}
-  .tradingview-widget-copyright{font-size:11px; padding:4px 8px; color:var(--muted); background:var(--panel);}
-  .tradingview-widget-copyright a{color:var(--muted); text-decoration:none;}
-  .tradingview-widget-copyright a:hover{color:var(--gold);}
+  #tv_chart_container{width:100%; height:460px; flex:none; border-radius:8px; overflow:hidden; border:1px solid var(--line);}
 
   .legend-grid{display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:12px;}
   .legend-grid .li{display:flex; align-items:center; gap:6px;}
@@ -232,7 +238,7 @@
 
   .bottom-grid{
     display:grid; grid-template-columns:repeat(4,1fr); gap:14px; padding:0 14px 14px;
-    max-width:1700px; margin:0 auto;
+    max-width:1600px; margin:0 auto;
   }
   .entry-list .ei{display:flex; align-items:center; gap:7px; font-size:12.5px; padding:4px 0;}
   .entry-list .ei svg{flex-shrink:0;}
@@ -246,45 +252,20 @@
   .pulse{animation:pulse 2s infinite;}
   @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
 
-  #alertToggle.on{color:var(--gold); border-color:rgba(240,180,41,.4); background:rgba(240,180,41,.1);}
-
-  #alertToastWrap{
-    position:fixed; top:calc(14px + env(safe-area-inset-top)); right:14px; z-index:999;
-    display:flex; flex-direction:column; gap:10px; max-width:340px; width:calc(100% - 28px);
-    pointer-events:none;
+  @media (max-width:1200px){
+    .layout{grid-template-columns:220px 1fr 270px;}
   }
-  .alert-toast{
-    pointer-events:auto;
-    background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--gold);
-    border-radius:10px; padding:12px 14px; box-shadow:0 8px 24px rgba(0,0,0,.35);
-    animation: toastIn .25s ease, toastOut .3s ease 6.7s forwards;
-    font-family:var(--sans);
-  }
-  .alert-toast.buy{border-left-color:var(--green);}
-  .alert-toast.sell{border-left-color:var(--red);}
-  .alert-toast .at-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;}
-  .alert-toast .at-title{font-size:13px; font-weight:800; display:flex; align-items:center; gap:6px;}
-  .alert-toast .at-close{cursor:pointer; color:var(--muted); font-size:14px; background:none; border:none; padding:0;}
-  .alert-toast .at-close:hover{color:var(--text);}
-  .alert-toast .at-row{display:flex; justify-content:space-between; font-size:11.5px; padding:2px 0;}
-  .alert-toast .at-row .l{color:var(--muted);}
-  .alert-toast .at-row .v{font-family:var(--mono); font-weight:700;}
-  .alert-toast .at-tag{
-    font-size:10px; color:var(--muted); background:var(--panel2); border:1px solid var(--line);
-    border-radius:6px; padding:5px 7px; margin-top:6px; line-height:1.4;
-  }
-  @keyframes toastIn{from{opacity:0; transform:translateX(30px);} to{opacity:1; transform:translateX(0);}}
-  @keyframes toastOut{from{opacity:1;} to{opacity:0; transform:translateX(30px);}}
-
-  @media (max-width:1100px){
-    .layout{grid-template-columns:1fr; }
+  @media (max-width:1000px){
+    .layout{grid-template-columns:1fr;}
     .bottom-grid{grid-template-columns:1fr 1fr;}
+    #tv_chart_container{height:380px;}
   }
   @media (max-width:600px){
-    .bottom-grid{grid-template-columns:1fr;}
+    .layout{padding:8px;}
+    .bottom-grid{grid-template-columns:1fr; padding:0 8px 8px;}
     nav.tabs{order:3; width:100%;}
     .topbar{justify-content:space-between;}
-    #tv_chart_container{height:460px;}
+    #tv_chart_container{height:300px;}
   }
 </style>
 </head>
@@ -294,18 +275,17 @@
   <div class="brand"><span class="dot pulse"></span>AZIS GOLD SYSTEM <span style="color:var(--muted); font-weight:500;">v1.0</span></div>
   <div class="symbol-pill">XAUUSD · M15</div>
   <nav class="tabs" id="tabs">
-    <button class="active" data-tab="dashboard"></button>
-    <button data-tab="trend"></button>
-    <button data-tab="sr"></button>
-    <button data-tab="liquidity"></button>
-    <button data-tab="ob"></button>
-    <button data-tab="fvg"></button>
-    <button data-tab="news"></button>
-    <button data-tab="ai"></button>
-    <button data-tab="about"></button>
+    <button class="active" data-tab="dashboard">Dashboard</button>
+    <button data-tab="trend">Trend</button>
+    <button data-tab="sr">S&amp;R</button>
+    <button data-tab="liquidity">Liquidity</button>
+    <button data-tab="ob">Order Block</button>
+    <button data-tab="fvg">FVG</button>
+    <button data-tab="news">News</button>
+    <button data-tab="ai">Market Validation</button>
+    <button data-tab="about">About</button>
   </nav>
   <button class="theme-toggle" id="themeToggle">🌙 <span id="themeLabel">Dark</span></button>
-  <button class="theme-toggle" id="alertToggle">🔔 <span id="alertLabel">Enable Alert</span></button>
   <div class="conn">● CONNECTED</div>
 </div>
 
@@ -324,25 +304,40 @@
     </div>
 
     <div class="card">
-      <h3>⭐ AI Score</h3>
+      <h3>⭐ AI Score <span class="mock-tag" style="text-transform:none; font-size:9.5px;">(mock)</span></h3>
       <div class="score-block">
-        <div class="score-head"><span>BUY SCORE</span><span class="pct bull" id="buyScorePct">—%</span></div>
+        <div class="score-head"><span>BUY SCORE</span><span class="pct bull">82%</span></div>
         <div class="bar-track green" id="buyBar"></div>
       </div>
       <div class="score-block" style="margin-bottom:0;">
-        <div class="score-head"><span>SELL SCORE</span><span class="pct bear" id="sellScorePct">—%</span></div>
+        <div class="score-head"><span>SELL SCORE</span><span class="pct bear">21%</span></div>
         <div class="bar-track red" id="sellBar"></div>
       </div>
-      <div style="font-size:9px;color:var(--muted);margin-top:8px;font-family:var(--mono);" id="aiScoreUpdated"></div>
     </div>
 
     <div class="card">
-      <h3>🕐 Fibonacci Time Zone <span style="font-size:9px;color:var(--gold);background:rgba(240,180,41,.12);padding:2px 6px;border-radius:5px;text-transform:none;letter-spacing:0;font-weight:700;">Eksperimental</span></h3>
-      <div style="font-size:10.5px;color:var(--muted);margin:-4px 0 10px;line-height:1.4;">Estimasi waktu potensi reversal dari swing terakhir (deret Fibonacci). Referensi tambahan saja — <b>tidak</b> masuk Setup Score.</div>
-      <div id="fibTimeList"></div>
-      <div style="font-size:9px;color:var(--muted);margin-top:8px;font-family:var(--mono);" id="fibTimeUpdated"></div>
+      <h3>📈 Market Condition</h3>
+      <div class="row"><span class="label">Trend Strength</span><span class="val" id="mc-strength">—</span></div>
+      <div class="row"><span class="label">Volatility</span><span class="val" id="mc-volatility">—</span></div>
+      <div class="row"><span class="label">Volume</span><span class="val" id="mc-volume">—</span></div>
+      <div class="row"><span class="label">Spread</span><span class="val" id="mc-spread">—</span></div>
+      <div class="row"><span class="label">ATR (14)</span><span class="val" id="mc-atr">—</span></div>
     </div>
 
+    <div class="card">
+      <h3>⏰ Next High Impact News</h3>
+      <div style="font-size:13px; font-weight:700; color:var(--red); margin-bottom:2px;">USD CPI (MoM)</div>
+      <div style="font-family:var(--mono); font-size:22px; font-weight:800; color:var(--gold);" id="newsTimer">00:45:20</div>
+      <div style="font-size:11px; color:var(--muted); margin-top:4px;">High Impact · 15 May 2024 19:30 (GMT+7)</div>
+    </div>
+
+    <div class="card">
+      <h3>🛡️ Account Risk</h3>
+      <div class="row"><span class="label">Risk per Trade</span><span class="val">1.00%</span></div>
+      <div class="row"><span class="label">Account Balance</span><span class="val">$5,000.00</span></div>
+      <div class="row"><span class="label">Risk Amount</span><span class="val bear">$50.00</span></div>
+      <div class="row"><span class="label">Lot Size (XAUUSD)</span><span class="val">0.02</span></div>
+    </div>
   </div>
 
   <!-- CENTER: CHART -->
@@ -369,8 +364,7 @@
 
       <div id="tv_chart_container">
         <div class="tradingview-widget-container" style="height:100%;width:100%">
-          <div class="tradingview-widget-container__widget" style="height:calc(100% - 24px);width:100%"></div>
-          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a></div>
+          <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
         </div>
       </div>
     </div>
@@ -383,6 +377,7 @@
       <div style="font-size:10.5px;color:var(--muted);margin:-6px 0 10px;">Validasi kondisi market berdasarkan sistem rule AGS</div>
 
       <table class="mv-table">
+        <colgroup><col class="col-comp"><col class="col-status"><col class="col-score"></colgroup>
         <thead>
           <tr><th>Komponen</th><th>Status</th><th>Skor</th></tr>
         </thead>
@@ -390,7 +385,7 @@
           <tr>
             <td class="mv-comp"><div class="name">Trend (EMA50)</div><div class="desc">Harga di atas EMA50</div></td>
             <td><span class="mv-status neutral" id="mv-trend-status">— LOADING</span></td>
-            <td class="mv-score" id="mv-trend-score">—/15</td>
+            <td class="mv-score" id="mv-trend-score">—/20</td>
           </tr>
           <tr>
             <td class="mv-comp"><div class="name">Structure</div><div class="desc">BOS / CHoCH</div></td>
@@ -401,11 +396,6 @@
             <td class="mv-comp"><div class="name">Order Block</div><div class="desc">Valid Bullish/Bearish OB</div></td>
             <td><span class="mv-status neutral" id="mv-ob-status">— LOADING</span></td>
             <td class="mv-score" id="mv-ob-score">—/15</td>
-          </tr>
-          <tr>
-            <td class="mv-comp"><div class="name">Fibonacci Confluence</div><div class="desc">Price di retracement 0.382–0.786</div></td>
-            <td><span class="mv-status neutral" id="mv-fib-status">— LOADING</span></td>
-            <td class="mv-score" id="mv-fib-score">—/10</td>
           </tr>
           <tr>
             <td class="mv-comp"><div class="name">Fair Value Gap</div><div class="desc">FVG Terisi</div></td>
@@ -420,7 +410,7 @@
           <tr>
             <td class="mv-comp"><div class="name">EMA50</div><div class="desc">Harga di atas EMA50</div></td>
             <td><span class="mv-status neutral" id="mv-ema-status">— LOADING</span></td>
-            <td class="mv-score" id="mv-ema-score">—/5</td>
+            <td class="mv-score" id="mv-ema-score">—/10</td>
           </tr>
           <tr>
             <td class="mv-comp"><div class="name">Volume</div><div class="desc">Volume vs rata-rata</div></td>
@@ -441,8 +431,12 @@
       </table>
 
       <div class="setup-score-box">
-        <div class="ssb-head"><span>Setup Score</span><span style="opacity:.5;">ⓘ</span></div>
-        <div class="ssb-num" id="ssb-num">— / 100</div>
+        <div class="ssb-head"><span>Setup Score</span></div>
+        <div class="ssb-row">
+          <span class="ssb-num" id="ssb-num">—</span>
+          <span style="font-size:13px;color:var(--muted);font-family:var(--mono);">/ 100</span>
+          <span class="ssb-cat" id="ssb-cat" style="margin-left:4px;color:var(--muted);">—</span>
+        </div>
         <div class="ssb-bar"><div class="ssb-fill" id="ssb-fill" style="width:0%;background:var(--muted);"></div></div>
         <div class="setup-score-legend">
           <span><span class="dot" style="background:var(--green);"></span>81–100 A+ Setup</span>
@@ -454,32 +448,20 @@
 
       <div class="final-decision-box" id="fd-box">
         <div class="fd-left">
-          <div class="fd-icon" id="fd-icon" style="background:var(--panel2);color:var(--muted);">◎</div>
-          <div>
+          <div class="fd-icon" id="fd-icon" style="background:var(--line);color:var(--muted);">◎</div>
+          <div class="fd-text">
             <div class="fd-label">Final Decision</div>
-            <div class="fd-word" id="fd-word" style="font-size:12.5px;font-weight:700;color:var(--muted);">CALCULATING…</div>
-            <div class="fd-word" id="fd-action" style="font-size:22px;">—</div>
+            <div class="fd-cat" id="fd-word" style="color:var(--muted);">CALCULATING…</div>
+            <div class="fd-word" id="fd-action" style="color:var(--muted);">—</div>
             <div class="fd-sub" id="fd-sub">Mengolah data sesuai rule AGS.</div>
           </div>
         </div>
         <div class="fd-conf">
-          <div class="pct" id="fd-pct">—%</div>
+          <div class="pct" id="fd-pct" style="color:var(--muted);">—%</div>
           <div class="lbl">CONFIDENCE</div>
         </div>
       </div>
-      <div class="fd-tip">💡 <span>Selalu gunakan manajemen risiko yang ketat. Tidak ada setup yang 100% pasti.</span></div>
-    </div>
-
-    <div class="card">
-      <h3>📐 Support/Resistance &amp; FVG Zone</h3>
-      <div style="font-size:10.5px;color:var(--muted);margin:-6px 0 10px;">S/R dari swing fractal terdekat · FVG dari zona gap yang sedang tervalidasi di Market Validation</div>
-      <div class="row"><span class="label">Resistance Terdekat</span><span class="val bear" id="sr-resistance">—</span></div>
-      <div class="row"><span class="label">Harga Sekarang</span><span class="val" id="sr-price">—</span></div>
-      <div class="row"><span class="label">Support Terdekat</span><span class="val bull" id="sr-support">—</span></div>
-      <div style="border-top:1px solid var(--line);margin:8px 0;"></div>
-      <div class="row"><span class="label">FVG Aktif (bias saat ini)</span><span class="val" id="sr-fvg-status">—</span></div>
-      <div class="row"><span class="label">Zona FVG</span><span class="val" id="sr-fvg-range">—</span></div>
-      <div style="font-size:9px;color:var(--muted);margin-top:6px;font-family:var(--mono);" id="sr-updated"></div>
+      <div class="fd-tip">💡 <span>Selalu gunakan manajemen risiko. Tidak ada setup yang 100% pasti.</span></div>
     </div>
 
     <div class="card">
@@ -534,14 +516,27 @@
   </div>
 </div>
 
+<div class="bottom-grid" id="dashboardBottom">
+  <div class="card">
+    <h3>🔑 Legend</h3>
+    <div class="legend-grid">
+      <div class="li"><span class="sw" style="background:#f0b429"></span>Support</div>
+      <div class="li"><span class="sw" style="background:#ef4444"></span>Resistance</div>
+      <div class="li"><span class="sw box" style="background:rgba(34,197,94,.35); border:1px solid #22c55e"></span>Bullish OB</div>
+      <div class="li"><span class="sw box" style="background:rgba(239,68,68,.35); border:1px solid #ef4444"></span>Bearish OB</div>
+      <div class="li"><span class="sw box" style="background:rgba(59,130,246,.3); border:1px solid #3b82f6"></span>FVG</div>
+      <div class="li">💧 Liquidity</div>
+    </div>
+  </div>
+</div>
+
 <!-- ABOUT PAGE -->
-<div id="aboutPage" style="display:none; max-width:1700px; margin:0 auto; padding:14px;">
+<div id="aboutPage" style="display:none; max-width:1600px; margin:0 auto; padding:14px;">
   <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px;">
     <div class="card entry-list">
       <h3>✅ Entry Rules (Buy)</h3>
       <div class="ei"><span style="color:var(--green)">✔</span>Trend Bullish (H1+H4)</div>
       <div class="ei"><span style="color:var(--green)">✔</span>Price Retrace to Bullish OB</div>
-      <div class="ei"><span style="color:var(--green)">✔</span>Fib Retracement 0.382–0.786 (Golden 0.5–0.618)</div>
       <div class="ei"><span style="color:var(--green)">✔</span>FVG Filled</div>
       <div class="ei"><span style="color:var(--green)">✔</span>Liquidity Sweep (EQ Low)</div>
       <div class="ei"><span style="color:var(--green)">✔</span>RSI Rebound Above 40</div>
@@ -553,7 +548,6 @@
       <h3>🔻 Entry Rules (Sell)</h3>
       <div class="ei"><span style="color:var(--red)">✔</span>Trend Bearish (H1+H4)</div>
       <div class="ei"><span style="color:var(--red)">✔</span>Price Retrace to Bearish OB</div>
-      <div class="ei"><span style="color:var(--red)">✔</span>Fib Retracement 0.382–0.786 (Golden 0.5–0.618)</div>
       <div class="ei"><span style="color:var(--red)">✔</span>FVG Filled</div>
       <div class="ei"><span style="color:var(--red)">✔</span>Liquidity Sweep (EQ High)</div>
       <div class="ei"><span style="color:var(--red)">✔</span>RSI Rejection Below 60</div>
@@ -565,16 +559,13 @@
       <h3>📖 How To Use</h3>
       <div class="ei">1. Check Trend &amp; AI Score</div>
       <div class="ei">2. Wait for Price Retrace to OB</div>
-      <div class="ei">3. Cek Confluence Fibonacci (0.5 / 0.618)</div>
-      <div class="ei">4. Wait for Liquidity Sweep</div>
-      <div class="ei">5. Confirm with FVG + RSI + Volume</div>
-      <div class="ei">6. Set SL &amp; TP with Risk Calculator</div>
-      <div class="ei">7. Execute with Discipline</div>
+      <div class="ei">3. Wait for Liquidity Sweep</div>
+      <div class="ei">4. Confirm with FVG + RSI + Volume</div>
+      <div class="ei">5. Set SL &amp; TP with Risk Calculator</div>
+      <div class="ei">6. Execute with Discipline</div>
     </div>
   </div>
 </div>
-
-<div id="alertToastWrap"></div>
 
 <footer>
   <b>AZIS GOLD SYSTEM</b> v1.0 &nbsp;|&nbsp; Build for Discipline. Trade with Confidence.
@@ -589,15 +580,14 @@ document.getElementById('tabs').addEventListener('click', e=>{
     const tab = e.target.dataset.tab;
     const isAbout = tab === 'about';
     document.querySelector('.layout').style.display = isAbout ? 'none' : '';
+    document.getElementById('dashboardBottom').style.display = isAbout ? 'none' : '';
     document.getElementById('aboutPage').style.display = isAbout ? 'block' : 'none';
   }
 });
 
-// ===== Buy/Sell segmented bars (LIVE, computed in fetchAIAnalysis) =====
+// ===== Buy/Sell segmented bars =====
 function buildBar(id, pct, total=20){
   const el = document.getElementById(id);
-  if(!el) return;
-  el.innerHTML = '';
   const on = Math.round((pct/100)*total);
   for(let i=0;i<total;i++){
     const s = document.createElement('div');
@@ -605,32 +595,26 @@ function buildBar(id, pct, total=20){
     el.appendChild(s);
   }
 }
-buildBar('buyBar', 0);
-buildBar('sellBar', 0);
+buildBar('buyBar', 82);
+buildBar('sellBar', 21);
+
+// ===== News countdown =====
+let secs = 45*60+20;
+setInterval(()=>{
+  if(secs>0){ secs--; }
+  const h=String(Math.floor(secs/3600)).padStart(2,'0');
+  const m=String(Math.floor((secs%3600)/60)).padStart(2,'0');
+  const s=String(secs%60).padStart(2,'0');
+  document.getElementById('newsTimer').textContent = `${h}:${m}:${s}`;
+}, 1000);
 
 // ===================================================================
 // TRADINGVIEW WIDGET
-// Indikator: Stochastic (pengganti RSI), Parabolic SAR (pengganti Volume),
-// Pivot Points High/Low (Support & Resistance otomatis dari swing fractal —
-// method-nya sama kayak yang dipakai TradingView utk Structure/Liquidity).
-// FIX: studies harus pakai ID resmi TradingView + suffix "@tv-basicstudies"
-// ("Stochastic@tv-basicstudies", "PSAR@tv-basicstudies"). Nama polos kayak
-// "Stochastic" / "Parabolic SAR" gak dikenali widget dan gagal render tanpa
-// error apapun di console — makanya kelihatannya "gak nambah apa-apa".
-// Catatan: FVG TIDAK ada di sini karena bukan built-in study TradingView
-// (konsep ICT, gak punya ID resmi di widget publik) — FVG dihitung &
-// ditampilkan sendiri lewat panel "Support/Resistance & FVG Zone" di bawah.
 // ===================================================================
 function loadTradingView(theme){
-  const wrapper = document.querySelector('#tv_chart_container .tradingview-widget-container');
-  const widgetDiv = wrapper.querySelector('.tradingview-widget-container__widget');
-  widgetDiv.innerHTML = '';
-  const oldScript = wrapper.querySelector('script.tv-embed-script');
-  if(oldScript) oldScript.remove();
-
+  const container = document.querySelector('#tv_chart_container .tradingview-widget-container__widget');
+  container.innerHTML = '';
   const script = document.createElement('script');
-  script.className = 'tv-embed-script';
-  script.type = 'text/javascript';
   script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
   script.async = true;
   script.innerHTML = JSON.stringify({
@@ -645,19 +629,14 @@ function loadTradingView(theme){
     "gridColor": theme === "dark" ? "rgba(29, 37, 49, 0.5)" : "rgba(221, 227, 236, 0.6)",
     "hide_top_toolbar": false,
     "hide_side_toolbar": false,
-    "hide_volume": true,
     "withdateranges": true,
     "details": false,
     "hide_legend": false,
     "allow_symbol_change": true,
-    "studies": ["Stochastic@tv-basicstudies", "PSAR@tv-basicstudies", "PivotPointsHighLow@tv-basicstudies"],
+    "studies": ["MASimple@tv-basicstudies","RSI@tv-basicstudies"],
     "support_host": "https://www.tradingview.com"
   });
-  // script must be a direct child of the widget container (sibling to the
-  // widget/copyright divs) — this matches TradingView's required embed
-  // structure. Nesting it one level deeper (inside container__widget) is
-  // the reason the toolbar + studies were silently failing to render.
-  wrapper.appendChild(script);
+  container.appendChild(script);
 }
 
 // ===================================================================
@@ -700,118 +679,6 @@ themeToggleBtn.addEventListener('click', ()=>{
 
 // load tema tersimpan, default dark
 applyTheme(getSavedTheme() || 'dark');
-
-// ===================================================================
-// ALERT SYSTEM — sound + on-screen toast + browser push notification
-// Trigger: Setup Score >= 61 (Good/A+) DAN actionable (BUY/SELL).
-// Anti-spam: cuma alert sekali per "sinyal baru" (state di-reset kalau
-// action balik ke WAIT/NO TRADE, jadi next signal beneran baru).
-// ===================================================================
-let alertEnabled = false;
-let lastAlertedAction = null; // null | 'BUY' | 'SELL'
-
-const alertToggleBtn = document.getElementById('alertToggle');
-const alertLabel = document.getElementById('alertLabel');
-
-function setAlertUI(enabled){
-  alertEnabled = enabled;
-  alertToggleBtn.classList.toggle('on', enabled);
-  alertLabel.textContent = enabled ? 'Alert ON' : 'Enable Alert';
-  alertToggleBtn.firstChild.textContent = enabled ? '🔔 ' : '🔕 ';
-}
-
-alertToggleBtn.addEventListener('click', async ()=>{
-  if(alertEnabled){
-    setAlertUI(false);
-    return;
-  }
-  // minta izin browser notification (harus dari user gesture, makanya di sini)
-  if('Notification' in window && Notification.permission === 'default'){
-    try{ await Notification.requestPermission(); }catch(e){}
-  }
-  setAlertUI(true);
-  // langsung tes bunyi + toast biar user tau alert-nya aktif
-  playAlertSound();
-  renderToast({
-    action:'TEST', score:'--', price:0, sl:0, tp:0,
-    confluence:'Alert berhasil diaktifkan', session:'-', isTest:true
-  });
-});
-
-// beep via Web Audio API — gak butuh file audio eksternal, jadi tetap
-// jalan walau offline / gak ada CORS ke CDN suara.
-function playAlertSound(){
-  try{
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const notes = [880, 1108, 1318]; // naik 3 nada biar kerasa kayak "ping" software
-    notes.forEach((freq, idx)=>{
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.001, ctx.currentTime + idx*0.14);
-      gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + idx*0.14 + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx*0.14 + 0.22);
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.start(ctx.currentTime + idx*0.14);
-      osc.stop(ctx.currentTime + idx*0.14 + 0.24);
-    });
-  }catch(e){ /* audio blocked, silent fail */ }
-}
-
-function fmtPrice(n){ return n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-
-function renderToast(d){
-  const wrap = document.getElementById('alertToastWrap');
-  if(!wrap) return;
-  const isBuy = d.action==='BUY';
-  const cls = d.isTest ? '' : (isBuy ? 'buy' : 'sell');
-  const dotColor = d.isTest ? 'var(--gold)' : (isBuy ? 'var(--green)' : 'var(--red)');
-  const icon = d.isTest ? '🔔' : (isBuy ? '▲' : '▼');
-  const now = new Date();
-  const pad = n=>String(n).padStart(2,'0');
-  const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-
-  const toast = document.createElement('div');
-  toast.className = 'alert-toast ' + cls;
-  toast.innerHTML = `
-    <div class="at-head">
-      <div class="at-title" style="color:${dotColor}">${icon} ${d.isTest ? 'ALERT AKTIF' : 'AGS · ' + d.action + ' XAUUSD'}</div>
-      <button class="at-close" aria-label="close">✕</button>
-    </div>
-    ${d.isTest ? `<div class="at-tag">${d.confluence}</div>` : `
-    <div class="at-row"><span class="l">Setup Score</span><span class="v" style="color:${dotColor}">${d.score}/100</span></div>
-    <div class="at-row"><span class="l">Entry</span><span class="v">${fmtPrice(d.price)}</span></div>
-    <div class="at-row"><span class="l">SL</span><span class="v" style="color:var(--red)">${fmtPrice(d.sl)}</span></div>
-    <div class="at-row"><span class="l">TP (1:2)</span><span class="v" style="color:var(--green)">${fmtPrice(d.tp)}</span></div>
-    <div class="at-row"><span class="l">Session</span><span class="v">${d.session}</span></div>
-    <div class="at-tag">📌 ${d.confluence}</div>
-    <div style="font-size:9px;color:var(--muted);margin-top:6px;font-family:var(--mono);">⏰ ${time}</div>
-    `}
-  `;
-  toast.querySelector('.at-close').addEventListener('click', ()=> toast.remove());
-  wrap.prepend(toast);
-  setTimeout(()=> toast.remove(), 7200);
-}
-
-function sendBrowserNotification(d){
-  if(!('Notification' in window) || Notification.permission!=='granted') return;
-  try{
-    new Notification(`AGS · ${d.action} XAUUSD — Score ${d.score}/100`, {
-      body: `Entry ${fmtPrice(d.price)} · SL ${fmtPrice(d.sl)} · TP ${fmtPrice(d.tp)}\n${d.confluence}`,
-      tag: 'ags-signal', // biar notif baru replace yang lama, gak numpuk
-    });
-  }catch(e){}
-}
-
-function checkAndAlert(d){
-  if(!alertEnabled) return;
-  if(d.action === lastAlertedAction) return; // sinyal sama, jangan spam
-  lastAlertedAction = d.action;
-  playAlertSound();
-  renderToast(d);
-  sendBrowserNotification(d);
-}
 
 // ===================================================================
 // LIVE SESSION INDICATOR
@@ -889,37 +756,6 @@ buildSessBar();updateSess();setInterval(updateSess,1000);
 // ===================================================================
 const TD_KEY = '5f52a74cd9f24b49a4729b5b8e599505';
 const TD_SYMBOL = 'XAU/USD';
-
-// ===================================================================
-// API REQUEST QUEUE — Twelve Data plan gratis cuma 8 request/menit.
-// Semua fetch ke Twelve Data lewat queue ini, dieksekusi berjejer
-// dengan jeda, jadi gak numpuk lagi — baik pas load awal maupun pas
-// semua setInterval kebetulan nyala bareng.
-// ===================================================================
-const REQUEST_GAP_MS = 9000; // ~7 request/menit, aman di bawah limit 8
-let apiQueue = [];
-let apiQueueRunning = false;
-
-function queueApiCall(fn){
-  return new Promise((resolve, reject)=>{
-    apiQueue.push(async ()=>{
-      try{ resolve(await fn()); }
-      catch(e){ reject(e); }
-    });
-    if(!apiQueueRunning) runApiQueue();
-  });
-}
-
-async function runApiQueue(){
-  apiQueueRunning = true;
-  while(apiQueue.length){
-    const job = apiQueue.shift();
-    await job();
-    if(apiQueue.length) await new Promise(r=>setTimeout(r, REQUEST_GAP_MS));
-  }
-  apiQueueRunning = false;
-}
-
 const TF_MAP = [
   { id:'trend-h4',  interval:'4h',  label:'H4'  },
   { id:'trend-h1',  interval:'1h',  label:'H1'  },
@@ -932,35 +768,6 @@ function calcEMA(closes, period){
   let ema = closes.slice(0,period).reduce((a,b)=>a+b,0)/period;
   for(let i=period;i<closes.length;i++) ema = closes[i]*k + ema*(1-k);
   return ema;
-}
-
-function calcRSI(closes, period=14){
-  let gains=0, losses=0;
-  for(let i=1;i<=period;i++){
-    const diff = closes[i]-closes[i-1];
-    if(diff>=0) gains+=diff; else losses+=Math.abs(diff);
-  }
-  let avgGain=gains/period, avgLoss=losses/period;
-  for(let i=period+1;i<closes.length;i++){
-    const diff=closes[i]-closes[i-1];
-    avgGain=(avgGain*(period-1)+(diff>=0?diff:0))/period;
-    avgLoss=(avgLoss*(period-1)+(diff<0?Math.abs(diff):0))/period;
-  }
-  if(avgLoss===0) return 100;
-  const rs=avgGain/avgLoss;
-  return 100-(100/(1+rs));
-}
-
-function calcATRFromArrays(highs, lows, closes, period=14){
-  const trs=[];
-  for(let i=1;i<closes.length;i++){
-    const h=highs[i], l=lows[i], pc=closes[i-1];
-    trs.push(Math.max(h-l, Math.abs(h-pc), Math.abs(l-pc)));
-  }
-  if(trs.length<period) return 0;
-  let atr=trs.slice(0,period).reduce((a,b)=>a+b,0)/period;
-  for(let i=period;i<trs.length;i++) atr=(atr*(period-1)+trs[i])/period;
-  return atr;
 }
 
 function getTrend(closes){
@@ -983,7 +790,7 @@ function getTrend(closes){
 async function fetchTrend(tf){
   const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(TD_SYMBOL)}&interval=${tf.interval}&outputsize=60&apikey=${TD_KEY}`;
   try {
-    const res = await queueApiCall(()=>fetch(url));
+    const res = await fetch(url);
     const data = await res.json();
     if(!data.values || !data.values.length) throw new Error('no data');
     const closes = data.values.map(v=>parseFloat(v.close)).reverse();
@@ -1016,6 +823,23 @@ setInterval(fetchAllTrends, 5*60*1000);
 // LIVE AI ANALYSIS — Twelve Data (M15 candle)
 // Hitung: EMA50, RSI14, Volume Confirmation, lalu scoring otomatis
 // ===================================================================
+function calcRSI(closes, period=14){
+  let gains=0, losses=0;
+  for(let i=1;i<=period;i++){
+    const diff = closes[i]-closes[i-1];
+    if(diff>=0) gains+=diff; else losses+=Math.abs(diff);
+  }
+  let avgGain=gains/period, avgLoss=losses/period;
+  for(let i=period+1;i<closes.length;i++){
+    const diff=closes[i]-closes[i-1];
+    avgGain=(avgGain*(period-1)+(diff>=0?diff:0))/period;
+    avgLoss=(avgLoss*(period-1)+(diff<0?Math.abs(diff):0))/period;
+  }
+  if(avgLoss===0) return 100;
+  const rs=avgGain/avgLoss;
+  return 100-(100/(1+rs));
+}
+
 function setAI(id, icon, text, color){
   const el=document.getElementById(id);
   if(!el) return;
@@ -1026,8 +850,8 @@ function setAI(id, icon, text, color){
 
 // ===================================================================
 // MARKET VALIDATION ENGINE (AGS Rule) — sesuai flowchart:
-// Trend(EMA50) > Structure(BOS/CHoCH) > Order Block > Fibonacci >
-// FVG > Liquidity Sweep > EMA50 Position > Volume > News Filter > Session
+// Trend(EMA50) > Structure(BOS/CHoCH) > Order Block > FVG >
+// Liquidity Sweep > EMA50 Position > Volume > News Filter > Session
 // ===================================================================
 
 function setMV(key, label, cls, score, max){
@@ -1095,66 +919,15 @@ function detectFVG(highs, lows, closes, bias){
     if(bias==='bull' && lows[i]>highs[i-2]){
       const gapLow=highs[i-2], gapHigh=lows[i];
       const filled = closes[n-1]<=gapHigh && closes[n-1]>=gapLow;
-      return {found:true, filled, low:gapLow, high:gapHigh};
+      return {found:true, filled};
     }
     if(bias==='bear' && highs[i]<lows[i-2]){
       const gapLow=highs[i], gapHigh=lows[i-2];
       const filled = closes[n-1]>=gapLow && closes[n-1]<=gapHigh;
-      return {found:true, filled, low:gapLow, high:gapHigh};
+      return {found:true, filled};
     }
   }
   return {found:false};
-}
-
-// ===================================================================
-// SUPPORT & RESISTANCE (dari swing fractal yang sama dengan Structure/
-// Liquidity Sweep) — ambil swing high terdekat di atas harga sbg
-// resistance, swing low terdekat di bawah harga sbg support.
-// ===================================================================
-function findNearestSR(highs, lows, closes){
-  const {swH, swL} = findSwings(highs, lows);
-  const price = closes[closes.length-1];
-  const resistances = swH.map(h=>h.price).filter(p=>p>price);
-  const supports = swL.map(l=>l.price).filter(p=>p<price);
-  return {
-    resistance: resistances.length ? Math.min(...resistances) : null,
-    support: supports.length ? Math.max(...supports) : null,
-  };
-}
-
-function renderSRFVG(highs, lows, closes, bias, fvg){
-  const price = closes[closes.length-1];
-  const sr = findNearestSR(highs, lows, closes);
-  const fmt = n => n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-
-  const resEl = document.getElementById('sr-resistance');
-  const supEl = document.getElementById('sr-support');
-  const priceEl = document.getElementById('sr-price');
-  const fvgStatusEl = document.getElementById('sr-fvg-status');
-  const fvgRangeEl = document.getElementById('sr-fvg-range');
-  const updEl = document.getElementById('sr-updated');
-
-  if(resEl) resEl.textContent = sr.resistance ? fmt(sr.resistance) : '—';
-  if(supEl) supEl.textContent = sr.support ? fmt(sr.support) : '—';
-  if(priceEl) priceEl.textContent = fmt(price);
-
-  if(fvgStatusEl){
-    if(fvg.found){
-      fvgStatusEl.textContent = (bias==='bull'?'▲ BULLISH · ':'▼ BEARISH · ') + (fvg.filled?'FILLED':'OPEN');
-      fvgStatusEl.style.color = fvg.filled ? 'var(--green)' : 'var(--gold)';
-    } else {
-      fvgStatusEl.textContent = '✕ TIDAK ADA';
-      fvgStatusEl.style.color = 'var(--muted)';
-    }
-  }
-  if(fvgRangeEl){
-    fvgRangeEl.textContent = fvg.found ? `${fmt(fvg.low)} – ${fmt(fvg.high)}` : '—';
-  }
-  if(updEl){
-    const now=new Date();
-    const pad=n=>String(n).padStart(2,'0');
-    updEl.textContent = `Updated ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-  }
 }
 
 function detectLiquiditySweep(highs, lows, closes, bias){
@@ -1175,171 +948,10 @@ function detectLiquiditySweep(highs, lows, closes, bias){
   return {taken:false};
 }
 
-// ===================================================================
-// FIBONACCI PRICE CONFLUENCE (Astronacci-inspired, "Fibonacci Price")
-// Ambil swing terakhir yang membentuk leg sesuai bias (low->high untuk
-// bull, high->low untuk bear), lalu cek apakah harga sekarang berada
-// di zona retracement 0.382–0.786 (golden zone 0.5–0.618 dapat bobot
-// lebih tinggi). Toleransi memakai fraksi ATR biar adaptif ke volatilitas.
-// ===================================================================
-function calcFibLevels(swingHigh, swingLow, isBullish){
-  const diff = swingHigh - swingLow;
-  return {
-    '0.236': isBullish ? swingHigh - diff*0.236 : swingLow + diff*0.236,
-    '0.382': isBullish ? swingHigh - diff*0.382 : swingLow + diff*0.382,
-    '0.5':   isBullish ? swingHigh - diff*0.5   : swingLow + diff*0.5,
-    '0.618': isBullish ? swingHigh - diff*0.618 : swingLow + diff*0.618,
-    '0.786': isBullish ? swingHigh - diff*0.786 : swingLow + diff*0.786,
-  };
-}
-
-function findLastSwingLeg(swH, swL, bias){
-  if(bias==='bull'){
-    if(!swL.length || !swH.length) return null;
-    const lastLow = swL[swL.length-1];
-    const highsAfter = swH.filter(h=>h.i>lastLow.i);
-    if(!highsAfter.length) return null;
-    const lastHigh = highsAfter[highsAfter.length-1];
-    if(lastHigh.price<=lastLow.price) return null;
-    return {low:lastLow.price, high:lastHigh.price};
-  } else {
-    if(!swH.length || !swL.length) return null;
-    const lastHigh = swH[swH.length-1];
-    const lowsAfter = swL.filter(l=>l.i>lastHigh.i);
-    if(!lowsAfter.length) return null;
-    const lastLow = lowsAfter[lowsAfter.length-1];
-    if(lastLow.price>=lastHigh.price) return null;
-    return {low:lastLow.price, high:lastHigh.price};
-  }
-}
-
-function detectFibConfluence(highs, lows, closes, bias, atr){
-  const {swH, swL} = findSwings(highs, lows);
-  const leg = findLastSwingLeg(swH, swL, bias);
-  if(!leg) return {found:false};
-  const levels = calcFibLevels(leg.high, leg.low, bias==='bull');
-  const price = closes[closes.length-1];
-  const tol = Math.max(atr*0.25, leg.high*0.0005); // toleransi ~1/4 ATR, minimum kecil biar gak 0
-  const order = ['0.5','0.618','0.382','0.786']; // cek golden zone dulu
-  for(const k of order){
-    if(Math.abs(price - levels[k]) <= tol){
-      return {found:true, level:k, price:levels[k], golden:(k==='0.5'||k==='0.618')};
-    }
-  }
-  return {found:false};
-}
-
-// ===================================================================
-// FIBONACCI TIME ZONE (Astronacci-inspired, "Fibonacci Time")
-// EKSPERIMENTAL — tidak divalidasi secara statistik, tidak dihitung ke
-// Setup Score. Murni proyeksi jarak candle Fibonacci dari swing point
-// (high atau low) yang paling baru terbentuk, ditampilkan sebagai
-// referensi tambahan buat user, bukan sinyal keputusan.
-// ===================================================================
-function findLastSwingPoint(swH, swL){
-  const all = [...swH.map(s=>({i:s.i, price:s.price, type:'HIGH'})), ...swL.map(s=>({i:s.i, price:s.price, type:'LOW'}))];
-  if(!all.length) return null;
-  all.sort((a,b)=>a.i-b.i);
-  return all[all.length-1];
-}
-
-function fibTimeTargets(swingIndex, totalCandles, intervalMinutes=15){
-  const fibSeq=[1,2,3,5,8,13,21,34,55,89];
-  const now = new Date();
-  const candlesFromSwingToNow = (totalCandles-1) - swingIndex;
-  return fibSeq.map(n=>{
-    const offsetFromNow = n - candlesFromSwingToNow;
-    const targetTime = new Date(now.getTime() + offsetFromNow*intervalMinutes*60000);
-    return {n, offsetFromNow, targetTime};
-  });
-}
-
-function renderFibTimeZone(highs, lows, closes){
-  const listEl = document.getElementById('fibTimeList');
-  const updEl = document.getElementById('fibTimeUpdated');
-  if(!listEl) return;
-  const {swH, swL} = findSwings(highs, lows);
-  const swingPt = findLastSwingPoint(swH, swL);
-  if(!swingPt){
-    listEl.innerHTML = '<div style="font-size:11px;color:var(--muted);">Belum ada swing point yang cukup jelas.</div>';
-    return;
-  }
-  const targets = fibTimeTargets(swingPt.i, closes.length, 15);
-  // ambil target yang belum lewat (upcoming), maksimal 4, plus 1 yang paling baru lewat sbg konteks
-  const upcoming = targets.filter(t=>t.offsetFromNow >= 0).slice(0,4);
-  const justPassed = [...targets].reverse().find(t=>t.offsetFromNow < 0);
-
-  const fmtTime = d => {
-    const pad=n=>String(n).padStart(2,'0');
-    const days=['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
-    return `${days[d.getDay()]} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  };
-
-  let html = `<div style="font-size:10.5px;color:var(--muted);margin-bottom:6px;">Swing terakhir: <b style="color:var(--text);">${swingPt.type}</b> @ ${swingPt.price.toFixed(2)}</div>`;
-
-  if(justPassed){
-    html += `<div style="display:flex;justify-content:space-between;font-size:11.5px;padding:4px 0;opacity:.5;">
-      <span>Candle ke-${justPassed.n} (lewat)</span><span style="font-family:var(--mono);">${fmtTime(justPassed.targetTime)}</span>
-    </div>`;
-  }
-  upcoming.forEach((t,idx)=>{
-    const isNext = idx===0;
-    html += `<div style="display:flex;justify-content:space-between;align-items:center;font-size:11.5px;padding:5px 0;${isNext?'border-left:2px solid var(--gold);padding-left:8px;':''}">
-      <span style="color:${isNext?'var(--gold)':'var(--text)'};font-weight:${isNext?'700':'500'};">Candle ke-${t.n}${isNext?' ⏳':''}</span>
-      <span style="font-family:var(--mono);color:${isNext?'var(--gold)':'var(--muted)'};">${fmtTime(t.targetTime)}</span>
-    </div>`;
-  });
-  if(!upcoming.length){
-    html += '<div style="font-size:11px;color:var(--muted);">Semua target sudah lewat, menunggu swing baru.</div>';
-  }
-  listEl.innerHTML = html;
-
-  if(updEl){
-    const now=new Date();
-    const pad=n=>String(n).padStart(2,'0');
-    updEl.textContent = `Updated ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-  }
-}
-
-// Directional score used for the live AI Score card (Buy % / Sell %).
-// Runs the same rule set independently for a bullish and a bearish
-// hypothesis so both scores move on their own, based on real data.
-function scoreDirection(price, ema50, opens, highs, lows, closes, vols, bias){
-  let score = 0;
-  const trendOk = bias==='bull' ? price>ema50 : price<ema50;
-  if(trendOk) score += 20;
-
-  const struct = detectStructure(highs, lows, closes);
-  if(struct.dir===bias) score += (struct.type==='BOS' ? 15 : 8);
-
-  const ob = detectOrderBlock(opens, highs, lows, closes, bias);
-  if(ob.valid) score += (ob.mitigated ? 15 : 8);
-
-  const fvg = detectFVG(highs, lows, closes, bias);
-  if(fvg.found) score += (fvg.filled ? 10 : 5);
-
-  const liq = detectLiquiditySweep(highs, lows, closes, bias);
-  if(liq.taken) score += 10;
-
-  const rsi = calcRSI(closes, 14);
-  if(bias==='bull' && rsi>50) score += 10;
-  if(bias==='bear' && rsi<50) score += 10;
-
-  const avgVol = vols.slice(-21,-1).reduce((a,b)=>a+b,0)/20;
-  const lastVol = vols[vols.length-1];
-  if(lastVol > avgVol*1.05) score += 10;
-
-  const atr14 = calcATRFromArrays(highs, lows, closes, 14);
-  const fib = detectFibConfluence(highs, lows, closes, bias, atr14);
-  if(fib.found) score += (fib.golden ? 10 : 6);
-
-  return Math.max(0, Math.min(100, Math.round(score)));
-}
-
 async function fetchAIAnalysis(){
   const url=`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(TD_SYMBOL)}&interval=15min&outputsize=100&apikey=${TD_KEY}`;
   try{
-    const res=await queueApiCall(()=>fetch(url));
+    const res=await fetch(url);
     const data=await res.json();
     if(!data.values||!data.values.length) throw new Error('no data');
     const vals=[...data.values].reverse();
@@ -1349,7 +961,6 @@ async function fetchAIAnalysis(){
     const closes=vals.map(v=>parseFloat(v.close));
     const vols=vals.map(v=>parseFloat(v.volume||0));
     const price=closes[closes.length-1];
-    const atr14=calcATRFromArrays(highs, lows, closes, 14);
 
     let total=0;
 
@@ -1357,9 +968,8 @@ async function fetchAIAnalysis(){
     const ema50=calcEMA(closes,50);
     const aboveEMA=price>ema50;
     const bias = aboveEMA ? 'bull' : 'bear';
-    currentGoldBias = bias; // dipakai konfluensi alert
-    const trendScore = aboveEMA ? 15 : 0;
-    setMV('trend', aboveEMA?'▲ BULLISH':'▼ BEARISH', aboveEMA?'ok':'bad', trendScore, 15);
+    const trendScore = aboveEMA ? 20 : 0;
+    setMV('trend', aboveEMA?'▲ BULLISH':'▼ BEARISH', aboveEMA?'ok':'bad', trendScore, 20);
     total+=trendScore;
 
     // 2) STRUCTURE (BOS / CHoCH)
@@ -1386,18 +996,7 @@ async function fetchAIAnalysis(){
     setMV('ob', obLabel, obCls, obScore, 15);
     total+=obScore;
 
-    // 4) FIBONACCI PRICE CONFLUENCE
-    const fib = detectFibConfluence(highs, lows, closes, bias, atr14);
-    let fibScore=0, fibLabel='✕ NO CONFLUENCE', fibCls='bad';
-    if(fib.found){
-      fibScore = fib.golden ? 10 : 6;
-      fibLabel = (fib.golden ? '✔ GOLDEN ZONE ' : '⦿ FIB ') + fib.level;
-      fibCls = fib.golden ? 'ok' : 'warn';
-    }
-    setMV('fib', fibLabel, fibCls, fibScore, 10);
-    total+=fibScore;
-
-    // 5) FAIR VALUE GAP
+    // 4) FAIR VALUE GAP
     const fvg = detectFVG(highs, lows, closes, bias);
     let fvgScore=0, fvgLabel='✕ NO FVG', fvgCls='bad';
     if(fvg.found){
@@ -1408,20 +1007,18 @@ async function fetchAIAnalysis(){
     setMV('fvg', fvgLabel, fvgCls, fvgScore, 10);
     total+=fvgScore;
 
-    // ===== SUPPORT/RESISTANCE & FVG ZONE INFO PANEL =====
-    renderSRFVG(highs, lows, closes, bias, fvg);
-
-    // 6) LIQUIDITY SWEEP
+    // 5) LIQUIDITY SWEEP
     const liq = detectLiquiditySweep(highs, lows, closes, bias);
     const liqScore = liq.taken ? 10 : 0;
     setMV('liq', liq.taken?'✔ TAKEN':'✕ NOT TAKEN', liq.taken?'ok':'bad', liqScore, 10);
     total+=liqScore;
 
-    // 7) EMA50 POSITION
-    setMV('ema', aboveEMA?'▲ ABOVE':'▼ BELOW', 'ok', 5, 5);
-    total+=5; // posisi EMA selalu konsisten dgn bias karena dipakai sbg acuan
+    // 6) EMA50 POSITION
+    const emaScore = aboveEMA ? 10 : (bias==='bear' ? 10 : 0);
+    setMV('ema', aboveEMA?'▲ ABOVE':'▼ BELOW', 'ok', 10, 10);
+    total+=10; // posisi EMA selalu konsisten dgn bias karena dipakai sbg acuan
 
-    // 8) VOLUME
+    // 7) VOLUME
     const avgVol=vols.slice(-21,-1).reduce((a,b)=>a+b,0)/20;
     const lastVol=vols[vols.length-1];
     const volOk=lastVol>avgVol*1.05;
@@ -1429,15 +1026,13 @@ async function fetchAIAnalysis(){
     setMV('vol', volOk?'▲ HIGH':'▽ NORMAL', volOk?'ok':'neutral', volScore, 10);
     total+=volScore;
 
-    // 9) NEWS FILTER — dicek manual lewat widget Economic Calendar (TradingView)
-    // di sidebar; tanpa API kalender berbayar kita nggak bisa hitung otomatis
-    // "menit menuju rilis berikutnya", jadi skor ini netral & minta konfirmasi
-    // manual dari kalender di samping.
-    const newsScore = 10;
-    setMV('news', 'ⓘ CEK KALENDER', 'neutral', newsScore, 10);
+    // 8) NEWS FILTER — pakai countdown high-impact news yg sudah berjalan di halaman
+    const newsSoon = secs <= 30*60; // <=30 menit ke high impact news
+    const newsScore = newsSoon ? 0 : 10;
+    setMV('news', newsSoon?'⚠ HIGH IMPACT':'✔ CLEAR', newsSoon?'warn':'ok', newsScore, 10);
     total+=newsScore;
 
-    // 10) SESSION (informational, max skor 0 sesuai rule AGS)
+    // 9) SESSION (informational, max skor 0 sesuai rule AGS)
     const hUTC=new Date().getUTCHours();
     const activeSessions = SESSIONS.filter(s=>sessIsActive(s,hUTC)).map(s=>s.name);
     const primary = activeSessions.find(n=>n==='LONDON'||n==='NEW YORK') || activeSessions[0];
@@ -1446,14 +1041,15 @@ async function fetchAIAnalysis(){
     // ===== SETUP SCORE =====
     const pct = Math.max(0, Math.min(100, Math.round(total)));
     const ssbNum=document.getElementById('ssb-num');
+    const ssbCat=document.getElementById('ssb-cat');
     const ssbFill=document.getElementById('ssb-fill');
-    if(ssbNum) ssbNum.textContent=pct+' / 100';
     let barColor='var(--red)', category='No Trade';
     if(pct>=81){barColor='var(--green)'; category='A+ Setup';}
     else if(pct>=61){barColor='var(--blue)'; category='Good Setup';}
     else if(pct>=41){barColor='var(--gold)'; category='Wait Confirmation';}
+    if(ssbNum){ ssbNum.textContent=pct; ssbNum.style.color=barColor; }
+    if(ssbCat){ ssbCat.textContent='· '+category; ssbCat.style.color=barColor; }
     if(ssbFill){ ssbFill.style.width=pct+'%'; ssbFill.style.background=barColor; }
-    if(ssbNum) ssbNum.style.color=barColor;
 
     // ===== FINAL DECISION =====
     const fdWord=document.getElementById('fd-word');
@@ -1479,60 +1075,11 @@ async function fetchAIAnalysis(){
     if(fdWord){ fdWord.textContent=category.toUpperCase(); fdWord.style.color=barColor; }
     if(fdAction){ fdAction.textContent=actionWord; fdAction.style.color=actionColor; }
     if(fdSub) fdSub.textContent=subTxt;
-    if(fdIcon){ fdIcon.textContent=icon; fdIcon.style.color=actionColor; fdIcon.style.background=actionColor+'22'; }
+    if(fdIcon){ fdIcon.textContent=icon; fdIcon.style.color=actionColor; fdIcon.style.background=actionColor.replace('var(--','rgba(').replace(')','').length?'':''; fdIcon.style.background=actionColor+'22'; }
     if(fdBox) fdBox.style.borderColor=actionColor+'55';
 
-    // ===== ALERT ENGINE TRIGGER =====
-    if(actionWord==='BUY' || actionWord==='SELL'){
-      const confluence=[];
-      if(structScore>0) confluence.push('Structure '+struct.type);
-      if(obScore>0) confluence.push(ob.mitigated?'OB Mitigated':'OB Formed');
-      if(fibScore>0) confluence.push('Fib '+fib.level+(fib.golden?' (Golden)':''));
-      if(fvgScore>0) confluence.push(fvg.filled?'FVG Filled':'FVG Open');
-      if(liqScore>0) confluence.push('Liquidity Swept');
-      if(volScore>0) confluence.push('Volume Spike');
-      if(latestDXYAligned===true) confluence.push('DXY Aligned');
-      else if(latestDXYAligned===false) confluence.push('⚠ DXY Conflict');
-      const atrNow = atr14;
-      const isBuySignal = actionWord==='BUY';
-      const slAlert  = isBuySignal ? price - atrNow : price + atrNow;
-      const tpAlert  = isBuySignal ? price + atrNow*2 : price - atrNow*2;
-      const hUTCnow = new Date().getUTCHours();
-      const activeSess = SESSIONS.filter(s=>sessIsActive(s,hUTCnow)).map(s=>s.name).join(' + ') || 'CLOSED';
-      checkAndAlert({
-        action: actionWord,
-        score: pct,
-        price: price,
-        sl: slAlert,
-        tp: tpAlert,
-        confluence: confluence.join(' · ') || '—',
-        session: activeSess
-      });
-    } else {
-      lastAlertedAction = null; // reset so next valid signal can alert again
-    }
-
-    // ===== FIBONACCI TIME ZONE (eksperimental, informational only) =====
-    renderFibTimeZone(highs, lows, closes);
-
-    // ===== LIVE AI SCORE (Buy % / Sell %) =====
-    const buyScore = scoreDirection(price, ema50, opens, highs, lows, closes, vols, 'bull');
-    const sellScore = scoreDirection(price, ema50, opens, highs, lows, closes, vols, 'bear');
-    buildBar('buyBar', buyScore);
-    buildBar('sellBar', sellScore);
-    const buyPctEl=document.getElementById('buyScorePct');
-    const sellPctEl=document.getElementById('sellScorePct');
-    if(buyPctEl) buyPctEl.textContent=buyScore+'%';
-    if(sellPctEl) sellPctEl.textContent=sellScore+'%';
-    const aiUpdEl=document.getElementById('aiScoreUpdated');
-    if(aiUpdEl){
-      const now=new Date();
-      const pad=n=>String(n).padStart(2,'0');
-      aiUpdEl.textContent=`Updated ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-    }
-
   } catch(e){
-    ['trend','structure','ob','fib','fvg','liq','ema','vol','news'].forEach(k=>{
+    ['trend','structure','ob','fvg','liq','ema','vol','news'].forEach(k=>{
       const st=document.getElementById('mv-'+k+'-status');
       if(st){ st.className='mv-status neutral'; st.textContent='— ERROR'; }
     });
@@ -1541,39 +1088,6 @@ async function fetchAIAnalysis(){
 
 fetchAIAnalysis();
 setInterval(fetchAIAnalysis, 5*60*1000);
-
-// ===================================================================
-// DXY CORRELATION (internal only, tidak ditampilkan sebagai card —
-// tetap dihitung di background karena dipakai sebagai salah satu
-// konfluensi di Alert Engine di atas.)
-// ===================================================================
-let currentGoldBias = null; // di-set di fetchAIAnalysis()
-let latestDXYAligned = null;
-
-async function fetchDXY(){
-  const url = `https://api.twelvedata.com/time_series?symbol=DXY&interval=15min&outputsize=60&apikey=${TD_KEY}`;
-  try{
-    const res = await queueApiCall(()=>fetch(url));
-    const data = await res.json();
-    if(!data.values || !data.values.length) throw new Error('no dxy data');
-    const closes = data.values.map(v=>parseFloat(v.close)).reverse();
-    const ema50 = calcEMA(closes, Math.min(50, closes.length-1));
-    const price = closes[closes.length-1];
-    const dxyBull = price > ema50;
-
-    if(currentGoldBias){
-      // korelasi inverse: gold bullish sehat kalau DXY melemah, & sebaliknya
-      latestDXYAligned = (currentGoldBias==='bull' && !dxyBull) || (currentGoldBias==='bear' && dxyBull);
-    } else {
-      latestDXYAligned = null;
-    }
-  }catch(e){
-    latestDXYAligned = null;
-  }
-}
-
-fetchDXY();
-setInterval(fetchDXY, 5*60*1000);
 
 // ===================================================================
 // LIVE RISK CALCULATOR — harga & ATR dari Twelve Data
@@ -1647,13 +1161,57 @@ function updateRC(){
 async function fetchRCData(){
   const url=`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(TD_SYMBOL)}&interval=15min&outputsize=60&apikey=${TD_KEY}`;
   try{
-    const res=await queueApiCall(()=>fetch(url));
+    const res=await fetch(url);
     const data=await res.json();
     if(!data.values||!data.values.length) throw new Error('no data');
     const vals=[...data.values];
     rcPrice = parseFloat(vals[0].close);
     rcATR   = calcATR(vals, 14);
     updateRC();
+
+    // ===== MARKET CONDITION =====
+    const closes = vals.map(v=>parseFloat(v.close)).reverse();
+    const vols   = vals.map(v=>parseFloat(v.volume||0)).reverse();
+    const highs  = vals.map(v=>parseFloat(v.high));
+    const lows   = vals.map(v=>parseFloat(v.low));
+
+    // Trend Strength — slope EMA50 vs 5 candle lalu
+    const ema50now  = calcEMA(closes, Math.min(50,closes.length));
+    const ema50prev = calcEMA(closes.slice(0,-5), Math.min(50,closes.length-5));
+    const slope = Math.abs((ema50now - ema50prev) / ema50prev * 100);
+    let strength, strengthColor;
+    if(slope > 0.15){strength='STRONG';strengthColor='var(--gold)';}
+    else if(slope > 0.05){strength='MODERATE';strengthColor='var(--gold)';}
+    else{strength='WEAK';strengthColor='var(--muted)';}
+
+    // Volatility — ATR % of price
+    const atrPct = (rcATR / rcPrice) * 100;
+    let vol, volColor;
+    if(atrPct > 0.4){vol='HIGH';volColor='var(--gold)';}
+    else if(atrPct > 0.2){vol='MEDIUM';volColor='var(--gold)';}
+    else{vol='LOW';volColor='var(--muted)';}
+
+    // Volume trend
+    const avgVol20 = vols.slice(-21,-1).reduce((a,b)=>a+b,0)/20;
+    const lastVol  = vols[vols.length-1];
+    const prev3Vol = vols.slice(-4,-1).reduce((a,b)=>a+b,0)/3;
+    let volTrend, volTrendColor;
+    if(lastVol > avgVol20*1.2){volTrend='INCREASING';volTrendColor='var(--green)';}
+    else if(lastVol < avgVol20*0.8){volTrend='DECREASING';volTrendColor='var(--red)';}
+    else{volTrend='NORMAL';volTrendColor='var(--muted)';}
+
+    // Spread — high-low candle terbaru dalam points (0.1 = 1 point untuk XAU)
+    const spread = ((highs[0] - lows[0]) * 10).toFixed(0);
+
+    const setMC = (id, text, color) => {
+      const el = document.getElementById(id);
+      if(el){ el.textContent=text; el.style.color=color; }
+    };
+    setMC('mc-strength',  strength,  strengthColor);
+    setMC('mc-volatility',vol,       volColor);
+    setMC('mc-volume',    volTrend,  volTrendColor);
+    setMC('mc-spread',    spread+' points', 'var(--text)');
+    setMC('mc-atr',       rcATR.toFixed(1), 'var(--text)');
 
     const now=new Date();
     const pad=n=>String(n).padStart(2,'0');
