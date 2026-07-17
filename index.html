@@ -257,24 +257,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
 .btn-primary { background: var(--green); color: #fff; }
 .btn-primary:hover { background: var(--green2); }
 .btn-ghost { background: var(--panel2); border: 1px solid var(--line); color: var(--muted); }
-.study-tab.active { background: rgba(34,197,94,.15); border-color: rgba(34,197,94,.4); color: var(--green); font-weight: 700; }
-.study-card { cursor: pointer; overflow: hidden; padding: 0; transition: transform .15s, border-color .15s; }
-.study-card:hover { transform: translateY(-2px); border-color: rgba(34,197,94,.4); }
-.study-thumb-wrap { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; overflow: hidden; }
-.study-thumb-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.study-play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.15); }
-.study-play span { width: 44px; height: 44px; border-radius: 50%; background: rgba(0,0,0,.6); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 16px; }
-.study-cat-badge { position: absolute; top: 8px; left: 8px; font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 6px; background: rgba(0,0,0,.65); color: var(--green); text-transform: uppercase; letter-spacing: .3px; }
-.study-body { padding: 10px 12px 12px; }
-.study-title { font-size: 13px; font-weight: 700; line-height: 1.3; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.study-channel { font-size: 11px; color: var(--muted); }
-.video-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.85); display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
-.video-modal-overlay.show { display: flex; }
-.video-modal-box { width: 100%; max-width: 760px; }
-.video-modal-frame-wrap { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; }
-.video-modal-frame-wrap iframe { width: 100%; height: 100%; border: none; }
-.video-modal-close { text-align: right; margin-bottom: 8px; }
-.video-modal-close span { cursor: pointer; color: #fff; font-size: 20px; background: rgba(255,255,255,.1); width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; }
 .btn-red { background: rgba(239,68,68,.15); border: 1px solid var(--red); color: var(--red); }
 
 /* TOAST */
@@ -442,7 +424,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
     <div class="nav-item" data-page="journal"><span class="nav-icon">📋</span> Trading Journal</div>
     <div class="nav-item" data-page="statistics"><span class="nav-icon">🥧</span> Statistics</div>
     <div class="nav-item" data-page="calendar"><span class="nav-icon">📅</span> Economy Calendar</div>
-    <div class="nav-item" data-page="study"><span class="nav-icon">🎓</span> Study</div>
     <div class="nav-item" data-page="about"><span class="nav-icon">ℹ️</span> About</div>
   </nav>
   <div class="sidebar-bottom">
@@ -654,24 +635,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
       </div>
     </div>
 
-    <!-- ===== STUDY PAGE ===== -->
-    <div class="page" id="page-study">
-      <div style="font-size:16px;font-weight:800;margin-bottom:4px;">🎓 Study</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Belajar, pahami, dan tingkatkan skill tradingmu. Video dikurasi dari channel YouTube edukasi trading yang kredibel.</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;" id="studyTabs">
-        <button class="btn btn-ghost study-tab active" data-cat="all">Semua</button>
-        <button class="btn btn-ghost study-tab" data-cat="teknikal">Teknikal Analisis</button>
-        <button class="btn btn-ghost study-tab" data-cat="fundamental">Fundamental Saham</button>
-        <button class="btn btn-ghost study-tab" data-cat="gold">XAUUSD (Gold)</button>
-      </div>
-      <div id="studyGrid" class="grid-3">
-        <div class="loading-state"><span class="spinner"></span> Memuat video...</div>
-      </div>
-      <div style="font-size:11px;color:var(--muted);margin-top:16px;">
-        💡 Video ditampilkan langsung dari data resmi YouTube (judul, channel, thumbnail live). Kalau ada video yang mau kamu tambahin, kasih tau linknya ya.
-      </div>
-    </div>
-
     <!-- ===== ABOUT PAGE (Pip Calculator) ===== -->
     <div class="page" id="page-about">
       <div style="font-size:16px;font-weight:800;margin-bottom:4px;">🧮 Tools</div>
@@ -730,13 +693,6 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
 </div><!-- /main -->
 
 <!-- ===== MODAL: NEW JOURNAL ===== -->
-<div class="video-modal-overlay" id="videoModalOverlay" onclick="closeVideoModal(event)">
-  <div class="video-modal-box" onclick="event.stopPropagation()">
-    <div class="video-modal-close"><span onclick="closeVideoModal()">✕</span></div>
-    <div class="video-modal-frame-wrap" id="videoModalFrameWrap"></div>
-  </div>
-</div>
-
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-title">
@@ -2320,113 +2276,6 @@ async function deleteJournal(id) {
 }
 
 // ================================================================
-// STUDY PAGE — video edukasi trading dari YouTube
-// ================================================================
-// Video dikurasi manual dari channel edukasi trading Indonesia yang kredibel.
-// Judul, nama channel, dan thumbnail diambil LIVE dari YouTube (via oEmbed)
-// setiap halaman dibuka, jadi datanya selalu akurat & up to date.
-// Catatan: API publik oEmbed tidak menyediakan jumlah view/komentar
-// (butuh API key resmi YouTube), jadi angka itu sengaja tidak ditampilkan
-// supaya tidak menampilkan data yang tidak bisa diverifikasi. Klik video
-// untuk buka & lihat statistik aslinya langsung di YouTube.
-const studyVideos = [
-  // Teknikal Analisis
-  { id: 'h7FtW9umIeE', category: 'teknikal' },
-  { id: 'fQ0b3uaT4zs', category: 'teknikal' },
-  { id: 'YQdlHOfrJnc', category: 'teknikal' },
-  { id: 'H3D9wPRcuJI', category: 'teknikal' },
-  // Fundamental Saham
-  { id: 'ki7Rrk474F8', category: 'fundamental' },
-  { id: '5MWvAeOWsDA', category: 'fundamental' },
-  { id: 'SbUZ0PgIRbY', category: 'fundamental' },
-  // XAUUSD (Gold)
-  { id: 'TgRb3kJYKfE', category: 'gold' },
-  { id: 'M2v0MFdC0Nk', category: 'gold' },
-  { id: 'wf5DPRfjV4A', category: 'gold' },
-];
-const studyCatLabel = { teknikal: 'Teknikal Analisis', fundamental: 'Fundamental Saham', gold: 'XAUUSD (Gold)' };
-let studyMetaCache = {};
-let studyActiveCat = 'all';
-
-async function loadStudyPage() {
-  document.querySelectorAll('.study-tab').forEach(btn => {
-    btn.onclick = () => {
-      document.querySelectorAll('.study-tab').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      studyActiveCat = btn.dataset.cat;
-      renderStudyGrid();
-    };
-  });
-  await renderStudyGrid();
-}
-
-async function fetchVideoMeta(id) {
-  if (studyMetaCache[id]) return studyMetaCache[id];
-  try {
-    const res = await fetch(`https://noembed.com/embed?url=${encodeURIComponent('https://www.youtube.com/watch?v='+id)}`);
-    const data = await res.json();
-    const meta = {
-      title: data.title || 'Video Trading',
-      channel: data.author_name || 'YouTube',
-      thumb: data.thumbnail_url || `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
-    };
-    studyMetaCache[id] = meta;
-    return meta;
-  } catch (e) {
-    const meta = { title: 'Video Trading', channel: 'YouTube', thumb: `https://img.youtube.com/vi/${id}/hqdefault.jpg` };
-    studyMetaCache[id] = meta;
-    return meta;
-  }
-}
-
-async function renderStudyGrid() {
-  const grid = document.getElementById('studyGrid');
-  const list = studyActiveCat === 'all' ? studyVideos : studyVideos.filter(v => v.category === studyActiveCat);
-  if (!list.length) {
-    grid.innerHTML = '<div class="loading-state">Belum ada video untuk kategori ini.</div>';
-    return;
-  }
-  grid.innerHTML = list.map(v => `
-    <div class="card study-card" data-vid="${v.id}">
-      <div class="study-thumb-wrap">
-        <span class="study-cat-badge">${studyCatLabel[v.category]}</span>
-        <img id="thumb-${v.id}" src="https://img.youtube.com/vi/${v.id}/hqdefault.jpg" alt="thumbnail">
-        <div class="study-play"><span>▶</span></div>
-      </div>
-      <div class="study-body">
-        <div class="study-title" id="title-${v.id}">Memuat judul...</div>
-        <div class="study-channel" id="channel-${v.id}">Memuat channel...</div>
-      </div>
-    </div>
-  `).join('');
-
-  grid.querySelectorAll('.study-card').forEach(card => {
-    card.addEventListener('click', () => openVideoModal(card.dataset.vid));
-  });
-
-  list.forEach(async v => {
-    const meta = await fetchVideoMeta(v.id);
-    const titleEl = document.getElementById('title-'+v.id);
-    const channelEl = document.getElementById('channel-'+v.id);
-    const imgEl = document.getElementById('thumb-'+v.id);
-    if (titleEl) titleEl.textContent = meta.title;
-    if (channelEl) channelEl.textContent = meta.channel;
-    if (imgEl && meta.thumb) imgEl.src = meta.thumb;
-  });
-}
-
-function openVideoModal(id) {
-  document.getElementById('videoModalFrameWrap').innerHTML =
-    `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-  document.getElementById('videoModalOverlay').classList.add('show');
-}
-function closeVideoModal(ev) {
-  if (ev && ev.target !== ev.currentTarget) return;
-  document.getElementById('videoModalOverlay').classList.remove('show');
-  document.getElementById('videoModalFrameWrap').innerHTML = '';
-}
-
-// ================================================================
 // PIP CALCULATOR (About page)
 // ================================================================
 function calcPips() {
@@ -2527,7 +2376,6 @@ function switchPage(page) {
   if(page==='journal') loadJournalPage();
   if(page==='statistics') loadStats();
   if(page==='calendar') loadEconomicCalendarWidget();
-  if(page==='study') loadStudyPage();
 }
 
 // expose ke iframe anak (gold.html / saham.htmll) supaya tombol "Kembali ke Dashboard"
