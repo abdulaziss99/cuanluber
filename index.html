@@ -401,6 +401,16 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
 }
 .sheet-apply-btn:hover { background: var(--green2); }
 
+/* ECONOMIC CALENDAR PAGE */
+.calendar-widget-card { padding: 10px; }
+.calendar-widget-frame-wrap { width: 100%; height: 75vh; min-height: 520px; border-radius: 10px; overflow: hidden; }
+#economicCalendarWidget { width: 100%; height: 100%; }
+.ecw-copyright { text-align: center; font-size: 10px; color: var(--muted); margin-top: 8px; }
+.ecw-copyright a { color: var(--muted); }
+@media (max-width: 700px) {
+  .calendar-widget-frame-wrap { height: 70vh; min-height: 420px; }
+}
+
 /* RESPONSIVE */
 @media (max-width: 900px) {
   .sidebar { transform: translateX(-100%); }
@@ -431,6 +441,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
     <div class="nav-item" data-page="saham"><span class="nav-icon">📈</span> Saham</div>
     <div class="nav-item" data-page="journal"><span class="nav-icon">📋</span> Trading Journal</div>
     <div class="nav-item" data-page="statistics"><span class="nav-icon">🥧</span> Statistics</div>
+    <div class="nav-item" data-page="calendar"><span class="nav-icon">📅</span> Economy Calendar</div>
     <div class="nav-item" data-page="study"><span class="nav-icon">🎓</span> Study</div>
     <div class="nav-item" data-page="about"><span class="nav-icon">ℹ️</span> About</div>
   </nav>
@@ -631,6 +642,18 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
       <div id="statsContent"><div class="loading-state"><span class="spinner"></span> Calculating...</div></div>
     </div>
 
+    <!-- ===== ECONOMIC CALENDAR PAGE ===== -->
+    <div class="page" id="page-calendar">
+      <div style="font-size:16px;font-weight:800;margin-bottom:4px;">📅 Economy Calendar</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Kalender ekonomi real-time (powered by Tradays / MQL5).</div>
+      <div class="card calendar-widget-card">
+        <div class="calendar-widget-frame-wrap">
+          <div id="economicCalendarWidget"></div>
+        </div>
+        <div class="ecw-copyright"><a href="https://www.mql5.com/?utm_source=calendar.widget&utm_medium=link&utm_term=economic.calendar&utm_content=visit.mql5.calendar&utm_campaign=202.calendar.widget" rel="noopener nofollow" target="_blank">MQL5 Algo Trading Community</a></div>
+      </div>
+    </div>
+
     <!-- ===== STUDY PAGE ===== -->
     <div class="page" id="page-study">
       <div style="font-size:16px;font-weight:800;margin-bottom:4px;">🎓 Study</div>
@@ -649,15 +672,11 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); disp
       </div>
     </div>
 
-    <!-- ===== ABOUT PAGE (Economic Calendar + Pip Calculator) ===== -->
+    <!-- ===== ABOUT PAGE (Pip Calculator) ===== -->
     <div class="page" id="page-about">
-      <div style="font-size:16px;font-weight:800;margin-bottom:4px;">📅 Economic Calendar & Tools</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Kalender ekonomi real-time & kalkulator pip.</div>
+      <div style="font-size:16px;font-weight:800;margin-bottom:4px;">🧮 Tools</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Kalkulator pip untuk bantu hitung estimasi profit/loss.</div>
       <div class="grid-2">
-        <div class="card" style="display:flex;justify-content:center;padding:14px;">
-          <div id="financialjuice-eco-widget-container"></div>
-        </div>
-
         <div class="card">
           <div class="card-title">🧮 Pip Calculator</div>
           <div class="form-grid">
@@ -2451,41 +2470,39 @@ function calcPips() {
 }
 
 // ================================================================
-// FINANCIALJUICE ECONOMIC CALENDAR WIDGET
+// ECONOMIC CALENDAR WIDGET (Tradays / MQL5)
 // ================================================================
-function loadFinancialJuiceWidget() {
-  if (document.getElementById('FJ-Widgets')) {
-    if (window.FJWidgets) {
-      document.getElementById('financialjuice-eco-widget-container').innerHTML = '';
-      new window.FJWidgets.createWidget({
-        container: 'financialjuice-eco-widget-container',
-        mode: 'standard',
-        width: '340px',
-        height: '600px',
-        backColor: '1e222d',
-        fontColor: 'b2b5be',
-        widgetType: 'ECOCAL'
-      });
-    }
-    return;
-  }
-  var jo = document.createElement('script');
-  jo.type = 'text/javascript';
-  jo.id = 'FJ-Widgets';
-  var r = Math.floor(Math.random() * 9999);
-  jo.src = 'https://feed.financialjuice.com/widgets/widgets.js?r=' + r;
-  jo.onload = function () {
-    new window.FJWidgets.createWidget({
-      container: 'financialjuice-eco-widget-container',
-      mode: 'standard',
-      width: '340px',
-      height: '600px',
-      backColor: '1e222d',
-      fontColor: 'b2b5be',
-      widgetType: 'ECOCAL'
-    });
-  };
-  document.getElementsByTagName('head')[0].appendChild(jo);
+function loadEconomicCalendarWidget() {
+  const container = document.getElementById('economicCalendarWidget');
+  if (!container) return;
+
+  // Kalau widget sudah pernah dimuat sebelumnya, jangan load ulang script-nya —
+  // cukup biarkan iframe yang sudah ada (widget tradays otomatis responsive).
+  if (container.dataset.loaded === '1') return;
+  container.dataset.loaded = '1';
+  container.innerHTML = '<div class="loading-state"><span class="spinner"></span> Memuat kalender ekonomi...</div>';
+
+  const script = document.createElement('script');
+  script.async = true;
+  script.type = 'text/javascript';
+  script.dataset.type = 'calendar-widget';
+  script.src = 'https://www.tradays.com/c/js/widgets/calendar/widget.js?v=15';
+  script.innerHTML = JSON.stringify({
+    width: '100%',
+    height: '100%',
+    mode: '2',
+    fw: 'html',
+    lang: 'en',
+    dateformat: 'MDY',
+    theme: 1
+  });
+  script.onload = () => { container.innerHTML = ''; };
+
+  // Widget script tradays akan mencari elemen dengan id "economicCalendarWidget"
+  // dan menyuntikkan iframe kalender ke dalamnya, jadi kosongkan dulu placeholder
+  // begitu script berhasil dimuat.
+  container.innerHTML = '';
+  document.body.appendChild(script);
 }
 
 // ================================================================
@@ -2509,8 +2526,8 @@ function switchPage(page) {
 
   if(page==='journal') loadJournalPage();
   if(page==='statistics') loadStats();
+  if(page==='calendar') loadEconomicCalendarWidget();
   if(page==='study') loadStudyPage();
-  if(page==='about') loadFinancialJuiceWidget();
 }
 
 // expose ke iframe anak (gold.html / saham.htmll) supaya tombol "Kembali ke Dashboard"
