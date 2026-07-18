@@ -160,7 +160,9 @@ gap:10px;
 .data-note b { color: var(--gold); }
 
 /* NEWS LIST */
-.news-card-list { display: flex; flex-direction: column; }
+.news-card-list { display: flex; flex-direction: column; max-height: 420px; overflow-y: auto; padding-right: 4px; }
+.news-card-list::-webkit-scrollbar { width: 6px; }
+.news-card-list::-webkit-scrollbar-thumb { background: var(--line); border-radius: 10px; }
 .news-row { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .news-row:last-child { border-bottom: none; }
 .news-thumb { width: 52px; height: 52px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: var(--panel2); }
@@ -430,7 +432,7 @@ gap:10px;
         <div class="card-title-row">
           <div class="card-title" style="margin-bottom:0;">🗓️ Jadwal Wajib Lapor Keuangan</div>
         </div>
-        <div class="card-source-sub">Dihitung otomatis dari aturan OJK/IDX, bukan jadwal per-perusahaan</div>
+        <div class="card-source-sub">Deadline dari aturan OJK/IDX · Status submit real dari IDX (basket ~38 saham likuid)</div>
         <div id="earnCal"><div class="loading-state"><span class="spinner"></span></div></div>
       </div>
     </div>
@@ -1340,27 +1342,32 @@ async function renderCorpActionReal() {
     });
     dividends.sort((a,b) => b.ts - a.ts);
     splits.sort((a,b) => b.ts - a.ts);
-    dividends = dividends.slice(0, 5);
-    splits = splits.slice(0, 5);
+
+    // Cuma tampilin yang beneran masih baru (biar gak numpuk sama event lama
+    // yang udah lewat berbulan-bulan lalu). Window: 120 hari terakhir.
+    const nowSec = Date.now() / 1000;
+    const RECENT_WINDOW_SEC = 120 * 24 * 3600;
+    dividends = dividends.filter(d => (nowSec - d.ts) <= RECENT_WINDOW_SEC).slice(0, 5);
+    splits = splits.filter(s => (nowSec - s.ts) <= RECENT_WINDOW_SEC).slice(0, 5);
 
     const divHtml = dividends.length
       ? dividends.map(d => `<div class="ca-item"><b>${d.sym}</b><span>Ex-Date: ${fmtDateID(d.ts)} • Rp${d.amount}</span></div>`).join('')
-      : `<div class="ca-item"><span>Tidak ada data dividend 2 tahun terakhir untuk basket saham ini.</span></div>`;
+      : `<div class="ca-item"><span>Tidak ada dividend dalam 120 hari terakhir untuk basket saham ini.</span></div>`;
 
     const splitHtml = splits.length
       ? splits.map(s => `<div class="ca-item"><b>${s.sym}</b><span>${fmtDateID(s.ts)} • Ratio ${s.ratio}</span></div>`).join('')
-      : `<div class="ca-item"><span>Tidak ada stock split 2 tahun terakhir untuk basket saham ini.</span></div>`;
+      : `<div class="ca-item"><span>Tidak ada stock split dalam 120 hari terakhir untuk basket saham ini.</span></div>`;
 
     el.innerHTML = `
-      <div class="ca-group"><div class="ca-group-title" style="color:var(--green);">💰 Dividend Terakhir (Yahoo Finance)</div>
+      <div class="ca-group"><div class="ca-group-title" style="color:var(--green);">💰 Dividend Terbaru (120 hari terakhir, Yahoo Finance)</div>
         ${divHtml}</div>
-      <div class="ca-group"><div class="ca-group-title" style="color:var(--blue);">✂️ Stock Split Terakhir (Yahoo Finance)</div>
+      <div class="ca-group"><div class="ca-group-title" style="color:var(--blue);">✂️ Stock Split Terbaru (120 hari terakhir, Yahoo Finance)</div>
         ${splitHtml}</div>
       <div class="ca-group"><div class="ca-group-title" style="color:var(--gold);">📄 Right Issue</div>
         <div class="ca-item"><span>Belum ada sumber gratis real-time. <a href="https://www.idx.co.id/en/market-data/statistical-reports/digital-statistic/monthly/corporate-action-of-listed-companies/right-issue" target="_blank" rel="noopener noreferrer" style="color:var(--gold);">Cek jadwal resmi di IDX →</a></span></div></div>
       <div class="ca-group"><div class="ca-group-title">🆕 IPO</div>
         <div class="ca-item"><span>Belum ada sumber gratis real-time. <a href="https://www.e-ipo.co.id/id/ipo-perdana" target="_blank" rel="noopener noreferrer" style="color:var(--text);">Cek jadwal resmi di e-IPO →</a></span></div></div>
-      <div class="data-note">Dividend &amp; split di atas data <b>histori riil</b> dari Yahoo Finance (bukan jadwal masa depan). Right Issue &amp; IPO belum ada API gratis, jadi diarahkan ke sumber resmi.</div>`;
+      <div class="data-note">Dividend &amp; split di atas data <b>histori riil</b> dari Yahoo Finance, difilter cuma yang terjadi <b>120 hari terakhir</b> (bukan jadwal masa depan, dan gak numpuk sama event lama). Right Issue &amp; IPO belum ada API gratis, jadi diarahkan ke sumber resmi.</div>`;
   } catch (e) {
     console.error('renderCorpActionReal', e);
     el.innerHTML = '<div class="loading-state">Gagal memuat data corporate action.</div>';
@@ -1390,14 +1397,16 @@ function computeReportingDeadlines() {
   const periods = [];
 
   [
-    { label: 'Triwulan I', endMonth: 2, endDay: 31 },   // 31 Mar
-    { label: 'Semester I (Triwulan II)', endMonth: 5, endDay: 30 }, // 30 Jun
-    { label: 'Triwulan III', endMonth: 8, endDay: 30 }, // 30 Sep
+    { label: 'Triwulan I', periodeCode: 'tw1', endMonth: 2, endDay: 31 },   // 31 Mar
+    { label: 'Semester I (Triwulan II)', periodeCode: 'tw2', endMonth: 5, endDay: 30 }, // 30 Jun
+    { label: 'Triwulan III', periodeCode: 'tw3', endMonth: 8, endDay: 30 }, // 30 Sep
   ].forEach(q => {
     const periodEnd = new Date(year, q.endMonth, q.endDay);
     periods.push({
       label: q.label,
       type: 'interim',
+      periodeCode: q.periodeCode,
+      year,
       sortDate: addDays(periodEnd, 60),
       deadlineMin: addDays(periodEnd, 30),
       deadlineMax: addDays(periodEnd, 60),
@@ -1411,6 +1420,8 @@ function computeReportingDeadlines() {
     periods.push({
       label: `Laporan Tahunan Auditan FY${y}`,
       type: 'annual',
+      periodeCode: 'tahunan',
+      year: y,
       sortDate: deadline,
       deadlineMin: deadline,
       deadlineMax: deadline,
@@ -1424,6 +1435,89 @@ function fmtDateShortID(d) {
   return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+// ================================================================
+// STATUS SUBMIT REAL — endpoint resmi IDX yang dipakai website idx.co.id
+// sendiri buat nampilin daftar laporan keuangan per-emiten:
+//   /umbraco/Surface/ListedCompany/GetFinancialReport
+// (dipakai juga di beberapa scraper open-source lain, jadi bukan endpoint
+// ngarang). Query per kode saham + tahun + periode ('tw1'/'tw2'/'tw3'/'tahunan').
+// Kalau Results[] ada isinya → emiten itu SUDAH submit laporan periode
+// tsb. Field tanggal & nama file di response gak didokumentasikan resmi
+// dan bisa beda-beda, jadi kita coba tebak field yang relevan tapi kalau
+// gak ketemu ditampilkan tanpa tanggal (bukan dikira-kira).
+// ================================================================
+const IDX_FINREPORT_BASE = 'https://idx.co.id/umbraco/Surface/ListedCompany/GetFinancialReport';
+let reportingStatusCache = { submitted: [], periodLabel: '', year: null, loading: true, error: false };
+
+async function fetchIdxFinancialReport(kodeEmiten, year, periode) {
+  const url = `${IDX_FINREPORT_BASE}?indexFrom=0&pageSize=5&year=${year}&reportType=rdf&periode=${periode}&kodeEmiten=${kodeEmiten}`;
+  const res = await fetch(CORS_PROXY + encodeURIComponent(url));
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  const results = data?.Results || data?.results || [];
+  if (!results.length) return { submitted: false };
+  const r0 = results[0];
+  const atts = r0.Attachments || r0.attachments || [];
+  let fileUrl = null;
+  if (atts.length) {
+    const path = atts[0].File_Path || atts[0].file_path || atts[0].FilePath;
+    if (path) fileUrl = /^https?:\/\//i.test(path) ? path : `https://idx.co.id${path.startsWith('/') ? '' : '/'}${path}`;
+  }
+  // Nama field tanggal di response ini gak konsisten/gak didokumentasikan
+  // resmi — kita coba cari key apapun yang keliatan kayak field tanggal.
+  let dateStr = null;
+  for (const k of Object.keys(r0)) {
+    if (/tanggal|date/i.test(k) && r0[k]) { dateStr = String(r0[k]); break; }
+  }
+  return { submitted: true, fileUrl, dateStr };
+}
+
+async function loadReportingStatusReal() {
+  const periods = computeReportingDeadlines();
+  if (!periods.length) return;
+  const target = periods[0]; // periode yang lagi aktif dilaporkan sekarang
+  reportingStatusCache = { submitted: [], periodLabel: target.label, year: target.year, loading: true, error: false };
+  updateEarnStatusBox();
+
+  let errorCount = 0;
+  await fetchInBatches(STOCK_UNIVERSE, async s => {
+    try {
+      const r = await fetchIdxFinancialReport(s.sym, target.year, target.periodeCode);
+      if (r.submitted) reportingStatusCache.submitted.push({ sym: s.sym, name: s.name, fileUrl: r.fileUrl, dateStr: r.dateStr });
+    } catch (e) { errorCount++; }
+  }, 5, 400);
+
+  reportingStatusCache.loading = false;
+  // Kalau mayoritas request gagal, kemungkinan diblokir bot-protection IDX —
+  // jangan tampilkan seolah "belum lapor semua", tandai sebagai gagal.
+  if (errorCount > STOCK_UNIVERSE.length * 0.7) reportingStatusCache.error = true;
+  updateEarnStatusBox();
+}
+
+function updateEarnStatusBox() {
+  const box = document.getElementById('earnStatusBox');
+  if (!box) return;
+  const s = reportingStatusCache;
+  if (s.loading) {
+    box.innerHTML = '<div class="loading-state"><span class="spinner"></span> Cek status submit basket saham ke IDX...</div>';
+    return;
+  }
+  if (s.error) {
+    box.innerHTML = `<div class="loading-state">Gagal ambil status real dari IDX (kemungkinan diblokir bot-protection atau endpoint berubah). <span style="text-decoration:underline;cursor:pointer;color:var(--green);" onclick="loadReportingStatusReal()">Coba lagi</span></div>`;
+    return;
+  }
+  const total = STOCK_UNIVERSE.length;
+  const doneCount = s.submitted.length;
+  const listHtml = doneCount
+    ? s.submitted.map(x => `<div class="ca-item"><b>${x.sym}</b><span>${x.dateStr ? x.dateStr : 'Sudah submit'}${x.fileUrl ? ` • <a href="${x.fileUrl}" target="_blank" rel="noopener noreferrer" style="color:var(--blue);">Lihat file</a>` : ''}</span></div>`).join('')
+    : `<div class="ca-item"><span>Belum ada emiten di basket ini yang submit untuk periode ${s.periodLabel}.</span></div>`;
+  box.innerHTML = `
+    <div class="data-note" style="background:rgba(59,130,246,.06);border-color:rgba(59,130,246,.25);margin-bottom:8px;">
+      <b>${doneCount} / ${total}</b> saham basket sudah submit laporan keuangan periode ini ke IDX (data real via endpoint resmi GetFinancialReport, bukan basket seluruh emiten IDX).
+    </div>
+    <div class="wl-scroll" style="max-height:200px;">${listHtml}</div>`;
+}
+
 function renderReportingDeadlines() {
   const rows = computeReportingDeadlines();
   const el = document.getElementById('earnCal');
@@ -1435,7 +1529,12 @@ function renderReportingDeadlines() {
         <span>${r.type === 'annual' ? `Deadline: ${fmtDateShortID(r.deadlineMin)}` : `Estimasi: ${fmtDateShortID(r.deadlineMin)} – ${fmtDateShortID(r.deadlineMax)}`}</span>
       </div>`).join('')}
     </div>
-    <div class="data-note"><b>Laporan Tahunan Auditan</b> deadline pasti (90 hari, POJK 42/2016). <b>Triwulanan</b> masih rentang indikatif (30–60 hari, POJK 14/2022) karena tergantung skema reviu tiap emiten — cek keterbukaan informasi resmi di IDX untuk tanggal pasti tiap perusahaan.</div>`;
+    <div class="data-note"><b>Laporan Tahunan Auditan</b> deadline pasti (90 hari, POJK 42/2016). <b>Triwulanan</b> masih rentang indikatif (30–60 hari, POJK 14/2022) karena tergantung skema reviu tiap emiten — cek keterbukaan informasi resmi di IDX untuk tanggal pasti tiap perusahaan.</div>
+    <div class="ca-group-title" style="margin-top:12px;color:var(--blue);">📡 Status Submit Real — ${rows[0].label} ${rows[0].year}
+      <span style="margin-left:auto;font-size:9.5px;font-weight:600;color:var(--muted);cursor:pointer;text-decoration:underline;" onclick="loadReportingStatusReal()">refresh</span>
+    </div>
+    <div id="earnStatusBox"><div class="loading-state"><span class="spinner"></span> Cek status submit basket saham ke IDX...</div></div>`;
+  loadReportingStatusReal();
 }
 </script>
 </body>
