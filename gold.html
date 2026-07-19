@@ -309,6 +309,15 @@
   <div class="conn">● CONNECTED</div>
 </div>
 
+<!-- AI SUMMARY BANNER -->
+<div style="max-width:1700px; margin:0 auto; padding:14px 14px 0;">
+  <div class="card" id="aiSummaryCard">
+    <h3>🤖 AI Market Summary</h3>
+    <div id="ai-summary-text" style="font-size:13.5px; line-height:1.55; color:var(--text);">Menunggu data pasar...</div>
+    <div style="font-size:9px;color:var(--muted);margin-top:8px;font-family:var(--mono);" id="aiSummaryUpdated"></div>
+  </div>
+</div>
+
 <div class="layout">
 
   <!-- LEFT COLUMN -->
@@ -321,6 +330,21 @@
       <div class="trend-row"><span class="tf">M15</span><span class="trend-tag" id="trend-m15">— LOADING</span></div>
       <div class="trend-row"><span class="tf">M5</span><span class="trend-tag" id="trend-m5">— LOADING</span></div>
       <div style="font-size:9px;color:var(--muted);margin-top:6px;font-family:var(--mono);" id="trendUpdated"></div>
+    </div>
+
+    <div class="card">
+      <h3>🗓️ Daily Key Levels</h3>
+      <div class="row"><span class="label">Today High</span><span class="val bull" id="dkl-today-high">—</span></div>
+      <div class="row"><span class="label">Today Low</span><span class="val bear" id="dkl-today-low">—</span></div>
+      <div class="row"><span class="label">Prev Day High</span><span class="val bull" id="dkl-prev-high">—</span></div>
+      <div class="row"><span class="label">Prev Day Low</span><span class="val bear" id="dkl-prev-low">—</span></div>
+      <div style="border-top:1px solid var(--line);margin:8px 0;"></div>
+      <div class="row"><span class="label">Pivot (Classic)</span><span class="val neutral" id="dkl-pivot">—</span></div>
+      <div class="row"><span class="label">R1</span><span class="val bear" id="dkl-r1">—</span></div>
+      <div class="row"><span class="label">R2</span><span class="val bear" id="dkl-r2">—</span></div>
+      <div class="row"><span class="label">S1</span><span class="val bull" id="dkl-s1">—</span></div>
+      <div class="row"><span class="label">S2</span><span class="val bull" id="dkl-s2">—</span></div>
+      <div style="font-size:9px;color:var(--muted);margin-top:6px;font-family:var(--mono);" id="dklUpdated"></div>
     </div>
 
     <div class="card">
@@ -850,6 +874,112 @@ function updateSess(){
 buildSessBar();updateSess();setInterval(updateSess,1000);
 
 // ===================================================================
+// GLOBAL AI-SUMMARY STATE
+// Kumpulan data terbaru dari semua sumber (trend MTF, AI score, daily
+// key levels). Setiap fetch yang relevan update state ini lalu manggil
+// renderAISummaryFromState() supaya kalimat summary selalu sinkron sama
+// kondisi market terbaru tanpa perlu nunggu semua fetch selesai bareng.
+// ===================================================================
+const AI_STATE = {
+  price:null,
+  buy:null,
+  sell:null,
+  trends:{ h4:null, h1:null, m15:null, m5:null },
+  levels:null // { todayHigh, todayLow, prevHigh, prevLow, prevClose, pivot, r1, r2, s1, s2 }
+};
+
+function currentActiveSessionLabel(){
+  const hUTC=new Date().getUTCHours();
+  const active=SESSIONS.filter(s=>sessIsActive(s,hUTC)).map(s=>s.name);
+  if(!active.length) return 'Market Sepi (antar sesi)';
+  if(active.includes('LONDON') && active.includes('NEW YORK')) return 'London/NY Overlap';
+  if(active.includes('LONDON')) return 'London Session';
+  if(active.includes('NEW YORK')) return 'New York Session';
+  if(active.includes('TOKYO') && active.includes('SYDNEY')) return 'Asia Session';
+  if(active.includes('TOKYO')) return 'Tokyo Session';
+  if(active.includes('SYDNEY')) return 'Sydney Session';
+  return active.join(' + ');
+}
+
+// Cari support/resistance terdekat dari kumpulan level (daily H/L + pivot)
+function nearestSR(price, levels){
+  const vals = [levels.todayHigh, levels.todayLow, levels.prevHigh, levels.prevLow,
+                levels.pivot, levels.r1, levels.r2, levels.s1, levels.s2]
+                .filter(v=>typeof v==='number' && !isNaN(v));
+  let support = null, resistance = null;
+  vals.forEach(v=>{
+    if(v < price && (support===null || v>support)) support = v;
+    if(v > price && (resistance===null || v<resistance)) resistance = v;
+  });
+  return { support, resistance };
+}
+
+function renderAISummaryFromState(){
+  const s = AI_STATE;
+  const textEl = document.getElementById('ai-summary-text');
+  const updEl = document.getElementById('aiSummaryUpdated');
+  if(!textEl) return;
+  if(s.buy===null || s.sell===null || !s.price || !s.levels ||
+     !s.trends.h1 || !s.trends.h4 || !s.trends.m15){
+    textEl.textContent = 'Menunggu data pasar...';
+    return;
+  }
+
+  const { support, resistance } = nearestSR(s.price, s.levels);
+  const h4 = s.trends.h4, h1 = s.trends.h1, m15 = s.trends.m15;
+  const diff = s.buy - s.sell;
+
+  // ----- BIAS -----
+  let biasWord;
+  if(h1==='BULLISH' && diff>=15) biasWord = 'Bullish';
+  else if(h1==='BEARISH' && diff<=-15) biasWord = 'Bearish';
+  else if((h4==='BULLISH' && h1==='BEARISH') || (h4==='BEARISH' && h1==='BULLISH')) biasWord = 'Sideways / Conflicting';
+  else if(Math.abs(diff) < 12) biasWord = 'Sideways';
+  else biasWord = diff>0 ? 'Cenderung Bullish' : 'Cenderung Bearish';
+
+  // ----- DOMINANT TIMEFRAME + CAVEAT -----
+  let dominantTF = (h1==='BULLISH'||h1==='BEARISH') ? 'H1' : 'H4';
+  let caveat = '';
+  if(m15==='RETRACE' && (h1==='BULLISH'||h1==='BEARISH')){
+    caveat = ' tapi hati-hati retrace di M15';
+  } else if((h1==='BULLISH' && m15==='BEARISH') || (h1==='BEARISH' && m15==='BULLISH')){
+    caveat = ' namun M15 menunjukkan sinyal berlawanan';
+  } else if(h4===h1 && (h1==='BULLISH'||h1==='BEARISH')){
+    caveat = ' dengan dukungan H4 yang selaras';
+  }
+
+  // ----- ACTIONABLE -----
+  const pct = Math.max(s.buy, s.sell); // proxy setup strength
+  let action;
+  if(biasWord==='Bullish' && s.buy>=61){
+    action = 'cari peluang Buy di area support';
+  } else if(biasWord==='Bearish' && s.sell>=61){
+    action = 'cari peluang Sell di area resistance';
+  } else if(biasWord.indexOf('Sideways')===0 || biasWord.indexOf('Conflicting')>-1){
+    action = 'hindari trading hingga breakout jelas';
+  } else if(pct>=41){
+    action = 'tunggu konfirmasi tambahan sebelum entry';
+  } else {
+    action = 'hindari trading hingga sinyal lebih jelas';
+  }
+
+  const fmt = n => n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const supTxt = support!==null ? fmt(support) : '—';
+  const resTxt = resistance!==null ? fmt(resistance) : '—';
+
+  const sentence1 = `Bias saat ini ${biasWord} di ${dominantTF}${caveat}.`;
+  const sentence2 = `Support terdekat ${supTxt}, Resistance terdekat ${resTxt} — ${action}.`;
+
+  textEl.textContent = `${sentence1} ${sentence2}`;
+
+  if(updEl){
+    const now = new Date();
+    const pad = n=>String(n).padStart(2,'0');
+    updEl.textContent = `Updated ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())} · Sesi: ${currentActiveSessionLabel()}`;
+  }
+}
+
+// ===================================================================
 // LIVE TREND MTF — Twelve Data API
 // Fetch candle XAUUSD, hitung EMA50, tentukan trend tiap TF
 // ===================================================================
@@ -959,6 +1089,9 @@ async function fetchTrend(tf){
       el.className = 'trend-tag ' + trend.cls;
       el.textContent = trend.arrow + ' ' + trend.label;
     }
+    // simpan ke AI_STATE buat AI Summary (h4/h1/m15/m5)
+    const key = tf.label.toLowerCase();
+    if(AI_STATE.trends.hasOwnProperty(key)) AI_STATE.trends[key] = trend.label;
   } catch(e){
     const el = document.getElementById(tf.id);
     if(el){ el.className='trend-tag neutral'; el.textContent='— ERROR'; }
@@ -973,10 +1106,82 @@ async function fetchAllTrends(){
     const pad = n=>String(n).padStart(2,'0');
     el.textContent = `Updated ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
   }
+  renderAISummaryFromState();
 }
 
 fetchAllTrends();
 setInterval(fetchAllTrends, 5*60*1000);
+
+// ===================================================================
+// DAILY KEY LEVELS — Today High/Low, Previous Day High/Low,
+// Pivot Point (Classic), R1/R2/S1/S2
+// ===================================================================
+function setDKL(id, val, decimals=2){
+  const el = document.getElementById(id);
+  if(el) el.textContent = (typeof val === 'number' && !isNaN(val)) ? val.toLocaleString('en-US',{minimumFractionDigits:decimals,maximumFractionDigits:decimals}) : '—';
+}
+
+async function fetchDailyLevels(){
+  const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(TD_SYMBOL)}&interval=1day&outputsize=3&apikey=${TD_KEY}`;
+  try{
+    const res = await queueApiCall(()=>fetch(url));
+    const data = await res.json();
+    if(!data.values || data.values.length < 2) throw new Error('no data');
+    const vals = data.values; // index 0 = paling baru (bisa candle hari ini yg masih berjalan)
+
+    const todayStr = new Date().toISOString().slice(0,10);
+    let todayCandle, prevCandle;
+    if(vals[0].datetime === todayStr){
+      todayCandle = vals[0];
+      prevCandle  = vals[1];
+    } else {
+      // market lagi tutup / belum ada candle hari ini terbentuk —
+      // pakai candle terakhir sbg "today" & candle sebelumnya sbg prev
+      todayCandle = vals[0];
+      prevCandle  = vals[1];
+    }
+
+    const todayHigh = parseFloat(todayCandle.high);
+    const todayLow  = parseFloat(todayCandle.low);
+    const prevHigh  = parseFloat(prevCandle.high);
+    const prevLow   = parseFloat(prevCandle.low);
+    const prevClose = parseFloat(prevCandle.close);
+
+    const pivot = (prevHigh + prevLow + prevClose) / 3;
+    const r1 = 2*pivot - prevLow;
+    const s1 = 2*pivot - prevHigh;
+    const r2 = pivot + (prevHigh - prevLow);
+    const s2 = pivot - (prevHigh - prevLow);
+
+    setDKL('dkl-today-high', todayHigh);
+    setDKL('dkl-today-low', todayLow);
+    setDKL('dkl-prev-high', prevHigh);
+    setDKL('dkl-prev-low', prevLow);
+    setDKL('dkl-pivot', pivot);
+    setDKL('dkl-r1', r1);
+    setDKL('dkl-r2', r2);
+    setDKL('dkl-s1', s1);
+    setDKL('dkl-s2', s2);
+
+    AI_STATE.levels = { todayHigh, todayLow, prevHigh, prevLow, prevClose, pivot, r1, r2, s1, s2 };
+
+    const el = document.getElementById('dklUpdated');
+    if(el){
+      const now = new Date();
+      const pad = n=>String(n).padStart(2,'0');
+      el.textContent = `Updated ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    }
+    renderAISummaryFromState();
+  } catch(e){
+    ['dkl-today-high','dkl-today-low','dkl-prev-high','dkl-prev-low','dkl-pivot','dkl-r1','dkl-r2','dkl-s1','dkl-s2'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.textContent = '—';
+    });
+  }
+}
+
+fetchDailyLevels();
+setInterval(fetchDailyLevels, 15*60*1000); // level harian jarang berubah, refresh tiap 15 menit
 
 // ===================================================================
 // LIVE AI ANALYSIS — Twelve Data (M15 candle)
@@ -1296,6 +1501,12 @@ async function fetchAIAnalysis(){
       const pad=n=>String(n).padStart(2,'0');
       aiUpdEl.textContent=`Updated ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
     }
+
+    // simpan ke AI_STATE buat AI Summary
+    AI_STATE.price = price;
+    AI_STATE.buy = buyScore;
+    AI_STATE.sell = sellScore;
+    renderAISummaryFromState();
 
   } catch(e){
     ['trend','structure','ob','fvg','liq','ema','vol','news'].forEach(k=>{
