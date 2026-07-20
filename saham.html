@@ -144,10 +144,15 @@ html.ags-embedded .ticker-bar { top: 0; }
 .live-dot { width:6px; height:6px; border-radius:50%; background: var(--green); animation: livePulse 1.4s ease-in-out infinite; }
 @keyframes livePulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(.7); } }
 .tf-row { display:flex; gap:6px; margin: 10px 0 8px; flex-wrap: wrap; }
-.tf-btn { font-size: 11px; padding: 5px 11px; border-radius: 8px; cursor: pointer; color: var(--muted); border: 1px solid var(--line); background: var(--panel2); font-family: var(--sans); font-weight:600; }
+.tf-btn { font-size: 11px; padding: 5px 11px; border-radius: 8px; cursor: pointer; color: var(--muted); border: 1px solid var(--line); background: var(--panel2); font-family: var(--sans); font-weight:600; transition:.12s; }
 .tf-btn.active { background: rgba(34,197,94,.15); color: var(--green); border-color: rgba(34,197,94,.3); }
+.tf-btn.disabled { opacity:.5; pointer-events:none; }
 .ihsg-chart-wrap { width: 100%; height: 220px; position: relative; }
-.ihsg-chart-wrap canvas { width: 100%; height: 100%; }
+.ihsg-chart-wrap canvas { width: 100%; height: 100%; transition: opacity .12s ease; }
+.ihsg-chart-wrap canvas.chart-loading { opacity: .35; }
+.ihsg-chart-loader { position:absolute; top:0; left:0; right:0; bottom:0; display:none; align-items:center; justify-content:center; gap:8px; color:var(--muted); font-size:12px; pointer-events:none; }
+.ihsg-chart-loader.show { display:flex; }
+.candle-tooltip { position:absolute; pointer-events:none; background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:11px; font-family:var(--mono); color:var(--text); white-space:nowrap; z-index:10; display:none; box-shadow:0 4px 12px rgba(0,0,0,.3); }
 .breadth-row{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
@@ -342,7 +347,11 @@ gap:10px;
           <span class="tf-btn" data-tf="All">All</span>
         </div>
 
-        <div class="ihsg-chart-wrap"><canvas id="ihsgChart"></canvas></div>
+        <div class="ihsg-chart-wrap">
+          <canvas id="ihsgChart"></canvas>
+          <div class="ihsg-chart-loader" id="ihsgChartLoader"><span class="spinner"></span> Memuat...</div>
+          <div class="candle-tooltip" id="candleTooltip"></div>
+        </div>
 
         <div class="breadth-row">
           <div class="breadth-item"><div class="breadth-num" id="brAdv" style="color:var(--green);">—</div><div class="breadth-label">Advancers</div></div>
@@ -634,11 +643,13 @@ function navigateParent(page) {
 }
 
 // ================================================================
-// IHSG CHART — Yahoo Finance ^JKSE, via CORS proxy
+// IHSG CHART — Yahoo Finance ^JKSE, via CORS proxy. Ditampilkan
+// sebagai CANDLESTICK (OHLC) di canvas, bukan line chart.
 // ================================================================
 function setupTf() {
   document.querySelectorAll('.tf-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+      if (btn.classList.contains('active')) return; // sudah di timeframe ini
       document.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
       currentTf = btn.dataset.tf;
@@ -652,18 +663,48 @@ const TF_MAP = {
   '1Y': { range:'1y', interval:'1wk' }, 'YTD': { range:'ytd', interval:'1d' },
   'All': { range:'5y', interval:'1mo' },
 };
+
+let ihsgLoadToken = 0; // dipakai buat cegah race condition kalau user klik timeframe cepat berkali-kali
+
+function setChartLoading(isLoading) {
+  const canvas = document.getElementById('ihsgChart');
+  const loader = document.getElementById('ihsgChartLoader');
+  canvas.classList.toggle('chart-loading', isLoading);
+  loader.classList.toggle('show', isLoading);
+  document.querySelectorAll('.tf-btn').forEach(b => b.classList.toggle('disabled', isLoading));
+}
+
 async function loadIhsg(tf) {
   const meta = document.getElementById('ihsgMeta');
+  const myToken = ++ihsgLoadToken; // token unik buat request ini
+  setChartLoading(true);
   try {
     const { range, interval } = TF_MAP[tf];
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/%5EJKSE?interval=${interval}&range=${range}`;
     const res = await fetch(CORS_PROXY + encodeURIComponent(url));
     const data = await res.json();
+
+    // Kalau user udah klik timeframe lain sebelum request ini selesai,
+    // buang hasilnya — jangan timpa chart yang lagi ditunggu user (bikin
+    // switching timeframe kerasa lebih responsif & gak "kedip salah data").
+    if (myToken !== ihsgLoadToken) return;
+
     const result = data?.chart?.result?.[0];
     if (!result) throw new Error('Data IHSG tidak tersedia');
-    const closesRaw = result.indicators.quote[0].close || [];
-    const closes = closesRaw.filter(v => v != null);
-    if (!closes.length) throw new Error('Seri harga kosong');
+    const q = result.indicators.quote[0];
+    const timestamps = result.timestamp || [];
+    const rawOpen = q.open || [], rawHigh = q.high || [], rawLow = q.low || [], rawClose = q.close || [];
+
+    // Susun candle OHLC, buang bar yang datanya bolong (null)
+    const candles = [];
+    for (let i = 0; i < timestamps.length; i++) {
+      const o = rawOpen[i], h = rawHigh[i], l = rawLow[i], c = rawClose[i];
+      if (o == null || h == null || l == null || c == null) continue;
+      candles.push({ t: timestamps[i], o, h, l, c });
+    }
+    if (!candles.length) throw new Error('Seri harga kosong');
+
+    const closes = candles.map(cd => cd.c);
     const price = result.meta.regularMarketPrice ?? closes[closes.length-1];
     const prevClose = result.meta.chartPreviousClose ?? result.meta.previousClose ?? closes[0];
     const chg = price - prevClose;
@@ -679,61 +720,143 @@ async function loadIhsg(tf) {
     const liveBadge = document.getElementById('liveBadge');
     liveBadge.style.display = tf === '1D' ? 'inline-flex' : 'none';
 
-    drawIhsgChart(closes, chg>=0?'#22c55e':'#ef4444');
+    drawIhsgCandles(candles, tf);
 
     // breadth: coba data REAL dari IDX (scraping endpoint publik idx.co.id).
     // Kalau diblokir/berubah/gagal (rawan, karena bukan API resmi), fallback
     // otomatis ke estimasi indikatif dan itu ditandai jelas ke user (lihat brNote).
     renderBreadthReal(chgPct);
   } catch(e) {
+    if (myToken !== ihsgLoadToken) return;
     console.error('IHSG', e);
     meta.textContent = 'Gagal memuat data IHSG. Coba refresh.';
+  } finally {
+    if (myToken === ihsgLoadToken) setChartLoading(false);
   }
 }
 
-let lastChartData = [];
-let lastChartColor = '#22c55e';
+let lastCandleData = [];
+let lastCandleTf = '1D';
+let lastCandleLayout = null; // dipakai buat hit-testing tooltip on hover
 
-function drawIhsgChart(data, color) {
-  lastChartData = [...data];
-  lastChartColor = color;
+function fmtCandleDate(ts, tf) {
+  const d = new Date(ts * 1000);
+  if (tf === '1D') return d.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
+  if (tf === '1W' || tf === '1M' || tf === '3M' || tf === 'YTD') return d.toLocaleDateString('id-ID', { day:'2-digit', month:'short' });
+  return d.toLocaleDateString('id-ID', { month:'short', year:'numeric' });
+}
+
+function drawIhsgCandles(candles, tf) {
+  lastCandleData = candles;
+  lastCandleTf = tf;
 
   const canvas = document.getElementById('ihsgChart');
   const wrap = canvas.parentElement;
-  canvas.width = wrap.clientWidth; canvas.height = wrap.clientHeight;
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = wrap.clientWidth, cssH = wrap.clientHeight;
+  canvas.width = cssW * dpr; canvas.height = cssH * dpr;
   const ctx = canvas.getContext('2d');
-  const min = Math.min(...data), max = Math.max(...data), range = (max-min)||1;
-  const w = canvas.width, h = canvas.height, pad = 6;
-  ctx.clearRect(0,0,w,h);
-  // grid lines
-  ctx.strokeStyle = 'rgba(128,128,128,.12)'; ctx.lineWidth = 1;
-  for (let i=1;i<4;i++) { const y = (h/4)*i; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
-  ctx.beginPath();
-  data.forEach((v,i) => {
-    const x = (i/(data.length-1))*w;
-    const y = h - pad - ((v-min)/range)*(h-pad*2);
-    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  const w = cssW, h = cssH;
+  const padTop = 10, padBottom = 6, padLeft = 4, padRight = 54; // padRight buat label harga di kanan
+
+  const highs = candles.map(c => c.h), lows = candles.map(c => c.l);
+  const max = Math.max(...highs), min = Math.min(...lows);
+  const range = (max - min) || (max * 0.01) || 1;
+  const yPad = range * 0.08; // sedikit ruang atas-bawah biar candle gak mepet tepi
+  const yMax = max + yPad, yMin = min - yPad, yRange = yMax - yMin;
+
+  const plotW = w - padLeft - padRight, plotH = h - padTop - padBottom;
+  const n = candles.length;
+  const slot = plotW / n;
+  const bodyW = Math.max(1.5, Math.min(slot * 0.62, 14));
+
+  ctx.clearRect(0, 0, w, h);
+
+  // grid lines + label harga horizontal
+  ctx.strokeStyle = 'rgba(128,128,128,.12)';
+  ctx.fillStyle = 'rgba(128,128,128,.55)';
+  ctx.font = '9px ' + getComputedStyle(document.body).fontFamily;
+  ctx.textBaseline = 'middle';
+  const gridLines = 4;
+  for (let i = 0; i <= gridLines; i++) {
+    const y = padTop + (plotH / gridLines) * i;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w - padRight, y); ctx.stroke();
+    const val = yMax - (yRange / gridLines) * i;
+    ctx.fillText(val.toLocaleString('id-ID', { maximumFractionDigits: 0 }), w - padRight + 6, y);
+  }
+
+  const toY = v => padTop + (1 - (v - yMin) / yRange) * plotH;
+
+  const layout = []; // simpan posisi tiap candle buat tooltip hover
+
+  candles.forEach((cd, i) => {
+    const cx = padLeft + slot * i + slot / 2;
+    const isUp = cd.c >= cd.o;
+    const color = isUp ? '#22c55e' : '#ef4444';
+
+    const yHigh = toY(cd.h), yLow = toY(cd.l);
+    const yOpen = toY(cd.o), yClose = toY(cd.c);
+    const yBodyTop = Math.min(yOpen, yClose);
+    const yBodyBottom = Math.max(yOpen, yClose);
+    const bodyH = Math.max(1, yBodyBottom - yBodyTop);
+
+    // wick
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx, yHigh);
+    ctx.lineTo(cx, yLow);
+    ctx.stroke();
+
+    // body
+    ctx.fillStyle = color;
+    ctx.fillRect(cx - bodyW / 2, yBodyTop, bodyW, bodyH);
+
+    layout.push({ x0: cx - slot / 2, x1: cx + slot / 2, cd });
   });
-  ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineJoin='round'; ctx.stroke();
-  ctx.lineTo(w,h); ctx.lineTo(0,h); ctx.closePath();
-  const grad = ctx.createLinearGradient(0,0,0,h);
-  grad.addColorStop(0, color+'33'); grad.addColorStop(1, color+'00');
-  ctx.fillStyle = grad; ctx.fill();
+
+  lastCandleLayout = { layout, plotW, padLeft, w, h };
 }
+
+// ---------- Tooltip hover pada candle ----------
+(function setupCandleHover() {
+  const canvas = document.getElementById('ihsgChart');
+  const wrap = canvas.parentElement;
+  const tooltip = document.getElementById('candleTooltip');
+  if (!canvas || !tooltip) return;
+
+  canvas.addEventListener('mousemove', (ev) => {
+    if (!lastCandleLayout || !lastCandleLayout.layout.length) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = ev.clientX - rect.left;
+    const hit = lastCandleLayout.layout.find(l => x >= l.x0 && x < l.x1);
+    if (!hit) { tooltip.style.display = 'none'; return; }
+    const { cd } = hit;
+    const isUp = cd.c >= cd.o;
+    const color = isUp ? 'var(--green)' : 'var(--red)';
+    tooltip.innerHTML = `
+      <div style="color:var(--muted);margin-bottom:3px;">${fmtCandleDate(cd.t, lastCandleTf)}</div>
+      <div>O <b style="color:${color};">${cd.o.toLocaleString('id-ID',{maximumFractionDigits:2})}</b></div>
+      <div>H <b style="color:${color};">${cd.h.toLocaleString('id-ID',{maximumFractionDigits:2})}</b></div>
+      <div>L <b style="color:${color};">${cd.l.toLocaleString('id-ID',{maximumFractionDigits:2})}</b></div>
+      <div>C <b style="color:${color};">${cd.c.toLocaleString('id-ID',{maximumFractionDigits:2})}</b></div>`;
+    let left = ev.clientX - rect.left + 12;
+    if (left + 110 > rect.width) left = ev.clientX - rect.left - 122;
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = '8px';
+    tooltip.style.display = 'block';
+  });
+  canvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+})();
+
 let resizeTimer;
-
 window.addEventListener("resize", () => {
-
     clearTimeout(resizeTimer);
-
     resizeTimer = setTimeout(() => {
-
-        if(lastChartData.length){
-            drawIhsgChart(lastChartData, lastChartColor);
-        }
-
-    },150);
-
+        if (lastCandleData.length) drawIhsgCandles(lastCandleData, lastCandleTf);
+    }, 150);
 });
 // ================================================================
 // BREADTH REAL — scraping endpoint publik idx.co.id (Stock Summary).
@@ -1488,7 +1611,7 @@ async function loadReportingStatusReal() {
   }, 5, 400);
 
   reportingStatusCache.loading = false;
-  // Kalau mayoritas request gagal, kemungkinan diblokir bot-protection IDX —
+  // Kalau mayoritas request gagal, kemungkinan diblokir bot-protection —
   // jangan tampilkan seolah "belum lapor semua", tandai sebagai gagal.
   if (errorCount > STOCK_UNIVERSE.length * 0.7) reportingStatusCache.error = true;
   updateEarnStatusBox();
