@@ -373,7 +373,18 @@ Ingatkan singkat bahwa ini bukan nasihat keuangan, keputusan tetap di tangan Azi
     '.topbar-left .greeting{font-size:15px}.content{padding:12px}' +
     '#journalTable,#recentJournal,#statsContent{overflow-x:auto}#journalTable .tbl{min-width:760px}' +
     '.form-grid{grid-template-columns:1fr}.form-group.span-2{grid-column:span 1}' +
-    '.ai-wrap{height:calc(100dvh - 200px)}.ai-msg{max-width:96%}}' +
+    '.ai-wrap{height:calc(100dvh - 290px)}.ai-msg{max-width:96%}}' +
+    'html,body{max-width:100%;overflow-x:hidden}.main{min-width:0;max-width:100%}.card,.dash-top>*,.grid-2>*,.grid-4>*{min-width:0}' +
+    '.nav-item .nl-short{display:none}' +
+    '@media(max-width:900px){' +
+    '.sidebar{transform:none!important;top:auto;bottom:0;left:0;right:0;width:100%;height:auto;flex-direction:row;border-right:none;border-top:1px solid var(--line);padding-bottom:calc(env(safe-area-inset-bottom) + 6px);z-index:150}' +
+    '.sidebar-logo,.sidebar-bottom{display:none}' +
+    '.sidebar-nav{display:flex;flex-direction:row;gap:2px;padding:6px 4px 0;width:100%;overflow:visible}' +
+    '.nav-item{flex:1;min-width:0;flex-direction:column;justify-content:center;gap:1px;padding:6px 2px;margin:0;font-size:10px;text-align:center;white-space:nowrap}' +
+    '.nav-item .nav-icon{font-size:20px;width:auto}.nav-item .nl-full{display:none}.nav-item .nl-short{display:inline}' +
+    '.hamburger{display:none!important}' +
+    '.main{padding-bottom:calc(84px + env(safe-area-inset-bottom))}' +
+    '.toast{bottom:calc(90px + env(safe-area-inset-bottom))}}' +
     '@media(min-width:1101px){.dash-top{grid-template-columns:minmax(280px,1fr) 2.2fr}}' +
     '#combinedNews .news-row{cursor:pointer}#combinedNews .news-row-title a:hover{text-decoration:underline}';
   document.head.appendChild(st2);
@@ -392,6 +403,14 @@ Ingatkan singkat bahwa ini bukan nasihat keuangan, keputusan tetap di tangan Azi
     conn.textContent = ok ? '● CONNECTED' : (navigator.onLine ? '○ CONNECTING' : '● OFFLINE');
     conn.style.color = ok ? 'var(--green)' : (navigator.onLine ? 'var(--gold)' : 'var(--red)');
   }, 1000);
+
+  /* label menu: panjang di desktop, pendek di bar bawah (HP) */
+  const NAVLBL = { dashboard: ['🏠', 'Dashboard', 'Home'], gold: ['📈', 'Chart', 'Chart'], xauai: ['🤖', 'XAU AI', 'XAU AI'],
+    journal: ['📋', 'Trading Journal', 'Journal'], statistics: ['📰', 'News & Calendar', 'News'], about: ['ℹ️', 'About', 'About'] };
+  document.querySelectorAll('.nav-item').forEach(el => {
+    const m = NAVLBL[el.dataset.page]; if (!m) return;
+    el.innerHTML = `<span class="nav-icon">${m[0]}</span><span class="nl-full"> ${m[1]}</span><span class="nl-short">${m[2]}</span>`;
+  });
 
   /* ---------- 8. News & Calendar: satu kartu berita (global + lokal), klik judul = buka web ---------- */
   const gCard = $('globalNews') && $('globalNews').closest('.card'); if (gCard) gCard.remove();
