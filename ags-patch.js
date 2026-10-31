@@ -1,6 +1,6 @@
 /* AGS PATCH v1 — taruh 1 baris sebelum </body> di index.html:
    <script src="ags-patch.js"></script>
-   Isi: hapus Saham · Gold→Chart · Dashboard=Statistik · Statistics→Market Corner · tambah XAU AI (Gemini) */
+   Isi: hapus Saham · Gold→Chart · Dashboard=Statistik · Statistics→News & Calendar · tambah XAU AI (Gemini) */
 (function () {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -18,14 +18,14 @@
 
   /* ---------- 1. Hapus Saham ---------- */
   const nav = document.querySelector('.sidebar-nav');
-  ['[data-page="saham"]'].forEach(s => { const n = nav.querySelector(s); if (n) n.remove(); });
+  ['[data-page="saham"]','[data-page="calendar"]'].forEach(s => { const n = nav.querySelector(s); if (n) n.remove(); });
   ['page-saham', 'saham-source-b64'].forEach(id => { const n = $(id); if (n) n.remove(); });
 
   /* ---------- 2. Rename menu ---------- */
   const navGold = nav.querySelector('[data-page="gold"]');
   navGold.innerHTML = '<span class="nav-icon">📈</span> Chart';
   const navStat = nav.querySelector('[data-page="statistics"]');
-  navStat.innerHTML = '<span class="nav-icon">🌍</span> Market Corner';
+  navStat.innerHTML = '<span class="nav-icon">📰</span> News & Calendar';
   const navAI = document.createElement('div');
   navAI.className = 'nav-item';
   navAI.dataset.page = 'xauai';
@@ -49,8 +49,15 @@
   if (sh) sh.textContent = '🏠 Dashboard';
   const mcTitle = document.createElement('div');
   mcTitle.style.cssText = 'font-size:16px;font-weight:800;margin-bottom:14px;';
-  mcTitle.textContent = '🌍 Market Corner';
+  mcTitle.textContent = '📰 News & Calendar';
   ps.prepend(mcTitle);
+
+  // pindahkan Economy Calendar ke bawah halaman News & Calendar, lalu hapus halaman lamanya
+  const pc = $('page-calendar');
+  if (pc) {
+    [...pc.children].forEach(c => ps.appendChild(c));
+    pc.remove();
+  }
 
   const st = document.createElement('style');
   st.textContent = '@media(max-width:700px){.grid-2{grid-template-columns:1fr}}' +
@@ -244,8 +251,8 @@ Ingatkan singkat bahwa ini bukan nasihat keuangan, keputusan tetap di tangan Azi
     if (t) t.classList.add('active');
     if (p === 'journal') loadJournalPage();
     if (p === 'dashboard') loadStats();
-    if (p === 'calendar') loadEconomicCalendarWidget();
-    if (p === 'statistics') { // = Market Corner: gambar ulang sparkline (tadinya tersembunyi)
+    if (p === 'statistics') { // = News & Calendar
+      try { loadEconomicCalendarWidget(); } catch (e) {}
       try {
         ['gold', 'usd'].forEach(k => {
           const s = marketSnapshot[k];
