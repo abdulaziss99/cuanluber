@@ -356,7 +356,13 @@ Ingatkan singkat bahwa ini bukan nasihat keuangan, keputusan tetap di tangan Azi
   const tr = document.querySelector('.topbar-right');
   tr.prepend(conn); tr.prepend(alertBtn);
   const st2 = document.createElement('style');
-  st2.textContent = '@media(max-width:700px){#pConn{display:none}}' +
+  st2.textContent = '@media(max-width:700px){#pConn{display:none}' +
+    '.topbar{flex-wrap:wrap;gap:8px;padding-left:12px;padding-right:12px}' +
+    '.topbar-right{width:100%;justify-content:space-between}' +
+    '.topbar-left .greeting{font-size:15px}.content{padding:12px}' +
+    '#journalTable,#recentJournal,#statsContent{overflow-x:auto}#journalTable .tbl{min-width:760px}' +
+    '.form-grid{grid-template-columns:1fr}.form-group.span-2{grid-column:span 1}' +
+    '.ai-wrap{height:calc(100dvh - 200px)}.ai-msg{max-width:96%}}' +
     '@media(min-width:1101px){.dash-top{grid-template-columns:minmax(280px,1fr) 2.2fr}}' +
     '#combinedNews .news-row{cursor:pointer}#combinedNews .news-row-title a:hover{text-decoration:underline}';
   document.head.appendChild(st2);
