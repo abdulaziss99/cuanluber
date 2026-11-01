@@ -400,6 +400,7 @@ Ingatkan singkat bahwa ini bukan nasihat keuangan, keputusan tetap di tangan Azi
     const t = $('page-' + p);
     if (t) t.classList.add('active');
     if (p === 'journal') loadJournalPage();
+    if (p === 'gold' && window.__agsRsiRefresh) window.__agsRsiRefresh();
     if (p === 'dashboard') loadStats();
     if (p === 'statistics') { // = News & Calendar
       try { loadEconomicCalendarWidget(); } catch (e) {}
@@ -700,7 +701,14 @@ Ingatkan singkat bahwa ini bukan nasihat keuangan, keputusan tetap di tangan Azi
     box.style.cssText = 'margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--panel2)';
     box.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
-        <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.5px">RSI (14) · M15 · AGS ZONES</div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.5px">RSI (14) · M15 · AGS ZONES</div>
+          <div style="display:flex;gap:6px;margin-top:6px">
+            <button id="agsSrcTd" style="font-size:10.5px;padding:3px 9px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer">XAU/USD · 1 menit</button>
+            <button id="agsSrcBn" style="font-size:10.5px;padding:3px 9px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer">⚡ LIVE · per detik</button>
+          </div>
+          <div id="agsSrcNote" style="font-size:9.5px;color:var(--muted);margin-top:4px"></div>
+        </div>
         <div><span id="agsRsiVal" style="font-family:var(--mono);font-size:22px;font-weight:800">—</span>
         <span id="agsRsiZone" style="font-size:13px;font-weight:800;margin-left:6px"></span></div>
       </div>
@@ -714,6 +722,7 @@ Ingatkan singkat bahwa ini bukan nasihat keuangan, keputusan tetap di tangan Azi
     function draw() {
       const cv = d.getElementById('agsRsiCv'); if (!cv) return;
       const dpr = w.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
+      if (!W || !H) return; // halaman Chart sedang tersembunyi
       cv.width = W * dpr; cv.height = H * dpr;
       const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, W, H);
@@ -739,28 +748,87 @@ Ingatkan singkat bahwa ini bukan nasihat keuangan, keputusan tetap di tangan Azi
       const last = pts[pts.length - 1], z = rsiZone(last);
       ctx.fillStyle = z.c; ctx.beginPath(); ctx.arc(padL + pw, Y(last), 4, 0, 7); ctx.fill();
     }
-    async function load() {
-      const valEl = d.getElementById('agsRsiVal'), zoneEl = d.getElementById('agsRsiZone');
+    const valEl = () => d.getElementById('agsRsiVal'), zoneEl = () => d.getElementById('agsRsiZone');
+    function applySeries(closes) {
+      series = rsiSeries(closes).slice(-80);
+      const last = series[series.length - 1]; if (last == null) return;
+      const z = rsiZone(last);
+      valEl().textContent = last.toFixed(1); valEl().style.color = z.c;
+      zoneEl().textContent = z.t.toUpperCase(); zoneEl().style.color = z.c;
+      draw();
+    }
+    function showErr(msg) { valEl().textContent = '—'; zoneEl().textContent = msg; zoneEl().style.color = 'var(--red)'; }
+
+    /* --- Mode 1: Twelve Data XAU/USD, refresh 1 menit --- */
+    let lastT = 0;
+    async function load(force) {
+      if (mode !== 'td') return;
+      if (!force && Date.now() - lastT < 20000) return;
+      lastT = Date.now();
       try {
         const run = () => fetch(`https://api.twelvedata.com/time_series?symbol=XAU%2FUSD&interval=15min&outputsize=140&apikey=${TD_KEY}`);
         const r = await (typeof w.queueApiCall === 'function' ? w.queueApiCall(run) : run());
         const j = await r.json();
         if (!j.values) throw new Error(j.message || 'no data');
-        const closes = [...j.values].reverse().map(x => +x.close);
-        series = rsiSeries(closes).slice(-80);
-        const last = series[series.length - 1], z = rsiZone(last);
-        valEl.textContent = last.toFixed(1);
-        valEl.style.color = z.c;
-        zoneEl.textContent = z.t.toUpperCase(); zoneEl.style.color = z.c;
-        draw();
+        applySeries([...j.values].reverse().map(x => +x.close));
+      } catch (e) { showErr('gagal ambil data'); setTimeout(() => load(true), 60000); }
+    }
+
+    /* --- Mode 2: LIVE per detik via Binance WebSocket (PAXG/USDT, token emas = proxy XAUUSD) --- */
+    let ws = null, wsTimer = null, bnCloses = [], bnT = 0, lastDraw = 0;
+    function stopBn() { clearTimeout(wsTimer); if (ws) { const x = ws; ws = null; try { x.close(); } catch (e) {} } }
+    function openWs() {
+      const sock = new WebSocket('wss://stream.binance.com:9443/ws/paxgusdt@kline_15m');
+      ws = sock;
+      sock.onmessage = ev => {
+        let k; try { k = JSON.parse(ev.data).k; } catch (e) { return; }
+        if (!k || !bnCloses.length) return;
+        const c = +k.c;
+        if (k.t === bnT) bnCloses[bnCloses.length - 1] = c;
+        else { bnCloses.push(c); bnCloses.shift(); bnT = k.t; }
+        const now = Date.now();
+        if (now - lastDraw > 400) { lastDraw = now; applySeries(bnCloses); }
+      };
+      sock.onclose = () => { if (mode === 'bn' && ws === sock) wsTimer = setTimeout(openWs, 3000); };
+    }
+    async function startBn() {
+      stopBn();
+      try {
+        const r = await fetch('https://api.binance.com/api/v3/klines?symbol=PAXGUSDT&interval=15m&limit=140');
+        const k = await r.json();
+        if (!Array.isArray(k) || !k.length) throw new Error('klines kosong');
+        bnCloses = k.map(x => +x[4]); bnT = k[k.length - 1][0];
+        applySeries(bnCloses);
+        openWs();
       } catch (e) {
-        if (valEl) { valEl.textContent = '—'; zoneEl.textContent = 'gagal ambil data'; zoneEl.style.color = 'var(--red)'; }
-        setTimeout(load, 60000);
+        console.warn('[RSI live]', e);
+        setMode('td'); showErr('Binance tidak bisa diakses, balik ke XAU/USD');
       }
     }
-    draw(); load();
-    setInterval(load, 5 * 60 * 1000);
+
+    function setMode(m) {
+      mode = m; lsSet('ags_rsi_src', m);
+      const on = 'rgba(34,197,94,.15)';
+      const b1 = d.getElementById('agsSrcTd'), b2 = d.getElementById('agsSrcBn');
+      b1.style.background = m === 'td' ? on : 'transparent'; b1.style.color = m === 'td' ? 'var(--green)' : 'var(--muted)';
+      b2.style.background = m === 'bn' ? on : 'transparent'; b2.style.color = m === 'bn' ? 'var(--green)' : 'var(--muted)';
+      d.getElementById('agsSrcNote').textContent = m === 'bn'
+        ? 'Live per detik dari PAXG/USDT (token emas). Angkanya mendekati XAUUSD tapi bukan spot OANDA, bisa selisih sedikit.'
+        : 'Data XAU/USD Twelve Data, diperbarui tiap 1 menit saat halaman Chart dibuka.';
+      if (m === 'bn') startBn(); else { stopBn(); load(true); }
+    }
+    let mode = lsGet('ags_rsi_src') === 'bn' ? 'bn' : 'td';
+    d.getElementById('agsSrcTd').onclick = () => setMode('td');
+    d.getElementById('agsSrcBn').onclick = () => setMode('bn');
+    draw(); setMode(mode);
+
+    window.__agsRsiRefresh = () => { if (mode === 'td') load(); else draw(); };
+    setInterval(() => {
+      const on = $('page-gold') && $('page-gold').classList.contains('active');
+      if (on && !document.hidden) load();
+    }, 60000);
     w.addEventListener('resize', draw);
     w.addEventListener('message', () => setTimeout(draw, 400));
+    try { new w.ResizeObserver(() => draw()).observe(box); } catch (e) {}
   }
 })();
