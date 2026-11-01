@@ -708,6 +708,7 @@ Ingatkan singkat bahwa ini bukan nasihat keuangan, keputusan tetap di tangan Azi
             <button id="agsSrcBn" style="font-size:10.5px;padding:3px 9px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer">⚡ LIVE · per detik</button>
           </div>
           <div id="agsSrcNote" style="font-size:9.5px;color:var(--muted);margin-top:4px"></div>
+          <div id="agsDbg" style="font-size:9.5px;color:var(--muted);margin-top:2px;font-family:var(--mono)"></div>
         </div>
         <div><span id="agsRsiVal" style="font-family:var(--mono);font-size:22px;font-weight:800">—</span>
         <span id="agsRsiZone" style="font-size:13px;font-weight:800;margin-left:6px"></span></div>
@@ -752,6 +753,8 @@ Ingatkan singkat bahwa ini bukan nasihat keuangan, keputusan tetap di tangan Azi
     function applySeries(closes) {
       series = rsiSeries(closes).slice(-80);
       const last = series[series.length - 1]; if (last == null) return;
+      const dbg = d.getElementById('agsDbg');
+      if (dbg) dbg.textContent = `${closes.length} candle · close terakhir: ${closes.slice(-6).map(x => x.toFixed(2)).join(' → ')}`;
       const z = rsiZone(last);
       valEl().textContent = last.toFixed(1); valEl().style.color = z.c;
       zoneEl().textContent = z.t.toUpperCase(); zoneEl().style.color = z.c;
