@@ -1,6 +1,6 @@
 /* AGS PATCH v3 — taruh 1 baris sebelum </body> di index.html:
    <script src="ags-patch.js"></script>
-   Isi: hapus Saham · Gold→Chart · Dashboard=Statistik · Statistics→News & Calendar · tambah XAU AI (ChatGPT / OpenAI) */
+   Isi: hapus Saham · Gold→Chart · Dashboard=Statistik · Statistics→News & Calendar · tambah XAU AI (Gemini + Groq) */
 (function () {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -149,19 +149,7 @@
   page.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap;">
       <div style="font-size:16px;font-weight:800;">🤖 XAU AI <span id="aiKeyState" style="font-size:11px;font-weight:600;color:var(--muted);"></span></div>
-      <div style="display:flex;gap:6px;"><select class="form-input" id="aiProv" style="padding:6px 8px;font-size:12px;width:auto;min-width:0;"><option value="openai">ChatGPT</option><option value="claude">Claude</option></select><button class="btn btn-ghost ai-hist-btn" id="aiHistBtn" style="padding:6px 12px;font-size:12px;">🕘 Riwayat</button><button class="btn btn-ghost" id="aiSetBtn" style="padding:6px 12px;font-size:12px;">⚙️ Pengaturan</button></div>
-    </div>
-    <div class="card mb-14" id="aiSettings" style="display:none;">
-      <div class="form-group" style="margin-bottom:8px;">
-        <label class="form-label" id="aiKeyLabel">OPENAI API KEY</label>
-        <input class="form-input" id="aiKey" type="password" placeholder="sk-..." autocomplete="off">
-      </div>
-      <div class="form-group" style="margin-bottom:8px;">
-        <label class="form-label">MODEL</label>
-        <input class="form-input" id="aiModel" placeholder="gpt-5.6-terra">
-      </div>
-      <div id="aiHelp" style="font-size:10.5px;color:var(--muted);margin-bottom:10px;"></div>
-      <button class="btn btn-primary" id="aiSave">💾 Simpan</button>
+      <div style="display:flex;gap:6px;"><button class="btn btn-ghost ai-hist-btn" id="aiHistBtn" style="padding:6px 12px;font-size:12px;">🕘 Riwayat</button><select class="form-input" id="aiProv" style="padding:6px 8px;font-size:12px;width:auto;min-width:0;"><option value="groq">Groq (Cepat)</option><option value="gemini">Gemini</option></select></div>
     </div>
     <div class="ai-layout">
     <div class="ai-side" id="aiSide">
@@ -173,7 +161,7 @@
       <div class="ai-chat" id="aiChat"></div>
       <div class="ai-chips" id="aiChips"></div>
       <label style="font-size:11px;color:var(--muted);margin-bottom:6px;display:flex;gap:6px;align-items:center;">
-        <input type="checkbox" id="aiSearch" checked> Pakai Web Search (berita terbaru)
+        <input type="checkbox" id="aiSearch" checked> Pakai pencarian web (berita terbaru)
       </label>
       <div class="ai-row">
         <textarea class="form-input" id="aiInput" placeholder="Tanya seputar XAUUSD: signal, analisa, berita, hitung lot..."></textarea>
@@ -184,17 +172,15 @@
   $('page-gold').after(page);
 
   /* ---------- 5. Logika XAU AI ---------- */
-  // Isi di antara tanda kutip kalau mau key otomatis aktif di SEMUA perangkat (lihat catatan keamanan).
-  const DEFAULT_KEYS = { openai: '', claude: '' };
-  const PROV_LS = 'ags_ai_provider';
-  const PROVS = {
-    openai: { name: 'ChatGPT', keyLs: 'ags_openai_key', modelLs: 'ags_openai_model', defModel: 'gpt-5.6-terra', ph: 'sk-...', label: 'OPENAI API KEY',
-      help: 'Key dibuat di platform.openai.com/api-keys (langganan ChatGPT Plus tidak otomatis jadi API key, billing API terpisah). Disimpan hanya di browser kamu. Model lebih ngebut/murah: gpt-5.6-luna.' },
-    claude: { name: 'Claude', keyLs: 'ags_claude_key', modelLs: 'ags_claude_model', defModel: 'claude-sonnet-5-5', ph: 'sk-ant-...', label: 'ANTHROPIC (CLAUDE) API KEY',
-      help: 'Key dibuat di console.anthropic.com (langganan Claude Pro/Max tidak otomatis jadi API key, billing API terpisah). Disimpan hanya di browser kamu. Model lebih ngebut/murah: claude-haiku-5-5. Web Search harus aktif di Console (Settings) agar berita terbaru jalan.' }
+  // API key langsung tertanam (tanpa menu pengaturan). PERINGATAN: siapa pun yang bisa buka source halaman ini bisa melihat key-nya.
+  const KEYS = {
+    gemini: 'AQ.Ab8RN6LLCXavEYWMj9iwLl5Pn7-SNAzOVf9ZsX9w4wB4h_V7Hw',
+    groq: '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'
   };
-  const getProv = () => { const p = lsGet(PROV_LS); return PROVS[p] ? p : 'openai'; };
-  const getKey = () => lsGet(PROVS[getProv()].keyLs) || DEFAULT_KEYS[getProv()];
+  const MODELS = { gemini: 'gemini-3.8-flash', groq: 'openai/gpt-oss-120b' };
+  const NAMES = { gemini: 'Gemini', groq: 'Groq' };
+  const PROV_LS = 'ags_ai_provider';
+  const getProv = () => { const p = lsGet(PROV_LS); return KEYS[p] ? p : 'groq'; };
   let storeOK = true;
   try { localStorage.setItem('_t', '1'); localStorage.removeItem('_t'); } catch (e) { storeOK = false; }
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
@@ -204,7 +190,7 @@
 Aturan AGS: risk maksimal 1% per trade, min RR 1:2, SL wajib, hindari entry saat berita high impact, maksimal 2 trade/hari, tunggu candle close.
 Untuk signal: beri bias (Buy/Sell/Wait), area entry, SL, TP1 (1:2), TP2 (1:4), alasan singkat dari data live, dan kondisi pembatalan. Pakai data live yang diberikan; jangan mengarang harga. Kalau setup kurang jelas, bilang WAIT.
 Hitung lot XAUUSD: 1 lot = 100 oz, jadi risiko($) = lot x jarak SL(dolar) x 100. Tampilkan rumusnya.
-Untuk berita, pakai web search bila tersedia dan sebutkan dampaknya ke emas (USD, yield, The Fed, geopolitik).
+Untuk berita, pakai Google Search bila tersedia dan sebutkan dampaknya ke emas (USD, yield, The Fed, geopolitik).
 Ingatkan singkat bahwa ini bukan nasihat keuangan, keputusan tetap di tangan Azis.`;
 
   const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -220,9 +206,9 @@ Ingatkan singkat bahwa ini bukan nasihat keuangan, keputusan tetap di tangan Azi
   }
 
   function refreshKeyState() {
-    const has = !!getKey();
-    $('aiKeyState').textContent = !storeOK && !DEFAULT_KEYS[getProv()] ? '· ⚠️ browser memblokir penyimpanan, key tidak bisa tersimpan' : has ? '· ✅ terhubung ' + PROVS[getProv()].name : '· ⚠️ belum ada API key';
-    $('aiKeyState').style.color = has ? 'var(--green)' : 'var(--gold)';
+    $('aiProv').value = getProv();
+    $('aiKeyState').textContent = '· ✅ terhubung ' + NAMES[getProv()];
+    $('aiKeyState').style.color = 'var(--green)';
   }
 
   /* indikator teknikal dari XAU/USD M15 (Twelve Data) */
@@ -263,8 +249,7 @@ Ingatkan singkat bahwa ini bukan nasihat keuangan, keputusan tetap di tangan Azi
   async function ask(q) {
     q = (q || '').trim();
     if (!q || busy) return;
-    const key = getKey();
-    if (!key) { $('aiSettings').style.display = 'block'; addMsg('ai', 'Isi API key ' + PROVS[getProv()].name + ' dulu di ⚙️ Pengaturan ya.'); return; }
+    const prov = getProv(), key = KEYS[prov];
     busy = true; $('aiSend').disabled = true;
     addMsg('user', q);
     const wait = addMsg('ai', '⏳ Menganalisa...');
@@ -275,40 +260,42 @@ Ingatkan singkat bahwa ini bukan nasihat keuangan, keputusan tetap di tangan Azi
       const ctx = await getContext();
       let arr = history.slice(-12);
       if (arr[0].role !== 'user') arr.shift();
-      const prov = getProv(), cfg = PROVS[prov];
-      const model = lsGet(cfg.modelLs) || cfg.defModel;
       const sys = SYSTEM + '\n\nDATA PASAR LIVE:\n' + ctx;
-      // history disimpan format lama (user/model + parts) supaya chat lama tetap kebaca -> konversi per provider
-      const msgs = arr.map(m => ({ role: m.role === 'model' ? 'assistant' : 'user', content: (m.parts || []).map(p => p.text || '').join('') }));
       const useSearch = $('aiSearch').checked;
       let url, headers, body;
-      if (prov === 'claude') {
-        url = 'https://api.anthropic.com/v1/messages';
-        headers = { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' };
-        body = { model, max_tokens: 3000, system: sys, messages: msgs };
-        if (useSearch) body.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }];
-      } else {
-        url = 'https://api.openai.com/v1/responses';
+      if (prov === 'groq') {
+        // history disimpan format Gemini (user/model + parts) -> konversi ke format chat biasa
+        const msgs = arr.map(m => ({ role: m.role === 'model' ? 'assistant' : 'user', content: (m.parts || []).map(p => p.text || '').join('') }));
+        const model = useSearch ? 'groq/compound' : MODELS.groq; // groq/compound = model Groq dengan web search bawaan
+        url = 'https://api.groq.com/openai/v1/chat/completions';
         headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key };
-        body = { model, instructions: sys, input: msgs, max_output_tokens: 3000, store: false };
-        if (/^(gpt-5|o\d)/i.test(model)) body.reasoning = { effort: 'low' }; // biar cepat
-        if (useSearch) body.tools = [{ type: 'web_search' }];
+        body = { model, messages: [{ role: 'system', content: sys }, ...msgs], temperature: 0.4, max_tokens: 1500 };
+        if (/gpt-oss/i.test(model)) body.reasoning_effort = 'low';
+      } else {
+        url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(MODELS.gemini)}:generateContent`;
+        headers = { 'Content-Type': 'application/json', 'x-goog-api-key': key };
+        body = {
+          systemInstruction: { parts: [{ text: sys }] },
+          contents: arr,
+          generationConfig: { temperature: 0.4, maxOutputTokens: 1500 }
+        };
+        if (useSearch) body.tools = [{ google_search: {} }];
       }
       let data;
       for (let attempt = 0; attempt < 3; attempt++) { // server sibuk / rate limit sementara -> coba ulang otomatis
         const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
         data = await res.json().catch(() => ({ error: { message: 'Respons server tidak valid (HTTP ' + res.status + ')' } }));
-        const emsg = (data.error && data.error.message) || '';
-        const busyErr = !res.ok && (res.status >= 500 || res.status === 529 || (res.status === 429 && !/quota|billing|credit/i.test(emsg)));
+        const emsg = (data.error && (data.error.message || data.error.status)) || '';
+        const busyErr = !res.ok && (res.status >= 500 || (res.status === 429 && !/quota|per day|TPD|RPD/i.test(emsg)) || /high demand|overloaded|UNAVAILABLE/i.test(emsg));
         if (!busyErr) break;
-        wait.innerHTML = fmt('⏳ Server ' + cfg.name + ' sibuk, mencoba lagi (' + (attempt + 1) + '/3)...');
+        wait.innerHTML = fmt('⏳ Server ' + NAMES[prov] + ' sibuk, mencoba lagi (' + (attempt + 1) + '/3)...');
         await new Promise(r => setTimeout(r, 2500 * (attempt + 1)));
       }
-      if (data.error) throw new Error(data.error.message || (cfg.name + ' error'));
-      const text = (prov === 'claude'
-        ? (data.content || []).filter(b => b.type === 'text').map(b => b.text || '').join('')
-        : (data.output || []).filter(o => o.type === 'message').map(o => (o.content || []).map(c => c.text || '').join('')).join('\n')).trim();
-      if (!text) throw new Error('Jawaban kosong (' + (data.stop_reason || data.incomplete_details?.reason || data.status || 'tidak diketahui') + '). Coba ulangi dengan kalimat lain.');
+      if (data.error) throw new Error(data.error.message || (NAMES[prov] + ' error'));
+      const text = (prov === 'groq'
+        ? String(data.choices?.[0]?.message?.content || '')
+        : (data.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('')).trim();
+      if (!text) throw new Error('Jawaban kosong (mungkin diblokir filter). Coba ulangi dengan kalimat lain.');
       history.push({ role: 'model', parts: [{ text }] });
       wait.innerHTML = fmt(text);
       cur.msgs.push({ role: 'ai', text }); cur.hist = history.slice(); cur.ts = Date.now();
@@ -317,13 +304,12 @@ Ingatkan singkat bahwa ini bukan nasihat keuangan, keputusan tetap di tangan Azi
       history.pop();
       if (cur) { cur.msgs.pop(); if (!cur.msgs.length) { chats = chats.filter(c => c !== cur); cur = null; renderHist(); } }
       let hint = '';
-      const pn = PROVS[getProv()].name;
-      if (/overloaded|server had an error|try again/i.test(e.message)) hint = '\n\n💡 Server ' + pn + ' lagi ramai. Tunggu sebentar lalu kirim lagi, atau ganti ke model yang lebih ringan di ⚙️ Pengaturan.';
-      else if (/quota|billing|insufficient|credit balance/i.test(e.message)) hint = '\n\n💡 Saldo/kuota API ' + pn + ' habis. Cek billing lalu top up.';
-      else if (/rate limit/i.test(e.message)) hint = '\n\n💡 Kena batas request. Tunggu 1 menit lalu ulangi, atau matikan centang "Pakai Web Search".';
-      else if (/incorrect api key|invalid_api_key|invalid x-api-key|unauthorized|authentication/i.test(e.message)) hint = '\n\n💡 API key ' + pn + ' salah. Cek lagi key di ⚙️ Pengaturan.';
-      else if (/web.?search/i.test(e.message)) hint = '\n\n💡 Web Search belum aktif di akun ' + pn + '. Aktifkan di dashboard-nya, atau matikan centang "Pakai Web Search".';
-      else if (/does not exist|not found|no longer available|do not have access/i.test(e.message)) hint = '\n\n💡 Ganti nama model di ⚙️ Pengaturan sesuai yang disarankan pada pesan error.';
+      const pn = NAMES[getProv()], other = getProv() === 'groq' ? 'Gemini' : 'Groq';
+      if (/per day|TPD|RPD/i.test(e.message)) hint = '\n\n💡 Jatah harian ' + pn + ' habis. Ganti ke ' + other + ' lewat dropdown di atas, atau coba lagi besok.';
+      else if (/high demand|overloaded|UNAVAILABLE/i.test(e.message)) hint = '\n\n💡 Server ' + pn + ' lagi ramai. Kirim lagi sebentar lagi, atau ganti ke ' + other + ' lewat dropdown di atas.';
+      else if (/quota|rate|too many/i.test(e.message)) hint = '\n\n💡 Kena batas request ' + pn + '. Tunggu 1 menit, matikan centang pencarian web, atau ganti ke ' + other + '.';
+      else if (/api key|unauthorized|invalid|permission/i.test(e.message)) hint = '\n\n💡 API key ' + pn + ' ditolak. Cek key di kode (KEYS) atau buat key baru.';
+      else if (/no longer available|not found|does not exist/i.test(e.message)) hint = '\n\n💡 Nama model ' + pn + ' sudah tidak tersedia. Ubah di MODELS pada kode.';
       wait.innerHTML = fmt('❌ ' + e.message + hint);
     }
     busy = false; $('aiSend').disabled = false;
@@ -346,33 +332,7 @@ Ingatkan singkat bahwa ini bukan nasihat keuangan, keputusan tetap di tangan Azi
   $('aiInput').addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('aiSend').click(); }
   });
-  function syncSettings() {
-    const p = getProv(), c = PROVS[p];
-    $('aiProv').value = p;
-    $('aiKeyLabel').textContent = c.label;
-    $('aiKey').placeholder = c.ph;
-    $('aiKey').value = '';
-    $('aiModel').placeholder = c.defModel;
-    $('aiModel').value = lsGet(c.modelLs) || c.defModel;
-    $('aiHelp').textContent = c.help;
-  }
-  $('aiProv').onchange = () => { lsSet(PROV_LS, $('aiProv').value); syncSettings(); refreshKeyState(); };
-  $('aiSetBtn').onclick = () => {
-    const box = $('aiSettings');
-    box.style.display = box.style.display === 'none' ? 'block' : 'none';
-    syncSettings();
-  };
-  $('aiSave').onclick = () => {
-    const c = PROVS[getProv()];
-    const k = $('aiKey').value.trim();
-    if (k) lsSet(c.keyLs, k);
-    lsSet(c.modelLs, $('aiModel').value.trim() || c.defModel);
-    $('aiKey').value = '';
-    $('aiSettings').style.display = 'none';
-    refreshKeyState();
-    showToast('Pengaturan XAU AI (' + c.name + ') disimpan ✅');
-  };
-  syncSettings();
+  $('aiProv').onchange = () => { lsSet(PROV_LS, $('aiProv').value); refreshKeyState(); showToast('XAU AI pakai ' + NAMES[getProv()] + ' ✅'); };
   refreshKeyState();
   /* sapaan awal lewat newChat() */
 
