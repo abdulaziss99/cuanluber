@@ -1,4 +1,4 @@
-/* AGS PATCH v2 — taruh 1 baris sebelum </body> di index.html:
+/* AGS PATCH v3 — taruh 1 baris sebelum </body> di index.html:
    <script src="ags-patch.js"></script>
    Isi: hapus Saham · Gold→Chart · Dashboard=Statistik · Statistics→News & Calendar · tambah XAU AI (Gemini) */
 (function () {
@@ -129,6 +129,16 @@
     '.ai-chip{font-size:11px;padding:5px 10px;border-radius:20px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);cursor:pointer;font-family:var(--sans)}' +
     '.ai-chip:hover{color:var(--green);border-color:var(--green)}' +
     '.ai-row{display:flex;gap:8px;align-items:flex-end}' +
+    '.ai-layout{display:flex;gap:12px;align-items:stretch}.ai-wrap{flex:1;min-width:0}' +
+    '.ai-side{width:260px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;height:calc(100vh - 150px);min-height:420px}' +
+    '.ai-hist{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px}' +
+    '.ai-h{padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--panel);cursor:pointer;display:flex;gap:6px;align-items:flex-start}' +
+    '.ai-h:hover{border-color:var(--green)}.ai-h.active{border-color:var(--green);background:rgba(34,197,94,.1)}' +
+    '.ai-h .t{flex:1;min-width:0;font-size:12px;font-weight:600;line-height:1.35;word-break:break-word}' +
+    '.ai-h .d{font-size:10px;color:var(--muted);margin-top:2px;font-weight:400}' +
+    '.ai-h .b{cursor:pointer;opacity:.6;font-size:13px;padding:0 2px}.ai-h .b:hover{opacity:1}' +
+    '.ai-hist-btn{display:none!important}' +
+    '@media(max-width:900px){.ai-layout{flex-direction:column}.ai-side{display:none;width:100%;height:auto;max-height:40vh;min-height:0}.ai-side.open{display:flex}.ai-hist-btn{display:inline-flex!important}}' +
     '.ai-row textarea{flex:1;min-height:42px;max-height:120px;resize:none}';
   document.head.appendChild(st);
 
@@ -139,7 +149,7 @@
   page.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap;">
       <div style="font-size:16px;font-weight:800;">🤖 XAU AI <span id="aiKeyState" style="font-size:11px;font-weight:600;color:var(--muted);"></span></div>
-      <button class="btn btn-ghost" id="aiSetBtn" style="padding:6px 12px;font-size:12px;">⚙️ Pengaturan</button>
+      <div style="display:flex;gap:6px;"><button class="btn btn-ghost ai-hist-btn" id="aiHistBtn" style="padding:6px 12px;font-size:12px;">🕘 Riwayat</button><button class="btn btn-ghost" id="aiSetBtn" style="padding:6px 12px;font-size:12px;">⚙️ Pengaturan</button></div>
     </div>
     <div class="card mb-14" id="aiSettings" style="display:none;">
       <div class="form-group" style="margin-bottom:8px;">
@@ -153,6 +163,12 @@
       <div style="font-size:10.5px;color:var(--muted);margin-bottom:10px;">Key dibuat gratis di aistudio.google.com/apikey (langganan Gemini Premium tidak otomatis jadi API key). Disimpan hanya di browser kamu.</div>
       <button class="btn btn-primary" id="aiSave">💾 Simpan</button>
     </div>
+    <div class="ai-layout">
+    <div class="ai-side" id="aiSide">
+      <button class="btn btn-primary" id="aiNew" style="justify-content:center;">＋ Chat baru</button>
+      <input class="form-input" id="aiFind" placeholder="🔍 Cari di riwayat chat...">
+      <div class="ai-hist" id="aiHistList"></div>
+    </div>
     <div class="ai-wrap">
       <div class="ai-chat" id="aiChat"></div>
       <div class="ai-chips" id="aiChips"></div>
@@ -163,11 +179,18 @@
         <textarea class="form-input" id="aiInput" placeholder="Tanya seputar XAUUSD: signal, analisa, berita, hitung lot..."></textarea>
         <button class="btn btn-primary" id="aiSend">Kirim</button>
       </div>
+    </div>
     </div>`;
   $('page-gold').after(page);
 
   /* ---------- 5. Logika XAU AI ---------- */
+  // Isi di antara tanda kutip kalau mau key otomatis aktif di SEMUA perangkat (lihat catatan keamanan).
+  const DEFAULT_KEY = '';
   const KEY_LS = 'ags_gemini_key', MODEL_LS = 'ags_gemini_model';
+  const getKey = () => lsGet(KEY_LS) || DEFAULT_KEY;
+  let storeOK = true;
+  try { localStorage.setItem('_t', '1'); localStorage.removeItem('_t'); } catch (e) { storeOK = false; }
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
   const DEFAULT_MODEL = 'gemini-3.8-flash';
   let history = [], busy = false;
 
@@ -191,8 +214,8 @@ Ingatkan singkat bahwa ini bukan nasihat keuangan, keputusan tetap di tangan Azi
   }
 
   function refreshKeyState() {
-    const has = !!lsGet(KEY_LS);
-    $('aiKeyState').textContent = has ? '· ✅ terhubung Gemini' : '· ⚠️ belum ada API key';
+    const has = !!getKey();
+    $('aiKeyState').textContent = !storeOK && !DEFAULT_KEY ? '· ⚠️ browser memblokir penyimpanan, key tidak bisa tersimpan' : has ? '· ✅ terhubung Gemini' : '· ⚠️ belum ada API key';
     $('aiKeyState').style.color = has ? 'var(--green)' : 'var(--gold)';
   }
 
@@ -223,6 +246,7 @@ Ingatkan singkat bahwa ini bukan nasihat keuangan, keputusan tetap di tangan Azi
       const c = v.map(x => +x.close), h = v.map(x => +x.high), l = v.map(x => +x.low);
       const p = c[c.length - 1], e50 = ema(c, 50), a = atr(h, l, c);
       out += `\nXAUUSD M15 live: harga ${p.toFixed(2)} | EMA50 ${e50.toFixed(2)} (${p > e50 ? 'di atas' : 'di bawah'}) | RSI14 ${rsi(c).toFixed(1)} | ATR14 ${a.toFixed(2)}` +
+        `\nZona RSI AGS: ${rsiZone(rsi(c)).t} (level: ${RSI_LEVELS.map(l => l.v + ' ' + l.t).join(', ')})` +
         `\nHigh/Low 100 candle M15: ${Math.max(...h).toFixed(2)} / ${Math.min(...l).toFixed(2)}` +
         `\n5 close terakhir: ${c.slice(-5).map(x => x.toFixed(2)).join(', ')}`;
     } catch (e) { out += '\n(Data live XAUUSD gagal diambil: ' + e.message + ')'; }
@@ -233,11 +257,13 @@ Ingatkan singkat bahwa ini bukan nasihat keuangan, keputusan tetap di tangan Azi
   async function ask(q) {
     q = (q || '').trim();
     if (!q || busy) return;
-    const key = lsGet(KEY_LS);
+    const key = getKey();
     if (!key) { $('aiSettings').style.display = 'block'; addMsg('ai', 'Isi API key Gemini dulu di ⚙️ Pengaturan ya.'); return; }
     busy = true; $('aiSend').disabled = true;
     addMsg('user', q);
     const wait = addMsg('ai', '⏳ Menganalisa...');
+    if (!cur) { cur = { id: Date.now(), title: q.length > 45 ? q.slice(0, 45) + '…' : q, ts: Date.now(), star: false, msgs: [], hist: [] }; chats.unshift(cur); }
+    cur.msgs.push({ role: 'user', text: q });
     history.push({ role: 'user', parts: [{ text: q }] });
     try {
       const ctx = await getContext();
@@ -268,8 +294,11 @@ Ingatkan singkat bahwa ini bukan nasihat keuangan, keputusan tetap di tangan Azi
       if (!text) throw new Error('Jawaban kosong (mungkin diblokir filter). Coba ulangi dengan kalimat lain.');
       history.push({ role: 'model', parts: [{ text }] });
       wait.innerHTML = fmt(text);
+      cur.msgs.push({ role: 'ai', text }); cur.hist = history.slice(); cur.ts = Date.now();
+      saveChats(); renderHist();
     } catch (e) {
       history.pop();
+      if (cur) { cur.msgs.pop(); if (!cur.msgs.length) { chats = chats.filter(c => c !== cur); cur = null; renderHist(); } }
       let hint = '';
       if (/high demand|overloaded/i.test(e.message)) hint = '\n\n💡 Server Google lagi ramai. Tunggu sebentar lalu kirim lagi, atau ganti model ke versi "flash-lite" di ⚙️ Pengaturan.';
       else if (/quota|rate/i.test(e.message)) hint = '\n\n💡 Coba matikan centang "Pakai Google Search" (fitur itu sering tidak ada kuota gratisnya), atau tunggu 1 menit lalu ulangi.';
@@ -311,7 +340,58 @@ Ingatkan singkat bahwa ini bukan nasihat keuangan, keputusan tetap di tangan Azi
     showToast('Pengaturan XAU AI disimpan ✅');
   };
   refreshKeyState();
-  addMsg('ai', 'Halo Azis 👋 Aku XAU AI. Tanya signal, hitung lot, atau minta rangkuman berita emas. Data harga XAUUSD live ikut kubaca tiap kamu bertanya.');
+  /* sapaan awal lewat newChat() */
+
+
+  /* ---------- Riwayat chat (tersimpan di browser) ---------- */
+  const CH_LS = 'ags_xauai_chats';
+  const WELCOME = 'Halo Azis 👋 Aku XAU AI. Tanya signal, hitung lot, atau minta rangkuman berita emas. Data harga XAUUSD live ikut kubaca tiap kamu bertanya.';
+  let chats = [], cur = null;
+  try { chats = JSON.parse(lsGet(CH_LS) || '[]'); if (!Array.isArray(chats)) chats = []; } catch (e) { chats = []; }
+  function saveChats() { lsSet(CH_LS, JSON.stringify(chats.slice(0, 60))); }
+  function newChat() {
+    if (busy) return;
+    cur = null; history = [];
+    $('aiChat').innerHTML = '';
+    addMsg('ai', WELCOME);
+    renderHist();
+  }
+  function loadChat(id) {
+    if (busy) return;
+    const c = chats.find(x => x.id === id); if (!c) return;
+    cur = c; history = (c.hist || []).slice();
+    $('aiChat').innerHTML = '';
+    c.msgs.forEach(m => addMsg(m.role, m.text));
+    renderHist();
+    $('aiSide').classList.remove('open');
+  }
+  function renderHist() {
+    const q = ($('aiFind').value || '').toLowerCase().trim();
+    let list = chats.filter(c => !q || c.title.toLowerCase().includes(q) || c.msgs.some(m => m.text.toLowerCase().includes(q)));
+    list = list.sort((a, b) => (b.star - a.star) || (b.ts - a.ts));
+    $('aiHistList').innerHTML = list.length ? list.map(c => `
+      <div class="ai-h ${cur && cur.id === c.id ? 'active' : ''}" data-id="${c.id}">
+        <div class="t">${c.star ? '⭐ ' : ''}${esc(c.title)}<div class="d">${new Date(c.ts).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</div></div>
+        <span class="b" data-act="star" title="Tandai penting">${c.star ? '★' : '☆'}</span>
+        <span class="b" data-act="del" title="Hapus">🗑</span>
+      </div>`).join('') : '<div style="font-size:11.5px;color:var(--muted);padding:8px;">' + (q ? 'Tidak ada yang cocok.' : 'Belum ada riwayat. Chat kamu otomatis tersimpan di sini.') + '</div>';
+  }
+  $('aiHistList').addEventListener('click', e => {
+    const item = e.target.closest('.ai-h'); if (!item) return;
+    const id = +item.dataset.id, act = e.target.dataset.act;
+    if (act === 'star') { const c = chats.find(x => x.id === id); c.star = !c.star; saveChats(); renderHist(); return; }
+    if (act === 'del') {
+      if (!confirm('Hapus chat ini dari riwayat?')) return;
+      chats = chats.filter(x => x.id !== id); saveChats();
+      if (cur && cur.id === id) newChat(); else renderHist();
+      return;
+    }
+    loadChat(id);
+  });
+  $('aiNew').onclick = () => { newChat(); $('aiSide').classList.remove('open'); };
+  $('aiFind').addEventListener('input', renderHist);
+  $('aiHistBtn').onclick = () => $('aiSide').classList.toggle('open');
+  newChat();
 
   /* ---------- 6. Override fungsi lama ---------- */
   window.switchPage = function (p) {
@@ -349,6 +429,7 @@ Ingatkan singkat bahwa ini bukan nasihat keuangan, keputusan tetap di tangan Azi
         const d = f.contentDocument, sty = d.createElement('style');
         sty.textContent = '.topbar{display:none!important}';
         d.head.appendChild(sty);
+        setupGoldRSI(f);
       } catch (e) {}
       const t = document.documentElement.getAttribute('data-theme') || 'dark';
       try { f.contentWindow.postMessage({ type: 'ags-theme', theme: t }, '*'); } catch (e) {}
@@ -551,4 +632,135 @@ Ingatkan singkat bahwa ini bukan nasihat keuangan, keputusan tetap di tangan Azi
       };
     } catch (e) { showToast('Gagal import: ' + e.message, true); }
   };
+
+  /* ---------- 10. RSI di Chart (TradingView + panel zona AGS) ---------- */
+  // Ubah level/keterangan/warna di sini:
+  const RSI_LEVELS = [
+    { v: 13, t: 'Ready Buy', c: '#38bdf8' },
+    { v: 15, t: 'Hot Buy', c: '#16a34a' },
+    { v: 20, t: 'Buy', c: '#22c55e' },
+    { v: 30, t: 'Ready Buy', c: '#86efac' },
+    { v: 50, t: 'Sideways', c: '#9ca3af' },
+    { v: 70, t: 'Sell', c: '#fca5a5' },
+    { v: 80, t: 'Ready Sell', c: '#f87171' },
+    { v: 92, t: 'Very Sell', c: '#dc2626' }
+  ];
+  function rsiZone(v) {
+    const L = RSI_LEVELS;
+    if (v <= 15) return L[1];
+    if (v <= 20) return L[2];
+    if (v <= 30) return L[3];
+    if (v < 70) return L[4];
+    if (v < 80) return L[5];
+    if (v < 92) return L[6];
+    return L[7];
+  }
+  function rsiSeries(c, p = 14) {
+    const out = new Array(c.length).fill(null);
+    if (c.length <= p) return out;
+    let g = 0, l = 0;
+    for (let i = 1; i <= p; i++) { const d = c[i] - c[i - 1]; d >= 0 ? g += d : l -= d; }
+    g /= p; l /= p;
+    out[p] = l === 0 ? 100 : 100 - 100 / (1 + g / l);
+    for (let i = p + 1; i < c.length; i++) {
+      const d = c[i] - c[i - 1];
+      g = (g * (p - 1) + Math.max(d, 0)) / p; l = (l * (p - 1) + Math.max(-d, 0)) / p;
+      out[i] = l === 0 ? 100 : 100 - 100 / (1 + g / l);
+    }
+    return out;
+  }
+
+  function setupGoldRSI(f) {
+    const d = f.contentDocument, w = f.contentWindow;
+    if (!d || !w) return;
+
+    // (a) RSI bawaan TradingView ikut ditambahkan ke widget chart
+    try {
+      const orig = w.loadTradingView;
+      if (orig && !orig.__agsRsi) {
+        const wrapped = function () {
+          const js = w.JSON.stringify;
+          w.JSON.stringify = function (o) {
+            if (o && Array.isArray(o.studies) && !o.studies.some(x => /RSI|Relative/i.test(x))) o.studies = [...o.studies, 'RSI@tv-basicstudies'];
+            return js.apply(this, arguments);
+          };
+          try { return orig.apply(this, arguments); } finally { w.JSON.stringify = js; }
+        };
+        wrapped.__agsRsi = true;
+        w.loadTradingView = wrapped;
+        wrapped(d.documentElement.getAttribute('data-theme') || 'dark');
+      }
+    } catch (e) { console.warn('[RSI TV]', e); }
+
+    // (b) panel RSI dengan level & keterangan AGS di bawah chart
+    const host = d.getElementById('tv_chart_container');
+    if (!host || d.getElementById('agsRsi')) return;
+    const box = d.createElement('div');
+    box.id = 'agsRsi';
+    box.style.cssText = 'margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--panel2)';
+    box.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.5px">RSI (14) · M15 · AGS ZONES</div>
+        <div><span id="agsRsiVal" style="font-family:var(--mono);font-size:22px;font-weight:800">—</span>
+        <span id="agsRsiZone" style="font-size:13px;font-weight:800;margin-left:6px"></span></div>
+      </div>
+      <canvas id="agsRsiCv" style="width:100%;height:200px;display:block"></canvas>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;font-size:10.5px">
+        ${RSI_LEVELS.map(l => `<span style="border:1px solid ${l.c};color:${l.c};padding:2px 8px;border-radius:12px;font-weight:700">${l.v} · ${l.t}</span>`).join('')}
+      </div>`;
+    host.after(box);
+
+    let series = [];
+    function draw() {
+      const cv = d.getElementById('agsRsiCv'); if (!cv) return;
+      const dpr = w.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
+      cv.width = W * dpr; cv.height = H * dpr;
+      const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      const padT = 8, padB = 8, padL = 4, padR = 88, pw = W - padL - padR, ph = H - padT - padB;
+      const Y = v => padT + (1 - v / 100) * ph;
+      const txt = getComputedStyle(d.body).color;
+      // zona warna
+      ctx.fillStyle = 'rgba(34,197,94,.10)'; ctx.fillRect(padL, Y(30), pw, Y(0) - Y(30));
+      ctx.fillStyle = 'rgba(239,68,68,.10)'; ctx.fillRect(padL, Y(100), pw, Y(70) - Y(100));
+      // garis level
+      ctx.font = '10px sans-serif'; ctx.textBaseline = 'middle';
+      RSI_LEVELS.forEach(l => {
+        ctx.strokeStyle = l.c; ctx.globalAlpha = .7; ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(padL, Y(l.v)); ctx.lineTo(padL + pw, Y(l.v)); ctx.stroke();
+        ctx.setLineDash([]); ctx.globalAlpha = 1; ctx.fillStyle = l.c;
+        ctx.fillText(`${l.v} ${l.t}`, padL + pw + 6, Y(l.v));
+      });
+      const pts = series.filter(v => v != null);
+      if (pts.length < 2) { ctx.fillStyle = txt; ctx.fillText('Memuat data RSI...', padL + 10, H / 2); return; }
+      ctx.strokeStyle = txt; ctx.lineWidth = 1.8; ctx.beginPath();
+      pts.forEach((v, i) => { const x = padL + (i / (pts.length - 1)) * pw; i ? ctx.lineTo(x, Y(v)) : ctx.moveTo(x, Y(v)); });
+      ctx.stroke();
+      const last = pts[pts.length - 1], z = rsiZone(last);
+      ctx.fillStyle = z.c; ctx.beginPath(); ctx.arc(padL + pw, Y(last), 4, 0, 7); ctx.fill();
+    }
+    async function load() {
+      const valEl = d.getElementById('agsRsiVal'), zoneEl = d.getElementById('agsRsiZone');
+      try {
+        const run = () => fetch(`https://api.twelvedata.com/time_series?symbol=XAU%2FUSD&interval=15min&outputsize=140&apikey=${TD_KEY}`);
+        const r = await (typeof w.queueApiCall === 'function' ? w.queueApiCall(run) : run());
+        const j = await r.json();
+        if (!j.values) throw new Error(j.message || 'no data');
+        const closes = [...j.values].reverse().map(x => +x.close);
+        series = rsiSeries(closes).slice(-80);
+        const last = series[series.length - 1], z = rsiZone(last);
+        valEl.textContent = last.toFixed(1);
+        valEl.style.color = z.c;
+        zoneEl.textContent = z.t.toUpperCase(); zoneEl.style.color = z.c;
+        draw();
+      } catch (e) {
+        if (valEl) { valEl.textContent = '—'; zoneEl.textContent = 'gagal ambil data'; zoneEl.style.color = 'var(--red)'; }
+        setTimeout(load, 60000);
+      }
+    }
+    draw(); load();
+    setInterval(load, 5 * 60 * 1000);
+    w.addEventListener('resize', draw);
+    w.addEventListener('message', () => setTimeout(draw, 400));
+  }
 })();
