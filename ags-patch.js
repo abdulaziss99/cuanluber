@@ -424,7 +424,6 @@ Ingatkan singkat bahwa ini bukan nasihat keuangan, keputusan tetap di tangan Azi
         const d = f.contentDocument, sty = d.createElement('style');
         sty.textContent = '.topbar{display:none!important}';
         d.head.appendChild(sty);
-        setupGoldRSI(f);
       } catch (e) {}
       const t = document.documentElement.getAttribute('data-theme') || 'dark';
       try { f.contentWindow.postMessage({ type: 'ags-theme', theme: t }, '*'); } catch (e) {}
