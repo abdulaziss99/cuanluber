@@ -1,4 +1,4 @@
-/* AGS VISION v1 — lampiran foto/screenshot untuk XAU AI.
+/* AGS VISION v2 — lampiran foto/screenshot untuk XAU AI.
    Pasang SETELAH ags-patch.js, sebelum </body>:
    <script src="ags-patch.js?v=8"></script>
    <script src="ags-vision.js?v=1"></script>
@@ -147,6 +147,23 @@
     } catch (e) { console.warn('[AGS Vision]', e); }
     return _fetch(url, opts);
   };
+
+  /* ---------- tinggi area chat menyesuaikan layar HP: kolom input menempel di bawah, tanpa ruang kosong ---------- */
+  function fitAi() {
+    const w = document.querySelector('#page-xauai .ai-wrap'), pg = $('page-xauai');
+    if (!w || !pg || !pg.classList.contains('active')) return;
+    if (!window.matchMedia('(max-width:900px)').matches) { w.style.height = ''; w.style.minHeight = ''; return; }
+    const nav = document.querySelector('.sidebar');
+    const navH = nav ? nav.getBoundingClientRect().height : 0;
+    const top = w.getBoundingClientRect().top + window.scrollY;
+    w.style.minHeight = '0';
+    w.style.height = Math.max(320, window.innerHeight - top - navH - 10) + 'px';
+    const chat = $('aiChat'); if (chat) chat.scrollTop = chat.scrollHeight;
+  }
+  window.addEventListener('resize', fitAi);
+  window.addEventListener('orientationchange', () => setTimeout(fitAi, 300));
+  new MutationObserver(() => setTimeout(fitAi, 50)).observe($('page-xauai'), { attributes: true, attributeFilter: ['class'] });
+  setTimeout(fitAi, 300);
 
   window.__agsVision = { setPending: p => { pending = p; renderPrev(); } }; // untuk pengujian
 })();
